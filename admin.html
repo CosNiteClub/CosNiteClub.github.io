@@ -34,25 +34,23 @@
         .btn-approve { background-color: #10b981; grid-column: span 2; }
         
         .manual-add-box { background: #fffafc; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--primary); }
-        
-        /* สไตล์สำหรับแท็บจัดการเกสต์ */
         .guest-manage-box { background: #fffafc; border: 1px dashed var(--primary); padding: 20px; border-radius: 12px; margin-bottom:20px;}
         .guest-item { display: inline-flex; align-items: center; background: white; padding: 5px 15px; border-radius: 20px; border: 1px solid var(--primary); margin: 5px; color: var(--primary); }
         .guest-item span { cursor: pointer; color: #ef4444; margin-left: 10px; font-weight: bold; }
 
-        /* สไตล์หน้าต่างแก้ไขข้อมูลลูกค้า (UI จัดใหม่) */
         #editModalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; backdrop-filter: blur(2px);}
         #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; border-radius: 20px; z-index: 101; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         .admin-note-box { background: #fff0f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed var(--primary); }
         .switch-wrap { display: flex; align-items: center; gap: 10px; margin-top: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
         .switch-wrap input { width: auto; transform: scale(1.3); cursor: pointer; }
         
-        /* Grid สำหรับจัดช่องกรอกข้อมูลให้ตรงกัน */
         .member-edit-card { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #eee; }
         .member-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .full-width { grid-column: span 2; }
         
-        .toolbar { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        /* แก้ไข Toolbar ให้รองรับปุ่มเยอะๆ แบบสวยงาม */
+        .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #f1f5f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .toolbar-group { display: flex; gap: 8px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -79,10 +77,10 @@
 
             <div id="tab-manage" style="display: none;">
                 <div class="dash-grid">
-                    <div class="dash-card"><h3>รวมที่ขายได้ (500)</h3><p id="dashTotal">0/500</p></div>
-                    <div class="dash-card"><h3>VIP (78)</h3><p id="dashVip">0/78</p></div>
-                    <div class="dash-card"><h3>Party (372)</h3><p id="dashParty">0/372</p></div>
-                    <div class="dash-card"><h3>Solo (50)</h3><p id="dashSolo">0/50</p></div>
+                    <div class="dash-card"><h3>รวมที่ขายได้ (486)</h3><p id="dashTotal">0/486</p></div>
+                    <div class="dash-card"><h3>VIP (โควตา 66)</h3><p id="dashVip">0/66</p></div>
+                    <div class="dash-card"><h3>Party (โควตา 372)</h3><p id="dashParty">0/372</p></div>
+                    <div class="dash-card"><h3>Solo (โควตา 48)</h3><p id="dashSolo">0/48</p></div>
                 </div>
                 
                 <div class="manual-add-box">
@@ -102,16 +100,21 @@
                 </div>
 
                 <div class="toolbar">
-                    <div>
-                        <label style="font-weight:bold; margin-right:5px;">กรองประเภทตั๋ว:</label>
-                        <select id="ticketFilter" onchange="renderPaidTable()" style="padding:8px;">
-                            <option value="all">แสดงทั้งหมด</option>
+                    <div class="toolbar-group">
+                        <select id="ticketFilter" onchange="renderPaidTable()" style="padding:8px; border-radius: 8px;">
+                            <option value="all">กรอง: แสดงทั้งหมด</option>
                             <option value="vip">เฉพาะ VIP</option>
                             <option value="party">เฉพาะ Party</option>
                             <option value="solo">เฉพาะ Solo</option>
                         </select>
                     </div>
-                    <button onclick="exportCSV()" style="background:#10b981; padding:8px 15px;">📥 ดาวน์โหลดชีท (Excel/CSV)</button>
+                    
+                    <div class="toolbar-group">
+                        <button onclick="toggleAllTables(true)" style="background:#3b82f6; padding:8px 15px;">👁️ เปิดชื่อโต๊ะทั้งหมด</button>
+                        <button onclick="toggleAllTables(false)" style="background:#ef4444; padding:8px 15px;">🙈 ซ่อนชื่อโต๊ะทั้งหมด</button>
+                        
+                        <button onclick="exportCSV()" style="background:#10b981; padding:8px 15px;">📥 โหลดชีท</button>
+                    </div>
                 </div>
 
                 <table id="paidTable">
@@ -123,7 +126,6 @@
             <div id="tab-settings" style="display: none;">
                 <div class="guest-manage-box">
                     <h3 style="margin-top:0; color:var(--primary);">รายชื่อ Guest สำหรับบัตร VIP</h3>
-                    <p style="color:#666; font-size:13px; margin-top:0;">เพิ่ม ลบ หรือแก้ไขชื่อเกสต์ที่นี่ ระบบจะอัปเดตไปที่หน้าเลือกลูกค้าทันที</p>
                     <div style="display:flex; gap:10px; margin-bottom:15px;">
                         <input type="text" id="newGuestName" placeholder="พิมพ์ชื่อเกสต์ใหม่..." style="flex:1;">
                         <button onclick="addGuest()" style="background:var(--primary);">+ เพิ่มเกสต์</button>
@@ -172,7 +174,7 @@
         const db = getFirestore(app);
 
         let globalGuests = [];
-        let allPaidTickets = []; // เก็บข้อมูลตั๋วสำหรับทำ Filter และ CSV
+        let allPaidTickets = []; 
 
         window.switchTab = function(id) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -259,21 +261,19 @@
             const qs = await getDocs(query(collection(db, "Tickets"), where("status", "==", "paid")));
             allPaidTickets = qs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            // คำนวณ Dashboard จากทั้งหมด
             let cTotal=0, cVip=0, cParty=0, cSolo=0;
             allPaidTickets.forEach(data => {
                 let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
                 cTotal += s; if(data.type.includes('vip')) cVip+=s; if(data.type.includes('party')) cParty+=s; if(data.type.includes('solo')) cSolo+=s;
             });
-            document.getElementById('dashTotal').innerText = `${cTotal}/500`;
-            document.getElementById('dashVip').innerText = `${cVip}/78`;
+            document.getElementById('dashTotal').innerText = `${cTotal}/486`;
+            document.getElementById('dashVip').innerText = `${cVip}/66`;
             document.getElementById('dashParty').innerText = `${cParty}/372`;
-            document.getElementById('dashSolo').innerText = `${cSolo}/50`;
+            document.getElementById('dashSolo').innerText = `${cSolo}/48`;
 
-            renderPaidTable(); // วาดตารางตาม Filter
+            renderPaidTable(); 
         }
 
-        // --- 3. ระบบกรอง (Filter) ตาราง ---
         window.renderPaidTable = function() {
             const filterVal = document.getElementById('ticketFilter').value;
             const tbody = document.querySelector('#paidTable tbody');
@@ -311,43 +311,44 @@
             });
         }
 
+        // --- ระบบเปิด/ปิดเลขโต๊ะทั้งหมด (Bulk Action) ---
+        window.toggleAllTables = async function(isVisible) {
+            const actionText = isVisible ? 'เปิดให้ลูกค้าเห็น' : 'ซ่อนไม่ให้ลูกค้าเห็น';
+            if(!confirm(`⚠️ ยืนยันการ ${actionText} "หมายเลข/ชื่อโต๊ะ" ของลูกค้าทั้งหมดใช่หรือไม่?\n(ระบบจะใช้เวลาอัปเดตสักครู่)`)) return;
+            
+            try {
+                // อัปเดตตั๋วทีละใบ (สามารถใช้ Promise.all ได้เพราะจำนวนไม่ได้เยอะหลักแสน)
+                const promises = [];
+                allPaidTickets.forEach(t => {
+                    promises.push(updateDoc(doc(db, "Tickets", t.id), { isTableVisible: isVisible }));
+                });
+                
+                await Promise.all(promises);
+                alert(`✅ อัปเดตสถานะสำเร็จ! (${actionText} เรียบร้อยแล้ว)`);
+                loadPaid(); // โหลดตารางใหม่
+            } catch(e) {
+                console.error(e);
+                alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
+            }
+        };
+
         // --- 4. โหลดเป็นไฟล์ CSV (Excel) ---
         window.exportCSV = function() {
             if(allPaidTickets.length === 0) return alert('ไม่มีข้อมูลตั๋วให้ดาวน์โหลด');
-            
-            // ใส่ \uFEFF เพื่อให้ Excel อ่านภาษาไทย (UTF-8) ได้ถูกต้อง
             let csvContent = "\uFEFFลำดับ,รหัสตั๋ว,อ้างอิงลูกค้า,ประเภทตั๋ว,เลขโต๊ะ,โซนที่รีเควส,รายละเอียดผู้ร่วมงาน (คนที่. ชื่อ | วันเกิด | FB | เกสต์)\n";
-            
             allPaidTickets.forEach((t, index) => {
                 let memberInfo = "";
-                if (t.members) {
-                    memberInfo = t.members.map((m, i) => `${i+1}. ${m.name||'-'} | ${m.dob||'-'} | ${m.facebook||'-'} | ${m.guest||'-'}`).join("  //  ");
-                }
-                
-                let row = [
-                    index + 1,
-                    t.id,
-                    t.refName || '',
-                    t.type,
-                    t.tableNumber || '',
-                    t.request || '',
-                    memberInfo
-                ];
-                
-                // ครอบเครื่องหมาย " เพื่อป้องกันคอมม่า (,) ในข้อความทำไฟล์พัง
+                if (t.members) memberInfo = t.members.map((m, i) => `${i+1}. ${m.name||'-'} | ${m.dob||'-'} | ${m.facebook||'-'} | ${m.guest||'-'}`).join("  //  ");
+                let row = [ index + 1, t.id, t.refName || '', t.type, t.tableNumber || '', t.request || '', memberInfo ];
                 let rowString = row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
                 csvContent += rowString + "\n";
             });
-
-            // สร้างลิงก์โหลด
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = `CosNite_Tickets_${new Date().toISOString().slice(0,10)}.csv`;
-            link.style.display = "none";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            link.style.display = "none"; document.body.appendChild(link);
+            link.click(); document.body.removeChild(link);
         }
 
         // --- ฟังก์ชันช่วยเหลืออื่นๆ ---
@@ -380,7 +381,7 @@
             }
         };
 
-        // --- แก้ไขข้อมูล (UI ใหม่) ---
+        // --- แก้ไขข้อมูล (UI Grid ใหม่) ---
         window.openEdit = async function(id) {
             const dSnap = await getDoc(doc(db, "Tickets", id));
             const data = dSnap.data();
@@ -399,7 +400,6 @@
             for(let i=0; i<s; i++) {
                 let m = data.members && data.members[i] ? data.members[i] : {name:'',dob:'',facebook:'',guest:''};
                 
-                // ใช้ Grid จัดช่องว่างให้ตรงเป๊ะ
                 h += `<div class="member-edit-card">
                     <b style="color:var(--primary); font-size:14px; margin-bottom:5px; display:block;">คนที่ ${i+1}</b>
                     <div class="member-edit-grid">
