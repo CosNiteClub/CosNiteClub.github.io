@@ -6,19 +6,31 @@
     <title>Admin Panel - CosNite Club</title>
     <style>
         body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
-        input, button { padding: 10px; margin-top: 10px; border-radius: 5px; border: none; }
+        .container { max-width: 1000px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
+        input, button, select { padding: 10px; margin-top: 10px; border-radius: 5px; border: none; }
         button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #444; padding: 12px; text-align: left; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { border: 1px solid #444; padding: 10px; text-align: left; }
         th { background-color: #333; }
-        .slip-img { max-width: 100px; cursor: pointer; border-radius: 5px; }
+        .slip-img { max-width: 80px; cursor: pointer; border-radius: 5px; }
         .btn-approve { background-color: #4ade80; color: black; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        
+        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { background-color: #444; color: white; padding: 10px 20px; flex: 1; border-radius: 5px; }
+        .tab-btn.active { background-color: #facc15; color: black; }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .dash-card { background: #333; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #555; }
+        .dash-card h3 { margin: 0 0 10px 0; color: #facc15; font-size: 16px; }
+        .dash-card p { margin: 0; font-size: 20px; font-weight: bold; }
+        
+        .manual-add-box { background: #333; padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 1px dashed #facc15; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>ระบบจัดการหลังบ้าน (Admin) - ตรวจสอบสลิป</h2>
+        <h2>แผงควบคุมแอดมิน - CosNite Club</h2>
         
         <div id="loginSection">
             <p>กรุณากรอกอีเมลแอดมินเพื่อเข้าสู่ระบบ</p>
@@ -27,25 +39,67 @@
         </div>
 
         <div id="adminPanel" style="display: none;">
-            <p style="color: #4ade80;">เข้าสู่ระบบสำเร็จ! (สิทธิ์แอดมิน)</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ประเภทตั๋ว</th>
-                        <th>ราคาที่จ่าย</th>
-                        <th>ช่องทาง</th>
-                        <th>สลิปโอนเงิน</th>
-                        <th>จัดการ</th>
-                    </tr>
-                </thead>
-                <tbody id="ticketTableBody"></tbody>
-            </table>
+            <div class="tab-menu">
+                <button class="tab-btn active" onclick="switchTab('tab-pending')">ตรวจสอบสลิป</button>
+                <button class="tab-btn" onclick="switchTab('tab-manage')">สรุปยอด & จัดการตั๋ว</button>
+            </div>
+
+            <div id="tab-pending">
+                <h3>รายการรอตรวจสอบ</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ประเภทตั๋ว</th>
+                            <th>ราคาที่จ่าย</th>
+                            <th>ช่องทาง</th>
+                            <th>สลิปโอนเงิน</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="tab-manage" style="display: none;">
+                <div class="dashboard">
+                    <div class="dash-card"><h3>รวมที่นั่งทั้งหมด (500)</h3><p id="dashTotal">0 / 500</p></div>
+                    <div class="dash-card"><h3>VIP (โควตา 78)</h3><p id="dashVip">0 / 78</p></div>
+                    <div class="dash-card"><h3>Party (โควตา 372)</h3><p id="dashParty">0 / 372</p></div>
+                    <div class="dash-card"><h3>Solo (โควตา 50)</h3><p id="dashSolo">0 / 50</p></div>
+                </div>
+
+                <div class="manual-add-box">
+                    <h3 style="margin-top:0; color:#4ade80;">+ เพิ่มตั๋วลูกค้าเก่า (Manual Add)</h3>
+                    <select id="manualType">
+                        <option value="solo">Solo (เดี่ยว)</option>
+                        <option value="party4">Party 4 คน</option>
+                        <option value="party6">Party 6 คน</option>
+                        <option value="vip4">VIP 4 คน</option>
+                        <option value="vip6">VIP 6 คน</option>
+                    </select>
+                    <input type="text" id="manualRef" placeholder="ชื่อผู้ซื้อ หรือ รหัสอ้างอิง" style="width: 250px;">
+                    <button onclick="addManualTicket()">เพิ่มตั๋วเข้าสู่ระบบ</button>
+                </div>
+
+                <h3>รายชื่อตั๋วทั้งหมดในระบบ (Paid)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID / อ้างอิง</th>
+                            <th>ประเภท</th>
+                            <th>รายชื่อผู้เข้าร่วม (ชื่อ, เกิด, FB)</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paidTableBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
@@ -53,12 +107,24 @@
             projectId: "cosniteclub",
             storageBucket: "cosniteclub.firebasestorage.app",
             messagingSenderId: "429033863377",
-            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0",
-            measurementId: "G-8GSH09B7P2"
+            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        // ระบบเปลี่ยนแท็บ
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-pending').style.display = 'none';
+            document.getElementById('tab-manage').style.display = 'none';
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).style.display = 'block';
+
+            if(tabId === 'tab-manage') loadDashboardAndTickets();
+            else loadPendingTickets();
+        };
 
         document.getElementById('loginBtn').addEventListener('click', () => {
             const email = document.getElementById('adminEmail').value;
@@ -71,56 +137,136 @@
             }
         });
 
+        // 1. โหลดตั๋วรอตรวจ
         async function loadPendingTickets() {
-            const tableBody = document.getElementById('ticketTableBody');
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">กำลังโหลดข้อมูล...</td></tr>';
-            
+            const tbody = document.getElementById('pendingTableBody');
+            tbody.innerHTML = '<tr><td colspan="5">กำลังโหลด...</td></tr>';
             try {
                 const q = query(collection(db, "Tickets"), where("status", "==", "pending_verification"));
-                const querySnapshot = await getDocs(q);
-                
-                tableBody.innerHTML = ''; 
-                
-                if (querySnapshot.empty) {
-                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">ไม่มีรายการรอตรวจสอบครับ</td></tr>';
-                    return;
-                }
+                const qs = await getDocs(q);
+                tbody.innerHTML = ''; 
+                if (qs.empty) return tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">ไม่มีรายการรอตรวจสอบครับ</td></tr>';
 
-                querySnapshot.forEach((documentSnapshot) => {
-                    const data = documentSnapshot.data();
-                    const ticketId = documentSnapshot.id;
-                    
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${data.type.toUpperCase()} ${data.drinkSet ? '(Set ' + data.drinkSet + ')' : ''}</td>
-                        <td>${data.pricePaid.toLocaleString()} บาท</td>
-                        <td>${data.paymentMethod}</td>
-                        <td><a href="${data.slipUrl}" target="_blank"><img src="${data.slipUrl}" class="slip-img" alt="สลิป"></a></td>
-                        <td>
-                            <button class="btn-approve" onclick="approveTicket('${ticketId}')">ยืนยันยอดเงิน</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(tr);
+                qs.forEach((d) => {
+                    const data = d.data();
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${data.type.toUpperCase()} ${data.drinkSet ? '(Set '+data.drinkSet+')' : ''}</td>
+                            <td>${data.pricePaid} บาท</td>
+                            <td>${data.paymentMethod}</td>
+                            <td><a href="${data.slipUrl}" target="_blank"><img src="${data.slipUrl}" class="slip-img"></a></td>
+                            <td>
+                                <button class="btn-approve" onclick="approveTicket('${d.id}')">ยืนยันยอด</button>
+                                <button class="btn-danger" onclick="deleteTicket('${d.id}')" style="margin-top:5px;">ลบทิ้ง</button>
+                            </td>
+                        </tr>`;
                 });
-            } catch (error) {
-                console.error("Error loading tickets: ", error);
-                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+            } catch (error) { console.error(error); }
+        }
+
+        // 2. โหลดตั๋วทั้งหมดและสรุปยอดโควตา
+        async function loadDashboardAndTickets() {
+            const tbody = document.getElementById('paidTableBody');
+            tbody.innerHTML = '<tr><td colspan="4">กำลังโหลด...</td></tr>';
+            
+            let countVip = 0, countParty = 0, countSolo = 0, countTotal = 0;
+
+            try {
+                const q = query(collection(db, "Tickets"), where("status", "==", "paid"));
+                const qs = await getDocs(q);
+                tbody.innerHTML = ''; 
+
+                if (qs.empty) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ยังไม่มีตั๋วที่ขายได้</td></tr>';
+
+                qs.forEach((d) => {
+                    const data = d.data();
+                    let seats = 1;
+                    if(data.type.includes('4')) seats = 4;
+                    if(data.type.includes('6')) seats = 6;
+
+                    // คำนวณโควตา
+                    countTotal += seats;
+                    if(data.type.includes('vip')) countVip += seats;
+                    if(data.type.includes('party')) countParty += seats;
+                    if(data.type.includes('solo')) countSolo += seats;
+
+                    // จัดเรียงรายชื่อ
+                    let membersDisplay = '';
+                    if (data.members && data.members.length > 0) {
+                        data.members.forEach((m, idx) => {
+                            if(m.name) membersDisplay += `<div>${idx+1}. ${m.name} | ${m.dob} | FB: ${m.facebook}</div>`;
+                        });
+                    } else {
+                        membersDisplay = '<span style="color:#f87171;">ยังไม่กรอกข้อมูล</span>';
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-size:12px; color:#aaa;">${d.id}<br><span style="color:#facc15;">${data.refName || ''}</span></td>
+                            <td>${data.type.toUpperCase()}</td>
+                            <td>${membersDisplay}</td>
+                            <td>
+                                <button onclick="unlockMembers('${d.id}')">ปลดล็อกให้แก้ชื่อ</button>
+                                <button class="btn-danger" onclick="deleteTicket('${d.id}')" style="margin-top:5px;">ลบตั๋ว</button>
+                            </td>
+                        </tr>`;
+                });
+
+                // อัปเดตตัวเลขหน้า Dashboard
+                document.getElementById('dashTotal').innerText = `${countTotal} / 500`;
+                document.getElementById('dashVip').innerText = `${countVip} / 78`;
+                document.getElementById('dashParty').innerText = `${countParty} / 372`;
+                document.getElementById('dashSolo').innerText = `${countSolo} / 50`;
+
+            } catch (error) { console.error(error); }
+        }
+
+        // 3. แอดมินเพิ่มตั๋ว Manual
+        window.addManualTicket = async function() {
+            const type = document.getElementById('manualType').value;
+            const refName = document.getElementById('manualRef').value || 'แอดมินเพิ่มระบบ';
+            
+            if(!confirm(`ยืนยันการเพิ่มตั๋ว ${type} ให้กับ: ${refName} ใช่หรือไม่?`)) return;
+
+            try {
+                await addDoc(collection(db, "Tickets"), {
+                    userId: "manual_admin_added", // บ่งบอกว่าแอดมินเพิ่มเอง
+                    refName: refName, // ชื่ออ้างอิง
+                    type: type,
+                    status: "paid",
+                    isMembersLocked: false,
+                    createdAt: serverTimestamp()
+                });
+                alert('เพิ่มตั๋วเข้าระบบสำเร็จ!');
+                loadDashboardAndTickets();
+            } catch (e) {
+                console.error(e);
+                alert('เกิดข้อผิดพลาด');
             }
         }
 
-        window.approveTicket = async function(ticketId) {
-            if (confirm('คุณตรวจสอบสลิปและต้องการยืนยันยอดเงินนี้ใช่หรือไม่?')) {
-                try {
-                    const ticketRef = doc(db, "Tickets", ticketId);
-                    await updateDoc(ticketRef, {
-                        status: "paid"
-                    });
-                    alert('อัปเดตสถานะเป็น Paid สำเร็จ!');
-                    loadPendingTickets(); 
-                } catch (error) {
-                    console.error("Error updating document: ", error);
-                    alert('เกิดข้อผิดพลาดในการอัปเดตสถานะ');
-                }
+        // ฟังก์ชันช่วยเหลือต่างๆ
+        window.approveTicket = async function(id) {
+            if (confirm('ยืนยันยอดเงินนี้?')) {
+                await updateDoc(doc(db, "Tickets", id), { status: "paid" });
+                loadPendingTickets();
+            }
+        };
+
+        window.unlockMembers = async function(id) {
+            if (confirm('ต้องการปลดล็อกให้ลูกค้าเข้าไปแก้ชื่อในเว็บได้อีกครั้งใช่หรือไม่?')) {
+                await updateDoc(doc(db, "Tickets", id), { isMembersLocked: false });
+                alert('ปลดล็อกสำเร็จ!');
+                loadDashboardAndTickets();
+            }
+        };
+
+        window.deleteTicket = async function(id) {
+            if (confirm('คำเตือน: คุณต้องการลบตั๋วนี้ออกจากระบบอย่างถาวรใช่หรือไม่!?')) {
+                await deleteDoc(doc(db, "Tickets", id));
+                alert('ลบตั๋วเรียบร้อยแล้ว');
+                loadPendingTickets();
+                loadDashboardAndTickets();
             }
         };
     </script>
