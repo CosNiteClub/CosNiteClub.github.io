@@ -7,14 +7,15 @@
     <style>
         body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; }
         .container { max-width: 1000px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
-        input, button, select { padding: 10px; margin-top: 10px; border-radius: 5px; border: none; }
-        button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; }
+        input, button, select, textarea { padding: 8px; border-radius: 5px; border: none; }
+        button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; padding: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        th, td { border: 1px solid #444; padding: 10px; text-align: left; }
+        th, td { border: 1px solid #444; padding: 10px; text-align: left; vertical-align: top; }
         th { background-color: #333; }
         .slip-img { max-width: 80px; cursor: pointer; border-radius: 5px; }
-        .btn-approve { background-color: #4ade80; color: black; }
-        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-approve { background-color: #4ade80; color: black; margin-bottom: 5px; width: 100%; }
+        .btn-edit { background-color: #3b82f6; color: white; margin-bottom: 5px; width: 100%; }
+        .btn-danger { background-color: #ef4444; color: white; width: 100%; }
         
         .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab-btn { background-color: #444; color: white; padding: 10px 20px; flex: 1; border-radius: 5px; }
@@ -26,6 +27,12 @@
         .dash-card p { margin: 0; font-size: 20px; font-weight: bold; }
         
         .manual-add-box { background: #333; padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 1px dashed #facc15; }
+        
+        /* Modal สำหรับแก้ไขข้อมูล */
+        #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; padding: 20px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; border-radius: 10px; z-index: 1000; border: 2px solid #facc15; }
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
+        .edit-member-box { background: #333; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .edit-member-box input { width: 100%; margin-bottom: 5px; background: #444; color: white; }
     </style>
 </head>
 <body>
@@ -53,7 +60,7 @@
                             <th>ราคาที่จ่าย</th>
                             <th>ช่องทาง</th>
                             <th>สลิปโอนเงิน</th>
-                            <th>จัดการ</th>
+                            <th style="width: 120px;">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="pendingTableBody"></tbody>
@@ -77,8 +84,8 @@
                         <option value="vip4">VIP 4 คน</option>
                         <option value="vip6">VIP 6 คน</option>
                     </select>
-                    <input type="text" id="manualRef" placeholder="ชื่อผู้ซื้อ หรือ รหัสอ้างอิง" style="width: 250px;">
-                    <button onclick="addManualTicket()">เพิ่มตั๋วเข้าสู่ระบบ</button>
+                    <input type="text" id="manualRef" placeholder="ชื่ออ้างอิงลูกค้าเก่า" style="width: 250px;">
+                    <button onclick="addManualTicket()">เพิ่มตั๋วเข้าระบบ</button>
                 </div>
 
                 <h3>รายชื่อตั๋วทั้งหมดในระบบ (Paid)</h3>
@@ -87,8 +94,8 @@
                         <tr>
                             <th>ID / อ้างอิง</th>
                             <th>ประเภท</th>
-                            <th>รายชื่อผู้เข้าร่วม (ชื่อ, เกิด, FB)</th>
-                            <th>จัดการ</th>
+                            <th>รายละเอียด / รายชื่อผู้เข้าร่วม</th>
+                            <th style="width: 120px;">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="paidTableBody"></tbody>
@@ -97,9 +104,24 @@
         </div>
     </div>
 
+    <div id="modalOverlay" onclick="closeModal()"></div>
+    <div id="editModal">
+        <h3 style="color: #facc15; margin-top: 0;">แก้ไขข้อมูลตั๋วโดยแอดมิน</h3>
+        <input type="hidden" id="editTicketId">
+        <input type="hidden" id="editTicketType">
+        
+        <label><b>รีเควสเพิ่มเติม (Zone / อื่นๆ):</b></label>
+        <textarea id="editRequest" rows="2" style="width: 100%; background: #444; color: white; margin-bottom: 15px;"></textarea>
+        
+        <div id="editMembersArea"></div>
+        
+        <button onclick="saveAdminEdit()" style="background: #4ade80; width: 100%; margin-top: 10px;">บันทึกการแก้ไข</button>
+        <button onclick="closeModal()" style="background: #ef4444; color: white; width: 100%; margin-top: 5px;">ยกเลิก</button>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
@@ -112,16 +134,15 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
+        const guestList = ["เกสต์ A", "เกสต์ B", "เกสต์ C", "เกสต์ D", "เกสต์ E", "เกสต์ F"];
 
-        // ระบบเปลี่ยนแท็บ
         window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('tab-pending').style.display = 'none';
             document.getElementById('tab-manage').style.display = 'none';
-            
             event.target.classList.add('active');
             document.getElementById(tabId).style.display = 'block';
-
             if(tabId === 'tab-manage') loadDashboardAndTickets();
             else loadPendingTickets();
         };
@@ -133,11 +154,10 @@
                 document.getElementById('adminPanel').style.display = 'block';
                 loadPendingTickets();
             } else {
-                alert('อีเมลไม่ถูกต้อง ไม่มีสิทธิ์เข้าถึงครับ');
+                alert('อีเมลไม่ถูกต้อง');
             }
         });
 
-        // 1. โหลดตั๋วรอตรวจ
         async function loadPendingTickets() {
             const tbody = document.getElementById('pendingTableBody');
             tbody.innerHTML = '<tr><td colspan="5">กำลังโหลด...</td></tr>';
@@ -145,7 +165,7 @@
                 const q = query(collection(db, "Tickets"), where("status", "==", "pending_verification"));
                 const qs = await getDocs(q);
                 tbody.innerHTML = ''; 
-                if (qs.empty) return tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">ไม่มีรายการรอตรวจสอบครับ</td></tr>';
+                if (qs.empty) return tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">ไม่มีรายการรอตรวจสอบ</td></tr>';
 
                 qs.forEach((d) => {
                     const data = d.data();
@@ -157,25 +177,22 @@
                             <td><a href="${data.slipUrl}" target="_blank"><img src="${data.slipUrl}" class="slip-img"></a></td>
                             <td>
                                 <button class="btn-approve" onclick="approveTicket('${d.id}')">ยืนยันยอด</button>
-                                <button class="btn-danger" onclick="deleteTicket('${d.id}')" style="margin-top:5px;">ลบทิ้ง</button>
+                                <button class="btn-danger" onclick="deleteTicket('${d.id}')">ลบทิ้ง</button>
                             </td>
                         </tr>`;
                 });
             } catch (error) { console.error(error); }
         }
 
-        // 2. โหลดตั๋วทั้งหมดและสรุปยอดโควตา
         async function loadDashboardAndTickets() {
             const tbody = document.getElementById('paidTableBody');
             tbody.innerHTML = '<tr><td colspan="4">กำลังโหลด...</td></tr>';
-            
             let countVip = 0, countParty = 0, countSolo = 0, countTotal = 0;
 
             try {
                 const q = query(collection(db, "Tickets"), where("status", "==", "paid"));
                 const qs = await getDocs(q);
                 tbody.innerHTML = ''; 
-
                 if (qs.empty) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ยังไม่มีตั๋วที่ขายได้</td></tr>';
 
                 qs.forEach((d) => {
@@ -183,21 +200,21 @@
                     let seats = 1;
                     if(data.type.includes('4')) seats = 4;
                     if(data.type.includes('6')) seats = 6;
-
-                    // คำนวณโควตา
+                    
                     countTotal += seats;
                     if(data.type.includes('vip')) countVip += seats;
                     if(data.type.includes('party')) countParty += seats;
                     if(data.type.includes('solo')) countSolo += seats;
 
-                    // จัดเรียงรายชื่อ
-                    let membersDisplay = '';
+                    let isVip = data.type.includes('vip');
+                    let membersDisplay = data.request ? `<div style="color:#facc15; margin-bottom:5px;">Req: ${data.request}</div>` : '';
+                    
                     if (data.members && data.members.length > 0) {
                         data.members.forEach((m, idx) => {
-                            if(m.name) membersDisplay += `<div>${idx+1}. ${m.name} | ${m.dob} | FB: ${m.facebook}</div>`;
+                            if(m.name) membersDisplay += `<div>${idx+1}. ${m.name} | ${m.dob} | ${m.facebook} ${isVip ? `| <b>[${m.guest || 'ไม่ได้เลือก'}]</b>` : ''}</div>`;
                         });
                     } else {
-                        membersDisplay = '<span style="color:#f87171;">ยังไม่กรอกข้อมูล</span>';
+                        membersDisplay += '<span style="color:#f87171;">ลูกค้ายืนยันตั๋วแล้ว แต่ยังไม่กรอกข้อมูล</span>';
                     }
 
                     tbody.innerHTML += `
@@ -206,13 +223,12 @@
                             <td>${data.type.toUpperCase()}</td>
                             <td>${membersDisplay}</td>
                             <td>
-                                <button onclick="unlockMembers('${d.id}')">ปลดล็อกให้แก้ชื่อ</button>
-                                <button class="btn-danger" onclick="deleteTicket('${d.id}')" style="margin-top:5px;">ลบตั๋ว</button>
+                                <button class="btn-edit" onclick="openEditModal('${d.id}')">แก้ไขข้อมูล</button>
+                                <button class="btn-danger" onclick="deleteTicket('${d.id}')">ลบตั๋ว</button>
                             </td>
                         </tr>`;
                 });
 
-                // อัปเดตตัวเลขหน้า Dashboard
                 document.getElementById('dashTotal').innerText = `${countTotal} / 500`;
                 document.getElementById('dashVip').innerText = `${countVip} / 78`;
                 document.getElementById('dashParty').innerText = `${countParty} / 372`;
@@ -221,43 +237,24 @@
             } catch (error) { console.error(error); }
         }
 
-        // 3. แอดมินเพิ่มตั๋ว Manual
         window.addManualTicket = async function() {
             const type = document.getElementById('manualType').value;
             const refName = document.getElementById('manualRef').value || 'แอดมินเพิ่มระบบ';
-            
             if(!confirm(`ยืนยันการเพิ่มตั๋ว ${type} ให้กับ: ${refName} ใช่หรือไม่?`)) return;
-
             try {
                 await addDoc(collection(db, "Tickets"), {
-                    userId: "manual_admin_added", // บ่งบอกว่าแอดมินเพิ่มเอง
-                    refName: refName, // ชื่ออ้างอิง
-                    type: type,
-                    status: "paid",
-                    isMembersLocked: false,
-                    createdAt: serverTimestamp()
+                    userId: "manual_admin_added",
+                    refName: refName, type: type, status: "paid", isMembersLocked: false, createdAt: serverTimestamp()
                 });
                 alert('เพิ่มตั๋วเข้าระบบสำเร็จ!');
                 loadDashboardAndTickets();
-            } catch (e) {
-                console.error(e);
-                alert('เกิดข้อผิดพลาด');
-            }
+            } catch (e) { console.error(e); }
         }
 
-        // ฟังก์ชันช่วยเหลือต่างๆ
         window.approveTicket = async function(id) {
             if (confirm('ยืนยันยอดเงินนี้?')) {
                 await updateDoc(doc(db, "Tickets", id), { status: "paid" });
                 loadPendingTickets();
-            }
-        };
-
-        window.unlockMembers = async function(id) {
-            if (confirm('ต้องการปลดล็อกให้ลูกค้าเข้าไปแก้ชื่อในเว็บได้อีกครั้งใช่หรือไม่?')) {
-                await updateDoc(doc(db, "Tickets", id), { isMembersLocked: false });
-                alert('ปลดล็อกสำเร็จ!');
-                loadDashboardAndTickets();
             }
         };
 
@@ -267,6 +264,82 @@
                 alert('ลบตั๋วเรียบร้อยแล้ว');
                 loadPendingTickets();
                 loadDashboardAndTickets();
+            }
+        };
+
+        // --- ระบบแก้ไขโดยแอดมิน ---
+        window.openEditModal = async function(id) {
+            const docRef = doc(db, "Tickets", id);
+            const docSnap = await getDoc(docRef);
+            if (!docSnap.exists()) return;
+            
+            const data = docSnap.data();
+            document.getElementById('editTicketId').value = id;
+            document.getElementById('editTicketType').value = data.type;
+            document.getElementById('editRequest').value = data.request || '';
+            
+            let seats = 1;
+            if(data.type.includes('4')) seats = 4;
+            if(data.type.includes('6')) seats = 6;
+            let isVip = data.type.includes('vip');
+
+            let html = '';
+            for(let i=0; i<seats; i++) {
+                let m = data.members && data.members[i] ? data.members[i] : {name:'', dob:'', facebook:'', guest:''};
+                html += `<div class="edit-member-box">
+                    <strong>คนที่ ${i+1}</strong>
+                    <input type="text" id="edit_name_${i}" placeholder="ชื่อ-สกุล" value="${m.name}">
+                    <input type="text" id="edit_dob_${i}" placeholder="เกิด (วว/ดด/ปป)" value="${m.dob}">
+                    <input type="text" id="edit_fb_${i}" placeholder="Facebook" value="${m.facebook}">`;
+                
+                if (isVip) {
+                    let opts = `<option value="">-- ไม่ระบุเกสต์ --</option>`;
+                    guestList.forEach(g => { opts += `<option value="${g}" ${m.guest === g ? 'selected' : ''}>${g}</option>`; });
+                    html += `<select id="edit_guest_${i}" style="width:100%; background:#444; color:white; padding:8px; border:none; margin-top:5px;">${opts}</select>`;
+                }
+                html += `</div>`;
+            }
+            document.getElementById('editMembersArea').innerHTML = html;
+            
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('editModal').style.display = 'block';
+        };
+
+        window.closeModal = function() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('editModal').style.display = 'none';
+        };
+
+        window.saveAdminEdit = async function() {
+            const id = document.getElementById('editTicketId').value;
+            const type = document.getElementById('editTicketType').value;
+            let seats = 1;
+            if(type.includes('4')) seats = 4;
+            if(type.includes('6')) seats = 6;
+            let isVip = type.includes('vip');
+
+            let membersArray = [];
+            for(let i=0; i<seats; i++) {
+                membersArray.push({
+                    name: document.getElementById(`edit_name_${i}`).value,
+                    dob: document.getElementById(`edit_dob_${i}`).value,
+                    facebook: document.getElementById(`edit_fb_${i}`).value,
+                    guest: isVip ? document.getElementById(`edit_guest_${i}`).value : ''
+                });
+            }
+
+            try {
+                await updateDoc(doc(db, "Tickets", id), {
+                    request: document.getElementById('editRequest').value,
+                    members: membersArray,
+                    isMembersLocked: true // บังคับให้หน้าลูกค้าถูกล็อกอยู่เสมอ
+                });
+                alert('บันทึกข้อมูลเรียบร้อยแล้ว (แอดมินแก้ไข)');
+                closeModal();
+                loadDashboardAndTickets();
+            } catch (e) {
+                console.error(e);
+                alert('เกิดข้อผิดพลาดในการบันทึก');
             }
         };
     </script>
