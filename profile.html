@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Ticket - CosNite Club</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
+        input, button { width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 10px; border-radius: 5px; border: none; box-sizing: border-box; }
+        button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; }
+        .ticket-box { background: #333; padding: 20px; border-radius: 10px; margin-top: 20px; text-align: left; border: 1px solid #444; }
+        #qrcode { margin: 20px auto; display: flex; justify-content: center; padding: 10px; background: white; width: max-content; border-radius: 5px; }
+        .status-paid { color: #4ade80; font-weight: bold; }
+        .status-pending { color: #facc15; font-weight: bold; }
+        .member-input { background: #444; color: white; border: 1px solid #555; }
+        .logout-btn { background-color: #ef4444; color: white; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>ระบบสมาชิก CosNite Club</h2>
+
+        <div id="authSection">
+            <p>เข้าสู่ระบบเพื่อดูตั๋วของคุณ</p>
+            <input type="email" id="userEmail" placeholder="อีเมล">
+            <input type="password" id="userPassword" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัว)">
+            <button id="loginBtn">เข้าสู่ระบบ</button>
+            <button id="registerBtn" style="background-color: #444; color: white;">สมัครสมาชิกใหม่</button>
+        </div>
+
+        <div id="profileSection" style="display: none;">
+            <p>ยินดีต้อนรับ, <span id="displayEmail" style="color: #facc15;"></span></p>
+            
+            <div id="ticketContainer">
+                </div>
+
+            <button id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // คอนฟิก Firebase ของคุณ
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
+            authDomain: "cosniteclub.firebaseapp.com",
+            projectId: "cosniteclub",
+            storageBucket: "cosniteclub.firebasestorage.app",
+            messagingSenderId: "429033863377",
+            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const authSection = document.getElementById('authSection');
+        const profileSection = document.getElementById('profileSection');
+        const displayEmail = document.getElementById('displayEmail');
+        const ticketContainer = document.getElementById('ticketContainer');
+
+        // 1. ตรวจสอบสถานะการล็อกอิน
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authSection.style.display = 'none';
+                profileSection.style.display = 'block';
+                displayEmail.innerText = user.email;
+                loadMyTickets(user.uid);
+            } else {
+                authSection.style.display = 'block';
+                profileSection.style.display = 'none';
+                ticketContainer.innerHTML = '';
+            }
+        });
+
+        // 2. สมัครสมาชิก
+        document.getElementById('registerBtn').addEventListener('click', () => {
+            const email = document.getElementById('userEmail').value;
+            const pass = document.getElementById('userPassword').value;
+            createUserWithEmailAndPassword(auth, email, pass)
+                .then(() => alert('สมัครสมาชิกสำเร็จ!'))
+                .catch((error) => alert('เกิดข้อผิดพลาด: ' + error.message));
+        });
+
+        // 3. เข้าสู่ระบบ
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            const email = document.getElementById('userEmail').value;
+            const pass = document.getElementById('userPassword').value;
+            signInWithEmailAndPassword(auth, email, pass)
+                .catch((error) => alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง'));
+        });
+
+        // 4. ออกจากระบบ
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // 5. โหลดข้อมูลตั๋วของฉัน
+        async function loadMyTickets(uid) {
+            ticketContainer.innerHTML = '<p>กำลังค้นหาตั๋วของคุณ...</p>';
+            try {
+                // ค้นหาตั๋วที่ผูกกับ UID ของผู้ใช้นี้
+                const q = query(collection(db, "Tickets"), where("userId", "==", uid));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    ticketContainer.innerHTML = '<p>คุณยังไม่มีตั๋วที่ทำการจองไว้</p>';
+                    return;
+                }
+
+                ticketContainer.innerHTML = '';
+                
+                querySnapshot.forEach((documentSnapshot) => {
+                    const data = documentSnapshot.data();
+                    const ticketId = documentSnapshot.id;
+                    const isPaid = data.status === 'paid';
+                    const statusText = isPaid ? 'ยืนยันการชำระเงินแล้ว' : 'รอแอดมินตรวจสอบสลิป';
+                    const statusClass = isPaid ? 'status-paid' : 'status-pending';
+
+                    // กำหนดจำนวนคนในโต๊ะ (1, 4 หรือ 6)
+                    let memberCount = 1;
+                    if(data.type.includes('4')) memberCount = 4;
+                    if(data.type.includes('6')) memberCount = 6;
+
+                    // สร้างช่องกรอกชื่อ
+                    let membersHtml = `<h4 style="margin-bottom: 5px;">รายชื่อผู้เข้าร่วม:</h4>`;
+                    for(let i = 0; i < memberCount; i++) {
+                        let currentName = data.members && data.members[i] ? data.members[i] : '';
+                        membersHtml += `<input type="text" id="member_${ticketId}_${i}" class="member-input" placeholder="ชื่อคนที่ ${i+1}" value="${currentName}">`;
+                    }
+                    membersHtml += `<button onclick="updateMembers('${ticketId}', ${memberCount})" style="background-color: #3b82f6; color: white;">บันทึกรายชื่อ</button>`;
+
+                    const ticketDiv = document.createElement('div');
+                    ticketDiv.className = 'ticket-box';
+                    ticketDiv.innerHTML = `
+                        <h3>ตั๋วประเภท: ${data.type.toUpperCase()}</h3>
+                        <p>สถานะ: <span class="${statusClass}">${statusText}</span></p>
+                        
+                        ${isPaid ? `
+                            <p style="text-align:center; font-size: 14px; margin-top: 15px;">นำ QR Code นี้ให้สตาฟฟ์สแกนหน้างาน</p>
+                            <div id="qrcode_${ticketId}" id="qrcode"></div>
+                        ` : ''}
+                        
+                        <hr style="border-color: #555; margin: 15px 0;">
+                        ${membersHtml}
+                    `;
+                    
+                    ticketContainer.appendChild(ticketDiv);
+
+                    // สร้าง QR Code ถ้าจ่ายเงินแล้ว
+                    if(isPaid) {
+                        new QRCode(document.getElementById(`qrcode_${ticketId}`), {
+                            text: ticketId, // ใช้ Ticket ID เป็นข้อมูลใน QR Code ให้สตาฟฟ์สแกน
+                            width: 150,
+                            height: 150
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading tickets: ", error);
+                ticketContainer.innerHTML = '<p style="color:red;">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+            }
+        }
+
+        // 6. อัปเดตรายชื่อคนในโต๊ะ
+        window.updateMembers = async function(ticketId, count) {
+            let membersArray = [];
+            for(let i = 0; i < count; i++) {
+                membersArray.push(document.getElementById(`member_${ticketId}_${i}`).value);
+            }
+            
+            try {
+                const ticketRef = doc(db, "Tickets", ticketId);
+                await updateDoc(ticketRef, {
+                    members: membersArray
+                });
+                alert('บันทึกรายชื่อสำเร็จ!');
+            } catch (error) {
+                console.error("Error updating document: ", error);
+                alert('เกิดข้อผิดพลาดในการอัปเดตรายชื่อ');
+            }
+        };
+    </script>
+</body>
+</html>
