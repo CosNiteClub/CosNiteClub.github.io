@@ -8,54 +8,89 @@
     <style>
         :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #fffafc; --text: #333; }
         body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
-        .container { max-width: 600px; margin: 40px auto; background: #fff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
+        .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
         h2 { color: var(--primary); text-align: center; margin-top: 0; }
-        label { font-weight: 500; color: #555; }
-        select, input, button { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 25px; border-radius: 10px; border: 1px solid #ddd; font-family: 'Kanit', sans-serif; font-size: 1rem; outline: none; transition: 0.3s; }
-        select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(255,62,201,0.3); }
-        button { background-color: var(--primary); color: white; font-weight: 500; cursor: pointer; border: none; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255,62,201,0.3); }
-        button:hover { background-color: #e62eb3; transform: translateY(-2px); }
+        
+        /* สไตล์ Card Selection */
+        .grid-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; margin-bottom: 25px; }
+        .card-opt { background: #f9f9f9; border: 2px solid #eee; padding: 15px; border-radius: 12px; cursor: pointer; text-align: center; transition: 0.3s; display: flex; flex-direction: column; justify-content: center; min-height: 80px; }
+        .card-opt:hover { border-color: #ffb3e6; background: #fff5fb; }
+        .card-opt.active { border-color: var(--primary); background: #fff0f9; box-shadow: 0 5px 15px rgba(255,62,201,0.2); }
+        .card-opt strong { font-size: 1.1rem; color: var(--primary); }
+        .card-opt span { font-size: 0.9rem; color: #666; }
+        .full-width { grid-column: span 2; }
+
+        label { font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
+        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; margin-top: 10px; }
+        button.submit-btn:hover { background-color: #e62eb3; transform: translateY(-3px); }
+        button.submit-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>เลือกแพ็กเกจที่คุณต้องการ</h2>
-        <form id="bookingForm">
-            <label for="ticketType">ประเภทบัตร:</label>
-            <select id="ticketType" required>
-                <option value="">-- กรุณาเลือก --</option>
-                <option value="solo">Solo (เดี่ยว) - 690 บาท</option>
-                <option value="party4">Party โต๊ะ 4 คน - 3,400 บาท</option>
-                <option value="party6">Party โต๊ะ 6 คน - 5,100 บาท</option>
-                <option value="vip4">VIP โต๊ะ 4 คน - 6,000 บาท</option>
-                <option value="vip6">VIP โต๊ะ 6 คน - 9,000 บาท</option>
-            </select>
+        <h2>เลือกแพ็กเกจบัตร 🎟️</h2>
+        
+        <label>ประเภทบัตร:</label>
+        <div class="grid-options" id="ticketGrid">
+            <div class="card-opt full-width" data-val="solo"><strong>Solo (เดี่ยว)</strong><span>690 บาท</span></div>
+            <div class="card-opt" data-val="party4"><strong>Party โต๊ะ 4 คน</strong><span>3,400 บาท</span></div>
+            <div class="card-opt" data-val="party6"><strong>Party โต๊ะ 6 คน</strong><span>5,100 บาท</span></div>
+            <div class="card-opt" data-val="vip4"><strong>VIP โต๊ะ 4 คน</strong><span>6,000 บาท</span></div>
+            <div class="card-opt" data-val="vip6"><strong>VIP โต๊ะ 6 คน</strong><span>9,000 บาท</span></div>
+        </div>
 
-            <div id="drinkSelection" style="display: none;">
-                <label for="drinkSet">เลือกเซ็ตเครื่องดื่ม:</label>
-                <select id="drinkSet">
-                    <option value="A">Set A - Sangsom + Mixer</option>
-                    <option value="B">Set B - Leo Beer</option>
-                    <option value="C">Set C - Soju (+39 บาท/คน)</option>
-                </select>
+        <div id="drinkSection" style="display: none; animation: popIn 0.3s ease-out;">
+            <label>เลือกเซ็ตเครื่องดื่ม (สำหรับ Party):</label>
+            <div class="grid-options" id="drinkGrid">
+                <div class="card-opt active" data-val="A"><strong>Set A</strong><span>Sangsom + Mixer</span></div>
+                <div class="card-opt" data-val="B"><strong>Set B</strong><span>Leo Beer</span></div>
+                <div class="card-opt" data-val="C"><strong>Set C (Soju)</strong><span>+39 บาท/คน</span></div>
             </div>
+        </div>
 
-            <button type="submit">ไปหน้าชำระเงิน</button>
-        </form>
+        <button id="btnNext" class="submit-btn" disabled>ไปหน้าชำระเงิน</button>
     </div>
 
     <script>
-        const ticketSelect = document.getElementById('ticketType');
-        const drinkDiv = document.getElementById('drinkSelection');
-        ticketSelect.addEventListener('change', function() {
-            drinkDiv.style.display = this.value.includes('party') ? 'block' : 'none';
+        let selectedTicket = null;
+        let selectedDrink = 'A'; // ค่าเริ่มต้นถ้าเป็น Party
+
+        const ticketCards = document.querySelectorAll('#ticketGrid .card-opt');
+        const drinkCards = document.querySelectorAll('#drinkGrid .card-opt');
+        const drinkSection = document.getElementById('drinkSection');
+        const btnNext = document.getElementById('btnNext');
+
+        // จัดการคลิกเลือกบัตร
+        ticketCards.forEach(card => {
+            card.addEventListener('click', () => {
+                ticketCards.forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                selectedTicket = card.dataset.val;
+                
+                if(selectedTicket.includes('party')) {
+                    drinkSection.style.display = 'block';
+                } else {
+                    drinkSection.style.display = 'none';
+                    selectedDrink = null;
+                }
+                btnNext.disabled = false;
+            });
         });
 
-        document.getElementById('bookingForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        // จัดการคลิกเลือกเครื่องดื่ม
+        drinkCards.forEach(card => {
+            card.addEventListener('click', () => {
+                drinkCards.forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                selectedDrink = card.dataset.val;
+            });
+        });
+
+        btnNext.addEventListener('click', () => {
+            if(!selectedTicket) return;
             localStorage.setItem('bookingData', JSON.stringify({
-                ticketType: document.getElementById('ticketType').value,
-                drinkSet: document.getElementById('drinkSet').value
+                ticketType: selectedTicket,
+                drinkSet: selectedDrink
             }));
             window.location.href = 'checkout.html';
         });
