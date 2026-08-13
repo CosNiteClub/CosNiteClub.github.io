@@ -45,7 +45,6 @@
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-        // คอนฟิก Firebase ของคุณ
         const firebaseConfig = {
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
             authDomain: "cosniteclub.firebaseapp.com",
@@ -64,7 +63,7 @@
         const displayEmail = document.getElementById('displayEmail');
         const ticketContainer = document.getElementById('ticketContainer');
 
-        // 1. ตรวจสอบสถานะการล็อกอิน
+        // ตรวจสอบสถานะการล็อกอิน
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 authSection.style.display = 'none';
@@ -78,7 +77,6 @@
             }
         });
 
-        // 2. สมัครสมาชิก
         document.getElementById('registerBtn').addEventListener('click', () => {
             const email = document.getElementById('userEmail').value;
             const pass = document.getElementById('userPassword').value;
@@ -87,7 +85,6 @@
                 .catch((error) => alert('เกิดข้อผิดพลาด: ' + error.message));
         });
 
-        // 3. เข้าสู่ระบบ
         document.getElementById('loginBtn').addEventListener('click', () => {
             const email = document.getElementById('userEmail').value;
             const pass = document.getElementById('userPassword').value;
@@ -95,16 +92,13 @@
                 .catch((error) => alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง'));
         });
 
-        // 4. ออกจากระบบ
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth);
         });
 
-        // 5. โหลดข้อมูลตั๋วของฉัน
         async function loadMyTickets(uid) {
             ticketContainer.innerHTML = '<p>กำลังค้นหาตั๋วของคุณ...</p>';
             try {
-                // ค้นหาตั๋วที่ผูกกับ UID ของผู้ใช้นี้
                 const q = query(collection(db, "Tickets"), where("userId", "==", uid));
                 const querySnapshot = await getDocs(q);
                 
@@ -122,12 +116,10 @@
                     const statusText = isPaid ? 'ยืนยันการชำระเงินแล้ว' : 'รอแอดมินตรวจสอบสลิป';
                     const statusClass = isPaid ? 'status-paid' : 'status-pending';
 
-                    // กำหนดจำนวนคนในโต๊ะ (1, 4 หรือ 6)
                     let memberCount = 1;
                     if(data.type.includes('4')) memberCount = 4;
                     if(data.type.includes('6')) memberCount = 6;
 
-                    // สร้างช่องกรอกชื่อ
                     let membersHtml = `<h4 style="margin-bottom: 5px;">รายชื่อผู้เข้าร่วม:</h4>`;
                     for(let i = 0; i < memberCount; i++) {
                         let currentName = data.members && data.members[i] ? data.members[i] : '';
@@ -152,10 +144,9 @@
                     
                     ticketContainer.appendChild(ticketDiv);
 
-                    // สร้าง QR Code ถ้าจ่ายเงินแล้ว
                     if(isPaid) {
                         new QRCode(document.getElementById(`qrcode_${ticketId}`), {
-                            text: ticketId, // ใช้ Ticket ID เป็นข้อมูลใน QR Code ให้สตาฟฟ์สแกน
+                            text: ticketId,
                             width: 150,
                             height: 150
                         });
@@ -167,7 +158,6 @@
             }
         }
 
-        // 6. อัปเดตรายชื่อคนในโต๊ะ
         window.updateMembers = async function(ticketId, count) {
             let membersArray = [];
             for(let i = 0; i < count; i++) {
