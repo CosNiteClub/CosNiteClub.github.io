@@ -9,22 +9,30 @@
         :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #fffafc; --text-dark: #333; --white: #ffffff; }
         body { font-family: 'Kanit', sans-serif; text-align: center; background-color: var(--bg); color: var(--text-dark); margin: 0; padding: 50px 20px; overflow-x: hidden; }
         
-        /* พื้นหลังตกแต่ง */
         .bg-shape { position: absolute; border-radius: 50%; filter: blur(60px); z-index: -1; animation: float 6s infinite ease-in-out alternate; }
         .shape1 { top: -50px; left: -50px; width: 300px; height: 300px; background: rgba(255, 62, 201, 0.2); }
         .shape2 { bottom: 10%; right: -50px; width: 250px; height: 250px; background: rgba(255, 247, 173, 0.6); animation-delay: 2s; }
-        
         @keyframes float { 0% { transform: translateY(0px) scale(1); } 100% { transform: translateY(30px) scale(1.1); } }
 
-        .container { max-width: 700px; margin: 0 auto; background: rgba(255, 255, 255, 0.9); padding: 50px 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(255, 62, 201, 0.1); border: 2px solid rgba(255, 62, 201, 0.2); backdrop-filter: blur(10px); position: relative; }
+        .container { max-width: 600px; margin: 0 auto; background: rgba(255, 255, 255, 0.9); padding: 50px 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(255, 62, 201, 0.1); border: 2px solid rgba(255, 62, 201, 0.2); backdrop-filter: blur(10px); position: relative; }
         h1 { color: var(--primary); font-size: 3rem; margin-bottom: 10px; text-shadow: 2px 2px 0px var(--accent); line-height: 1.2; animation: popIn 0.8s ease-out; }
         .subtitle { font-size: 1.2rem; color: #666; margin-bottom: 30px; animation: popIn 1s ease-out; }
         
         .info-box { background: var(--bg); padding: 20px; border-radius: 15px; border: 1px dashed var(--primary); margin: 20px 0; font-size: 1.1rem; animation: popIn 1.2s ease-out; }
         .highlight { color: var(--primary); font-weight: bold; background: var(--accent); padding: 2px 10px; border-radius: 8px; }
         
-        .btn { display: inline-block; padding: 16px 50px; background: linear-gradient(135deg, #ff3ec9, #ff7beb); color: var(--white); text-decoration: none; font-size: 1.4rem; font-weight: bold; border-radius: 50px; margin-top: 20px; transition: 0.3s; box-shadow: 0 10px 20px rgba(255, 62, 201, 0.3); border: 2px solid transparent; animation: pulse 2s infinite; }
-        .btn:hover { transform: translateY(-5px); box-shadow: 0 15px 25px rgba(255, 62, 201, 0.5); border: 2px solid var(--accent); }
+        /* สไตล์ปุ่มต่างๆ */
+        .google-btn { background-color: white; color: #444; display: flex; align-items: center; justify-content: center; gap: 10px; border: 2px solid #eee; padding: 15px 30px; font-size: 1.2rem; font-family: 'Kanit'; font-weight: 500; border-radius: 50px; cursor: pointer; transition: 0.3s; margin: 0 auto; box-shadow: 0 5px 15px rgba(0,0,0,0.05); width: 100%; max-width: 350px;}
+        .google-btn:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(255,62,201,0.15); }
+        
+        .btn-main { display: block; padding: 15px 20px; background: linear-gradient(135deg, #ff3ec9, #ff7beb); color: var(--white); text-decoration: none; font-size: 1.3rem; font-weight: bold; border-radius: 50px; margin: 15px auto; transition: 0.3s; box-shadow: 0 10px 20px rgba(255, 62, 201, 0.3); max-width: 350px; animation: pulse 2s infinite; border:none;}
+        .btn-main:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(255, 62, 201, 0.5); color:white;}
+        
+        .btn-outline { display: block; padding: 15px 20px; background: white; color: var(--primary); text-decoration: none; font-size: 1.1rem; font-weight: bold; border-radius: 50px; margin: 15px auto; transition: 0.3s; border: 2px solid var(--primary); max-width: 350px;}
+        .btn-outline:hover { background: var(--primary); color: white; transform: translateY(-3px);}
+        
+        .btn-text { background: transparent; border: none; color: #888; font-family: 'Kanit'; cursor: pointer; text-decoration: underline; margin-top: 10px; font-size: 1rem;}
+        .btn-text:hover { color: #ef4444; }
 
         @keyframes popIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 62, 201, 0.5); } 70% { box-shadow: 0 0 0 15px rgba(255, 62, 201, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 62, 201, 0); } }
@@ -44,9 +52,64 @@
             <p>📍 ร้าน praao ratchayothin (ติด BTS รัชโยธิน ทางออก 4)</p>
         </div>
 
-        <p style="color: #555; margin-bottom: 30px;">พบกับ Special Guests สุดพิเศษ และวง Cover Dance<br>พร้อมกิจกรรมเซอร์วิสมากมายภายในงาน!</p>
+        <p style="color: #555; margin-bottom: 25px;">พบกับ Special Guests สุดพิเศษ และวง Cover Dance<br>พร้อมกิจกรรมเซอร์วิสมากมายภายในงาน!</p>
         
-        <a href="booking.html" class="btn">จองบัตรเข้างาน</a>
+        <div id="unauthSection">
+            <p style="color: var(--primary); font-weight: 500; margin-bottom: 15px;">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+            <button id="loginBtn" class="google-btn">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="24">
+                เข้าสู่ระบบด้วย Google
+            </button>
+        </div>
+
+        <div id="authSection" style="display: none; animation: popIn 0.5s ease-out;">
+            <p style="font-size: 1.1rem; color: #555;">ยินดีต้อนรับ, <br><span id="userEmail" style="color: var(--primary); font-weight: bold; font-size: 1.3rem;"></span></p>
+            
+            <a href="booking.html" class="btn-main">🎟️ จองบัตรเข้างาน</a>
+            <a href="profile.html" class="btn-outline">🎫 ดูตั๋วของฉัน</a>
+            
+            <button id="logoutBtn" class="btn-text">ออกจากระบบ</button>
+        </div>
     </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const app = initializeApp({
+            apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
+            authDomain: "cosniteclub.firebaseapp.com",
+            projectId: "cosniteclub",
+            storageBucket: "cosniteclub.firebasestorage.app",
+            messagingSenderId: "429033863377",
+            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0"
+        });
+        
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        const unauthSec = document.getElementById('unauthSection');
+        const authSec = document.getElementById('authSection');
+        const emailDisp = document.getElementById('userEmail');
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                unauthSec.style.display = 'none';
+                authSec.style.display = 'block';
+                emailDisp.innerText = user.email;
+            } else {
+                unauthSec.style.display = 'block';
+                authSec.style.display = 'none';
+            }
+        });
+
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch(e => console.error(e));
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth);
+        });
+    </script>
 </body>
 </html>
