@@ -4,20 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CosNite Club Party</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #1a1a1a; color: white; margin: 0; padding: 50px; }
-        .container { max-width: 800px; margin: 0 auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
-        h1 { color: #facc15; }
-        .btn { display: inline-block; padding: 15px 30px; background-color: #facc15; color: black; text-decoration: none; font-weight: bold; border-radius: 5px; margin-top: 20px; }
-        .btn:hover { background-color: #eab308; }
+        :root {
+            --primary: #ff3ec9;
+            --accent: #fff7ad;
+            --bg: #fffafc;
+            --text-dark: #333;
+            --white: #ffffff;
+        }
+        body { font-family: 'Kanit', sans-serif; text-align: center; background-color: var(--bg); color: var(--text-dark); margin: 0; padding: 50px 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: var(--white); padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(255, 62, 201, 0.15); border: 2px solid #ffe6f7; }
+        h1 { color: var(--primary); font-size: 2.5rem; margin-bottom: 10px; text-shadow: 1px 1px 0px var(--accent); }
+        p { font-size: 1.1rem; color: #555; }
+        .highlight { color: var(--primary); font-weight: bold; background: var(--accent); padding: 2px 8px; border-radius: 5px; }
+        .btn { display: inline-block; padding: 15px 40px; background-color: var(--primary); color: var(--white); text-decoration: none; font-size: 1.2rem; font-weight: 500; border-radius: 50px; margin-top: 30px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 62, 201, 0.4); }
+        .btn:hover { background-color: #e62eb3; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(255, 62, 201, 0.6); }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Welcome to CosNite Club</h1>
-        <p>วันที่ 13 กันยายน 2569 | เวลา 17:30 - 01:30 น.</p>
+        <p>วันที่ <span class="highlight">13 กันยายน 2569</span> | เวลา 17:30 - 01:30 น.</p>
         <p>สถานที่: ร้าน praao ratchayothin (ติด BTS รัชโยธิน ทางออก 4)</p>
-        <hr style="border-color: #444; margin: 20px 0;">
+        <hr style="border: none; border-top: 2px dashed #ffb3e6; margin: 30px 0;">
         <p>เตรียมพบกับ Special Guests และวง Cover Dance พร้อมกิจกรรมสุดพิเศษมากมาย!</p>
         <a href="booking.html" class="btn">จองบัตรเลย!</a>
     </div>
