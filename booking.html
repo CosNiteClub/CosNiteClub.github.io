@@ -39,24 +39,6 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-        // คอนฟิก Firebase ของคุณ
-        const firebaseConfig = {
-            apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
-            authDomain: "cosniteclub.firebaseapp.com",
-            projectId: "cosniteclub",
-            storageBucket: "cosniteclub.firebasestorage.app",
-            messagingSenderId: "429033863377",
-            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0",
-            measurementId: "G-8GSH09B7P2"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
         // ดักจับการเปลี่ยนประเภทตั๋วเพื่อโชว์/ซ่อน ตัวเลือกเครื่องดื่ม
         const ticketSelect = document.getElementById('ticketType');
         const drinkDiv = document.getElementById('drinkSelection');
@@ -69,12 +51,6 @@
             }
         });
 
-        // จัดการเมื่อกดปุ่ม Submit (เดี๋ยวเราจะทำลอจิกส่งข้อมูลไปหน้า Checkout ต่อ)
-        document.getElementById('bookingForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('บันทึกข้อมูลเบื้องต้นสำเร็จ! (เดี๋ยวเราจะทำระบบส่งข้อมูลไปหน้า Checkout ต่อ)');
-            // โค้ดสำหรับบันทึกลง Firestore และเปลี่ยนหน้าจะอยู่ตรงนี้
-        });
         // จัดการเมื่อกดปุ่ม Submit เพื่อส่งข้อมูลไปหน้า Checkout
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             e.preventDefault();
