@@ -10,7 +10,7 @@
         body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
         .container { max-width: 1100px; margin: auto; background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         h2 { color: var(--primary); margin-top:0; }
-        input, button, select, textarea { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 14px; outline:none;}
+        input, button, select, textarea { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 14px; outline:none; box-sizing: border-box;}
         button { cursor: pointer; transition: 0.2s; border: none; color: white; font-weight: 500;}
         button:hover { filter: brightness(1.1); }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
@@ -21,7 +21,7 @@
         .tab-btn { background-color: transparent; color: #777; padding: 10px 20px; border-radius: 30px; border: 1px solid #ddd; }
         .tab-btn.active { background-color: var(--primary); color: white; border-color: var(--primary); }
         
-        .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
         .dash-card { background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #ffe6f7; }
         .dash-card h3 { margin: 0; color: #666; font-size: 14px; }
         .dash-card p { margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: var(--primary); }
@@ -33,15 +33,26 @@
         .btn-del { background-color: #ef4444; grid-column: span 2; }
         .btn-approve { background-color: #10b981; grid-column: span 2; }
         
-        .manual-add-box { background: #fffafc; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px dashed var(--primary); }
+        .manual-add-box { background: #fffafc; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--primary); }
+        
+        /* สไตล์สำหรับแท็บจัดการเกสต์ */
+        .guest-manage-box { background: #fffafc; border: 1px dashed var(--primary); padding: 20px; border-radius: 12px; margin-bottom:20px;}
+        .guest-item { display: inline-flex; align-items: center; background: white; padding: 5px 15px; border-radius: 20px; border: 1px solid var(--primary); margin: 5px; color: var(--primary); }
+        .guest-item span { cursor: pointer; color: #ef4444; margin-left: 10px; font-weight: bold; }
 
+        /* สไตล์หน้าต่างแก้ไขข้อมูลลูกค้า (UI จัดใหม่) */
         #editModalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; backdrop-filter: blur(2px);}
         #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; border-radius: 20px; z-index: 101; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         .admin-note-box { background: #fff0f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed var(--primary); }
-        
-        /* สวิตช์ Toggle เปิดปิดโต๊ะ */
         .switch-wrap { display: flex; align-items: center; gap: 10px; margin-top: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
         .switch-wrap input { width: auto; transform: scale(1.3); cursor: pointer; }
+        
+        /* Grid สำหรับจัดช่องกรอกข้อมูลให้ตรงกัน */
+        .member-edit-card { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #eee; }
+        .member-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .full-width { grid-column: span 2; }
+        
+        .toolbar { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -56,6 +67,7 @@
             <div class="tab-menu">
                 <button class="tab-btn active" onclick="switchTab('tab-pending')">ตรวจสอบสลิป</button>
                 <button class="tab-btn" onclick="switchTab('tab-manage')">สรุปยอด & จัดการตั๋ว</button>
+                <button class="tab-btn" onclick="switchTab('tab-settings')">ตั้งค่าเกสต์ (VIP)</button>
             </div>
 
             <div id="tab-pending">
@@ -67,7 +79,7 @@
 
             <div id="tab-manage" style="display: none;">
                 <div class="dash-grid">
-                    <div class="dash-card"><h3>รวม (500)</h3><p id="dashTotal">0/500</p></div>
+                    <div class="dash-card"><h3>รวมที่ขายได้ (500)</h3><p id="dashTotal">0/500</p></div>
                     <div class="dash-card"><h3>VIP (78)</h3><p id="dashVip">0/78</p></div>
                     <div class="dash-card"><h3>Party (372)</h3><p id="dashParty">0/372</p></div>
                     <div class="dash-card"><h3>Solo (50)</h3><p id="dashSolo">0/50</p></div>
@@ -76,24 +88,48 @@
                 <div class="manual-add-box">
                     <h3 style="margin-top:0; color:var(--primary);">+ เพิ่มตั๋วให้ลูกค้าเก่า (Manual)</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <select id="manualType">
+                        <select id="manualType" style="flex:1;">
                             <option value="solo">Solo (เดี่ยว)</option>
                             <option value="party4">Party 4 คน</option>
                             <option value="party6">Party 6 คน</option>
                             <option value="vip4">VIP 4 คน</option>
                             <option value="vip6">VIP 6 คน</option>
                         </select>
-                        <input type="text" id="manualRef" placeholder="ชื่ออ้างอิงลูกค้า" style="flex: 1;">
-                        <input type="text" id="manualUid" placeholder="UID ลูกค้า (ถ้ามี)" style="flex: 1;">
+                        <input type="text" id="manualRef" placeholder="ชื่ออ้างอิงลูกค้า" style="flex: 2;">
+                        <input type="text" id="manualUid" placeholder="UID ลูกค้า (เว้นว่างได้)" style="flex: 2;">
                         <button onclick="addManualTicket()" style="background:#10b981; padding: 10px 20px;">เพิ่มเข้าระบบ</button>
                     </div>
-                    <p style="font-size: 12px; color: #666; margin-top: 5px;">* หากนำ UID จากลูกค้ามากรอก ตั๋วจะถูกโอนเข้าบัญชีลูกค้าทันที (ถ้ายังไม่มีให้เว้นว่างไว้ แล้วค่อยใช้ปุ่ม "โอนสิทธิ์" ภายหลัง)</p>
+                </div>
+
+                <div class="toolbar">
+                    <div>
+                        <label style="font-weight:bold; margin-right:5px;">กรองประเภทตั๋ว:</label>
+                        <select id="ticketFilter" onchange="renderPaidTable()" style="padding:8px;">
+                            <option value="all">แสดงทั้งหมด</option>
+                            <option value="vip">เฉพาะ VIP</option>
+                            <option value="party">เฉพาะ Party</option>
+                            <option value="solo">เฉพาะ Solo</option>
+                        </select>
+                    </div>
+                    <button onclick="exportCSV()" style="background:#10b981; padding:8px 15px;">📥 ดาวน์โหลดชีท (Excel/CSV)</button>
                 </div>
 
                 <table id="paidTable">
                     <thead><tr><th>อ้างอิง/โต๊ะ</th><th>ประเภท</th><th>รายละเอียดลูกค้า</th><th style="width:150px;">จัดการ (Admin)</th></tr></thead>
                     <tbody></tbody>
                 </table>
+            </div>
+
+            <div id="tab-settings" style="display: none;">
+                <div class="guest-manage-box">
+                    <h3 style="margin-top:0; color:var(--primary);">รายชื่อ Guest สำหรับบัตร VIP</h3>
+                    <p style="color:#666; font-size:13px; margin-top:0;">เพิ่ม ลบ หรือแก้ไขชื่อเกสต์ที่นี่ ระบบจะอัปเดตไปที่หน้าเลือกลูกค้าทันที</p>
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <input type="text" id="newGuestName" placeholder="พิมพ์ชื่อเกสต์ใหม่..." style="flex:1;">
+                        <button onclick="addGuest()" style="background:var(--primary);">+ เพิ่มเกสต์</button>
+                    </div>
+                    <div id="guestListContainer">กำลังโหลด...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -105,28 +141,28 @@
         
         <div class="admin-note-box">
             <label style="font-weight:bold; color:var(--primary); font-size:14px;">สำหรับแอดมินจัดผังโต๊ะ:</label>
-            <input type="text" id="editTableNum" placeholder="ระบุหมายเลข / ชื่อโต๊ะ (เช่น V01, P12)" style="width:100%; margin-top:5px;">
+            <input type="text" id="editTableNum" class="full-width" placeholder="ระบุหมายเลข / ชื่อโต๊ะ (เช่น V01, P12)" style="margin-top:5px;">
             
             <div class="switch-wrap">
                 <input type="checkbox" id="editShowTable">
-                <label for="editShowTable" style="color: #ef4444; font-weight: bold; cursor:pointer;">เปิดให้ลูกค้าเห็นเลขโต๊ะนี้ในหน้าเว็บของลูกค้า</label>
+                <label for="editShowTable" style="color: #ef4444; font-weight: bold; cursor:pointer;">เปิดให้ลูกค้าเห็นเลขโต๊ะนี้ในเว็บลูกค้า</label>
             </div>
             
-            <textarea id="editNote" rows="2" placeholder="Note ภายในแอดมิน (ลูกค้าไม่เห็น)" style="width:100%; margin-top:10px;"></textarea>
+            <textarea id="editNote" class="full-width" rows="2" placeholder="Note ภายในแอดมิน (ลูกค้าไม่เห็น)" style="margin-top:10px;"></textarea>
         </div>
 
-        <textarea id="editReq" rows="2" style="width:100%; margin-bottom:15px;" placeholder="รีเควสโซน/อื่นๆ"></textarea>
+        <textarea id="editReq" class="full-width" rows="2" style="margin-bottom:15px;" placeholder="รีเควสโซน/อื่นๆ"></textarea>
         <div id="editMembersArea"></div>
         
         <div style="display:flex; gap:10px; margin-top:20px;">
-            <button onclick="saveAdminEdit()" style="flex:1; background:#10b981;">บันทึกการแก้ไข</button>
-            <button onclick="closeModal()" style="flex:1; background:#ef4444;">ยกเลิก</button>
+            <button onclick="saveAdminEdit()" style="flex:1; background:#10b981; font-size:16px;">บันทึกการแก้ไข</button>
+            <button onclick="closeModal()" style="flex:1; background:#ef4444; font-size:16px;">ยกเลิก</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc, addDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const app = initializeApp({
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
@@ -135,24 +171,66 @@
         });
         const db = getFirestore(app);
 
+        let globalGuests = [];
+        let allPaidTickets = []; // เก็บข้อมูลตั๋วสำหรับทำ Filter และ CSV
+
         window.switchTab = function(id) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-pending').style.display = 'none';
             document.getElementById('tab-manage').style.display = 'none';
+            document.getElementById('tab-settings').style.display = 'none';
             event.target.classList.add('active');
             document.getElementById(id).style.display = 'block';
+            
             if(id === 'tab-pending') loadPending();
             if(id === 'tab-manage') loadPaid();
+            if(id === 'tab-settings') loadGuests();
         }
 
         document.getElementById('loginBtn').addEventListener('click', () => {
             if(document.getElementById('adminEmail').value === 'cosniteclubparty@gmail.com') {
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
-                loadPending(); 
+                loadPending(); loadGuests();
             } else alert('อีเมลผิด');
         });
 
+        // --- 1. ระบบจัดการเกสต์ ---
+        async function loadGuests() {
+            try {
+                const docSnap = await getDoc(doc(db, "Settings", "GuestList"));
+                if (docSnap.exists() && docSnap.data().guests) {
+                    globalGuests = docSnap.data().guests;
+                } else {
+                    await setDoc(doc(db, "Settings", "GuestList"), { guests: ["เกสต์ A", "เกสต์ B"] });
+                    globalGuests = ["เกสต์ A", "เกสต์ B"];
+                }
+                renderGuests();
+            } catch(e) { console.error(e); }
+        }
+        function renderGuests() {
+            const div = document.getElementById('guestListContainer');
+            div.innerHTML = '';
+            globalGuests.forEach((g, idx) => {
+                div.innerHTML += `<div class="guest-item">${g} <span onclick="removeGuest(${idx})">×</span></div>`;
+            });
+        }
+        window.addGuest = async function() {
+            const val = document.getElementById('newGuestName').value.trim();
+            if(!val) return;
+            globalGuests.push(val);
+            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests });
+            document.getElementById('newGuestName').value = '';
+            renderGuests();
+        }
+        window.removeGuest = async function(idx) {
+            if(!confirm('ยืนยันลบเกสต์ท่านนี้?')) return;
+            globalGuests.splice(idx, 1);
+            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests });
+            renderGuests();
+        }
+
+        // --- 2. โหลดตั๋ว ---
         async function loadPending() {
             const tbody = document.querySelector('#pendingTable tbody');
             tbody.innerHTML = '<tr><td colspan="4">โหลด...</td></tr>';
@@ -176,16 +254,42 @@
 
         async function loadPaid() {
             const tbody = document.querySelector('#paidTable tbody');
-            tbody.innerHTML = '<tr><td colspan="4">โหลด...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4">กำลังโหลดข้อมูล...</td></tr>';
+            
             const qs = await getDocs(query(collection(db, "Tickets"), where("status", "==", "paid")));
-            tbody.innerHTML = '';
+            allPaidTickets = qs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // คำนวณ Dashboard จากทั้งหมด
             let cTotal=0, cVip=0, cParty=0, cSolo=0;
-
-            qs.forEach(d => {
-                const data = d.data();
+            allPaidTickets.forEach(data => {
                 let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
                 cTotal += s; if(data.type.includes('vip')) cVip+=s; if(data.type.includes('party')) cParty+=s; if(data.type.includes('solo')) cSolo+=s;
-                
+            });
+            document.getElementById('dashTotal').innerText = `${cTotal}/500`;
+            document.getElementById('dashVip').innerText = `${cVip}/78`;
+            document.getElementById('dashParty').innerText = `${cParty}/372`;
+            document.getElementById('dashSolo').innerText = `${cSolo}/50`;
+
+            renderPaidTable(); // วาดตารางตาม Filter
+        }
+
+        // --- 3. ระบบกรอง (Filter) ตาราง ---
+        window.renderPaidTable = function() {
+            const filterVal = document.getElementById('ticketFilter').value;
+            const tbody = document.querySelector('#paidTable tbody');
+            tbody.innerHTML = '';
+
+            let displayTickets = allPaidTickets;
+            if (filterVal !== 'all') {
+                displayTickets = allPaidTickets.filter(t => t.type.includes(filterVal));
+            }
+
+            if(displayTickets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ไม่มีข้อมูลในหมวดหมู่นี้</td></tr>';
+                return;
+            }
+
+            displayTickets.forEach(data => {
                 let tableTag = data.tableNumber ? `<div style="color:var(--primary); font-weight:bold; font-size:14px;">📍 โต๊ะ: ${data.tableNumber} ${data.isTableVisible ? '(ลูกค้าเห็น)' : '(ซ่อน)'}</div>` : '';
                 let mHtml = data.request ? `<div style="color:#f59e0b; font-size:12px;">Req: ${data.request}</div>` : '';
                 if(data.members) {
@@ -193,28 +297,60 @@
                 }
                 
                 tbody.innerHTML += `<tr>
-                    <td>
-                        ${tableTag}
-                        <span style="font-size:10px; color:#aaa;">ID: ${d.id}</span>
-                        ${data.refName ? `<br><b style="font-size:12px; color:#10b981;">(Ref: ${data.refName})</b>` : ''}
-                    </td>
+                    <td>${tableTag}<span style="font-size:10px; color:#aaa;">ID: ${data.id}</span>${data.refName ? `<br><b style="font-size:12px; color:#10b981;">(Ref: ${data.refName})</b>` : ''}</td>
                     <td>${data.type.toUpperCase()}</td>
                     <td>${mHtml}</td>
                     <td>
                         <div class="action-btns">
-                            <button class="btn-edit" onclick="openEdit('${d.id}')">แก้ไข</button>
-                            <button class="btn-transfer" onclick="transferTicket('${d.id}')">โอนสิทธิ์</button>
-                            <button class="btn-del" onclick="delTicket('${d.id}')">ลบออก</button>
+                            <button class="btn-edit" onclick="openEdit('${data.id}')">แก้ไข</button>
+                            <button class="btn-transfer" onclick="transferTicket('${data.id}')">โอนสิทธิ์</button>
+                            <button class="btn-del" onclick="delTicket('${data.id}')">ลบออก</button>
                         </div>
                     </td>
                 </tr>`;
             });
-            document.getElementById('dashTotal').innerText = `${cTotal}/500`;
-            document.getElementById('dashVip').innerText = `${cVip}/78`;
-            document.getElementById('dashParty').innerText = `${cParty}/372`;
-            document.getElementById('dashSolo').innerText = `${cSolo}/50`;
         }
 
+        // --- 4. โหลดเป็นไฟล์ CSV (Excel) ---
+        window.exportCSV = function() {
+            if(allPaidTickets.length === 0) return alert('ไม่มีข้อมูลตั๋วให้ดาวน์โหลด');
+            
+            // ใส่ \uFEFF เพื่อให้ Excel อ่านภาษาไทย (UTF-8) ได้ถูกต้อง
+            let csvContent = "\uFEFFลำดับ,รหัสตั๋ว,อ้างอิงลูกค้า,ประเภทตั๋ว,เลขโต๊ะ,โซนที่รีเควส,รายละเอียดผู้ร่วมงาน (คนที่. ชื่อ | วันเกิด | FB | เกสต์)\n";
+            
+            allPaidTickets.forEach((t, index) => {
+                let memberInfo = "";
+                if (t.members) {
+                    memberInfo = t.members.map((m, i) => `${i+1}. ${m.name||'-'} | ${m.dob||'-'} | ${m.facebook||'-'} | ${m.guest||'-'}`).join("  //  ");
+                }
+                
+                let row = [
+                    index + 1,
+                    t.id,
+                    t.refName || '',
+                    t.type,
+                    t.tableNumber || '',
+                    t.request || '',
+                    memberInfo
+                ];
+                
+                // ครอบเครื่องหมาย " เพื่อป้องกันคอมม่า (,) ในข้อความทำไฟล์พัง
+                let rowString = row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+                csvContent += rowString + "\n";
+            });
+
+            // สร้างลิงก์โหลด
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `CosNite_Tickets_${new Date().toISOString().slice(0,10)}.csv`;
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- ฟังก์ชันช่วยเหลืออื่นๆ ---
         window.addManualTicket = async function() {
             const type = document.getElementById('manualType').value;
             const refName = document.getElementById('manualRef').value || 'ลูกค้าเก่า (Manual)';
@@ -224,31 +360,27 @@
             if(!confirm(`ยืนยันการเพิ่มตั๋ว ${type} ให้กับ: ${refName} ใช่หรือไม่?`)) return;
             try {
                 await addDoc(collection(db, "Tickets"), {
-                    userId: finalUid,
-                    refName: refName, type: type, status: "paid", isMembersLocked: false, isTableVisible: false, createdAt: serverTimestamp()
+                    userId: finalUid, refName: refName, type: type, status: "paid", isMembersLocked: false, isTableVisible: false, createdAt: serverTimestamp()
                 });
                 alert('เพิ่มตั๋วเข้าระบบสำเร็จ!');
-                document.getElementById('manualRef').value = '';
-                document.getElementById('manualUid').value = '';
+                document.getElementById('manualRef').value = ''; document.getElementById('manualUid').value = '';
                 loadPaid();
             } catch (e) { console.error(e); }
         }
 
-        window.approve = async (id) => { if(confirm('ยืนยันสลิปยอดเงิน?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); } }
+        window.approve = async (id) => { if(confirm('ยืนยันสลิปยอดเงิน?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); loadPaid(); } }
         window.delTicket = async (id) => { if(confirm('ลบตั๋วใบนี้ทิ้งอย่างถาวร?')) { await deleteDoc(doc(db,"Tickets",id)); loadPending(); loadPaid(); } }
         
         window.transferTicket = async function(id) {
-            const newUid = prompt("กรุณากรอก UID ของลูกค้าใหม่ที่ต้องการรับโอนตั๋วนี้\\n(ลูกค้าสามารถก๊อปปี้ UID ตัวเองได้จากหน้าเว็บ):");
-            if(!newUid || newUid.trim() === '') return;
-            if(confirm(`ยืนยันโอนตั๋วไปที่ UID: ${newUid.trim()} ใช่หรือไม่?`)) {
-                try {
-                    await updateDoc(doc(db, "Tickets", id), { userId: newUid.trim() });
-                    alert("✅ โอนสิทธิ์สำเร็จ!");
-                    loadPaid();
-                } catch(e) { console.error(e); alert("ผิดพลาด"); }
+            const newUid = prompt("กรอก UID ใหม่:");
+            if(!newUid) return;
+            if(confirm(`โอนตั๋วไปที่ UID: ${newUid.trim()} ?`)) {
+                await updateDoc(doc(db, "Tickets", id), { userId: newUid.trim() });
+                alert("✅ โอนสิทธิ์สำเร็จ!"); loadPaid();
             }
         };
 
+        // --- แก้ไขข้อมูล (UI ใหม่) ---
         window.openEdit = async function(id) {
             const dSnap = await getDoc(doc(db, "Tickets", id));
             const data = dSnap.data();
@@ -266,17 +398,21 @@
             
             for(let i=0; i<s; i++) {
                 let m = data.members && data.members[i] ? data.members[i] : {name:'',dob:'',facebook:'',guest:''};
-                h += `<div style="background:#f9f9f9; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #eee;">
-                    <b style="color:var(--primary); font-size:13px;">คนที่ ${i+1}</b>
-                    <input type="text" id="ed_n_${i}" value="${m.name}" placeholder="ชื่อ-สกุล" style="width:100%; margin:3px 0;">
-                    <div style="display:flex; gap:5px;">
-                        <input type="text" id="ed_d_${i}" value="${m.dob}" placeholder="วันเกิด" style="flex:1;">
-                        <input type="text" id="ed_f_${i}" value="${m.facebook}" placeholder="Facebook" style="flex:1;">
-                    </div>`;
+                
+                // ใช้ Grid จัดช่องว่างให้ตรงเป๊ะ
+                h += `<div class="member-edit-card">
+                    <b style="color:var(--primary); font-size:14px; margin-bottom:5px; display:block;">คนที่ ${i+1}</b>
+                    <div class="member-edit-grid">
+                        <input class="full-width" type="text" id="ed_n_${i}" value="${m.name}" placeholder="ชื่อ-สกุล">
+                        <input type="text" id="ed_d_${i}" value="${m.dob}" placeholder="วันเกิด">
+                        <input type="text" id="ed_f_${i}" value="${m.facebook}" placeholder="Facebook">`;
+                
                 if(isVip) {
-                    h += `<input type="text" id="ed_g_${i}" value="${m.guest}" placeholder="ชื่อเกสต์ 2-Shot" style="width:100%; border:1px dashed var(--primary); margin-top:5px;">`;
+                    let opts = `<option value="">- เลือกเกสต์ -</option>`;
+                    globalGuests.forEach(g => opts += `<option value="${g}" ${m.guest===g?'selected':''}>${g}</option>`);
+                    h += `<select class="full-width" id="ed_g_${i}">${opts}</select>`;
                 }
-                h += `</div>`;
+                h += `</div></div>`;
             }
             document.getElementById('editMembersArea').innerHTML = h;
             document.getElementById('editModalOverlay').style.display = 'block';
