@@ -43,7 +43,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-        // นำเข้า Firebase Auth เพิ่มเติม
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -59,17 +58,17 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
-        const auth = getAuth(app); // กำหนดตัวแปร Auth
+        const auth = getAuth(app);
 
         let currentUser = null;
 
-        // ตรวจสอบว่าผู้ใช้ล็อกอินอยู่หรือไม่ ถ้ายังให้กลับไปล็อกอินก่อน
+        // ตรวจสอบว่าผู้ใช้ล็อกอินอยู่หรือไม่
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
             } else {
                 alert('กรุณาเข้าสู่ระบบก่อนทำการชำระเงิน');
-                window.location.href = 'profile.html'; // เด้งไปหน้าให้ล็อกอิน
+                window.location.href = 'profile.html';
             }
         });
 
@@ -143,7 +142,7 @@
 
                 // 2. บันทึกข้อมูลตั๋วลง Firestore พร้อมเพิ่ม userId
                 const docRef = await addDoc(collection(db, "Tickets"), {
-                    userId: currentUser.uid, // <--- จุดที่เพิ่มเข้ามาเพื่อให้ผูกกับผู้ใช้
+                    userId: currentUser.uid, 
                     type: ticketType,
                     drinkSet: drinkSet || null,
                     paymentMethod: paymentMethodSelect.value,
@@ -155,7 +154,7 @@
 
                 alert('บันทึกข้อมูลสำเร็จ! กรุณารอทีมงานตรวจสอบสลิปครับ');
                 localStorage.removeItem('bookingData');
-                window.location.href = 'profile.html'; // เด้งไปหน้า Profile เพื่อดูตั๋ว
+                window.location.href = 'profile.html';
             } catch (error) {
                 console.error("Error adding document: ", error);
                 alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
