@@ -4,11 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>จองบัตร - CosNite Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
-        select, input, button { width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 20px; border-radius: 5px; border: none; }
-        button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; }
+        :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #fffafc; --text: #333; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
+        h2 { color: var(--primary); text-align: center; margin-top: 0; }
+        label { font-weight: 500; color: #555; }
+        select, input, button { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 25px; border-radius: 10px; border: 1px solid #ddd; font-family: 'Kanit', sans-serif; font-size: 1rem; outline: none; transition: 0.3s; }
+        select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(255,62,201,0.3); }
+        button { background-color: var(--primary); color: white; font-weight: 500; cursor: pointer; border: none; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255,62,201,0.3); }
+        button:hover { background-color: #e62eb3; transform: translateY(-2px); }
     </style>
 </head>
 <body>
@@ -41,25 +47,16 @@
     <script>
         const ticketSelect = document.getElementById('ticketType');
         const drinkDiv = document.getElementById('drinkSelection');
-        
         ticketSelect.addEventListener('change', function() {
-            if(this.value.includes('party')) {
-                drinkDiv.style.display = 'block';
-            } else {
-                drinkDiv.style.display = 'none';
-            }
+            drinkDiv.style.display = this.value.includes('party') ? 'block' : 'none';
         });
 
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const ticketType = document.getElementById('ticketType').value;
-            const drinkSet = document.getElementById('drinkSet').value;
-            
             localStorage.setItem('bookingData', JSON.stringify({
-                ticketType: ticketType,
-                drinkSet: drinkSet
+                ticketType: document.getElementById('ticketType').value,
+                drinkSet: document.getElementById('drinkSet').value
             }));
-
             window.location.href = 'checkout.html';
         });
     </script>
