@@ -4,35 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ชำระเงิน - CosNite Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; text-align: center; }
-        .container { max-width: 600px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
-        select, input, button { width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 20px; border-radius: 5px; border: none; box-sizing: border-box; }
-        button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .summary-box { background: #333; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: left; }
-        #qrCodeDisplay { max-width: 300px; display: none; margin: 20px auto; border-radius: 10px; }
+        :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #fffafc; --text: #333; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
+        h2 { color: var(--primary); margin-top: 0; }
+        select, input, button { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 20px; border-radius: 10px; border: 1px solid #ddd; font-family: inherit; font-size: 1rem; outline: none; box-sizing: border-box; }
+        select:focus, input:focus { border-color: var(--primary); }
+        button { background-color: var(--primary); color: white; font-weight: 500; cursor: pointer; border: none; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; }
+        button:hover:not(:disabled) { background-color: #e62eb3; transform: translateY(-2px); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
+        .summary-box { background: var(--accent); padding: 20px; border-radius: 15px; margin-bottom: 25px; text-align: left; color: #555; }
+        #qrCodeDisplay { max-width: 250px; display: none; margin: 20px auto; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 3px solid var(--primary); }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>สรุปรายการจองและชำระเงิน</h2>
-        
         <div class="summary-box" id="orderSummary"></div>
 
-        <label for="paymentMethod"><b>เลือกช่องทางการชำระเงิน:</b></label>
+        <label for="paymentMethod" style="font-weight:500; display:block; text-align:left;">เลือกช่องทางการชำระเงิน:</label>
         <select id="paymentMethod">
-            <option value="normal">โอนเงิน / PromptPay / Mobile Banking / E-Wallet</option>
-            <option value="credit">บัตรเครดิต (ชาร์จค่าธรรมเนียม 3%)</option>
+            <option value="normal">โอนเงิน / PromptPay / Mobile Banking</option>
+            <option value="credit">บัตรเครดิต (ชาร์จ 3%)</option>
         </select>
 
         <div id="paymentArea" style="display: none;">
-            <h3 style="color: #facc15;">ยอดที่ต้องชำระ: <span id="finalPriceDisplay">0</span> บาท</h3>
-            <p>สแกน QR Code ด้านล่างเพื่อชำระเงิน</p>
-            <img id="qrCodeDisplay" src="" alt="QR Code ชำระเงิน">
+            <h3 style="color: var(--primary); font-size: 1.5rem;">ยอดที่ต้องชำระ: <span id="finalPriceDisplay">0</span> บาท</h3>
+            <p style="color: #666;">สแกน QR Code เพื่อชำระเงิน</p>
+            <img id="qrCodeDisplay" src="" alt="QR Code">
             
-            <hr style="border-color: #444; margin: 20px 0;">
+            <hr style="border:none; border-top: 1px dashed #ccc; margin: 25px 0;">
             
-            <h3>อัปโหลดหลักฐานการโอนเงิน (สลิป)</h3>
+            <h3 style="text-align:left; color:#555;">อัปโหลดหลักฐานการโอนเงิน (สลิป)</h3>
             <input type="file" id="slipUpload" accept="image/*" required>
             <button id="submitOrderBtn">ยืนยันการชำระเงิน</button>
         </div>
@@ -43,40 +48,32 @@
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-        const firebaseConfig = {
+        const app = initializeApp({
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
             authDomain: "cosniteclub.firebaseapp.com",
             projectId: "cosniteclub",
             storageBucket: "cosniteclub.firebasestorage.app",
             messagingSenderId: "429033863377",
-            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0",
-            measurementId: "G-8GSH09B7P2"
-        };
-
-        const app = initializeApp(firebaseConfig);
+            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0"
+        });
         const db = getFirestore(app);
         const auth = getAuth(app);
         let currentUser = null;
 
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-            } else {
-                alert('กรุณาเข้าสู่ระบบก่อนทำการชำระเงิน');
+            if (user) currentUser = user;
+            else {
+                alert('กรุณาเข้าสู่ระบบก่อนชำระเงิน');
                 window.location.href = 'profile.html';
             }
         });
 
         const bookingData = JSON.parse(localStorage.getItem('bookingData'));
-        if(!bookingData) {
-            alert('ไม่พบข้อมูลการจอง กรุณาทำรายการใหม่');
-            window.location.href = 'booking.html';
-        }
+        if(!bookingData) { alert('ไม่พบข้อมูลการจอง'); window.location.href = 'booking.html'; }
 
         const ticketType = bookingData.ticketType;
         const drinkSet = bookingData.drinkSet;
-        let basePrice = 0;
-        let hasSoju = false;
+        let basePrice = 0, hasSoju = false;
 
         if(ticketType === 'solo') basePrice = 690;
         else if(ticketType === 'party4') { basePrice = 3400; if(drinkSet === 'C') { basePrice = 3556; hasSoju = true; } }
@@ -85,86 +82,51 @@
         else if(ticketType === 'vip6') basePrice = 9000;
 
         document.getElementById('orderSummary').innerHTML = `
-            <p><b>ประเภทบัตร:</b> ${ticketType.toUpperCase()}</p>
-            ${ticketType.includes('party') ? `<p><b>เซ็ตเครื่องดื่ม:</b> Set ${drinkSet}</p>` : ''}
+            <p style="margin:5px 0;"><b>ประเภทบัตร:</b> ${ticketType.toUpperCase()}</p>
+            ${ticketType.includes('party') ? `<p style="margin:5px 0;"><b>เซ็ตเครื่องดื่ม:</b> Set ${drinkSet}</p>` : ''}
         `;
 
-        const paymentMethodSelect = document.getElementById('paymentMethod');
-        const paymentArea = document.getElementById('paymentArea');
-        const finalPriceDisplay = document.getElementById('finalPriceDisplay');
-        const qrCodeDisplay = document.getElementById('qrCodeDisplay');
-
         function updatePaymentDisplay() {
-            const method = paymentMethodSelect.value;
-            let finalPrice = basePrice;
-            if(method === 'credit') {
-                finalPrice = basePrice * 1.03;
-            }
-
-            finalPriceDisplay.innerText = finalPrice.toLocaleString('th-TH', {minimumFractionDigits: 2});
-            let sojuText = hasSoju ? "-soju" : "";
-            let fileName = `qr-${ticketType}${sojuText}-${method}.jpg`;
+            const method = document.getElementById('paymentMethod').value;
+            let finalPrice = method === 'credit' ? basePrice * 1.03 : basePrice;
+            document.getElementById('finalPriceDisplay').innerText = finalPrice.toLocaleString('th-TH', {minimumFractionDigits: 2});
             
-            qrCodeDisplay.src = `assets/images/qrcodes/${fileName}`;
-            qrCodeDisplay.style.display = 'block';
-            paymentArea.style.display = 'block';
+            let sojuText = hasSoju ? "-soju" : "";
+            document.getElementById('qrCodeDisplay').src = `assets/images/qrcodes/qr-${ticketType}${sojuText}-${method}.jpg`;
+            document.getElementById('qrCodeDisplay').style.display = 'block';
+            document.getElementById('paymentArea').style.display = 'block';
         }
 
         updatePaymentDisplay();
-        paymentMethodSelect.addEventListener('change', updatePaymentDisplay);
+        document.getElementById('paymentMethod').addEventListener('change', updatePaymentDisplay);
 
         document.getElementById('submitOrderBtn').addEventListener('click', async () => {
-            if(!currentUser) {
-                alert('เซสชันขาดหาย กรุณาเข้าสู่ระบบอีกครั้ง');
-                return;
-            }
-
+            if(!currentUser) return alert('เซสชันขาดหาย กรุณาเข้าสู่ระบบอีกครั้ง');
             const slipFile = document.getElementById('slipUpload').files[0];
-            if(!slipFile) {
-                alert('กรุณาอัปโหลดหลักฐานการโอนเงินครับ');
-                return;
-            }
+            if(!slipFile) return alert('กรุณาอัปโหลดสลิปครับ');
 
-            document.getElementById('submitOrderBtn').innerText = "กำลังดำเนินการ...";
-            document.getElementById('submitOrderBtn').disabled = true;
+            const btn = document.getElementById('submitOrderBtn');
+            btn.innerText = "กำลังอัปโหลด..."; btn.disabled = true;
 
             try {
-                // อัปโหลดสลิปไปที่ ImgBB ด้วย API Key ของคุณ
-                const IMGBB_API_KEY = "766268cd70aad6dfecb61cfb6d44917e"; 
-                
-                const formData = new FormData();
-                formData.append('image', slipFile);
+                const formData = new FormData(); formData.append('image', slipFile);
+                const res = await fetch(`https://api.imgbb.com/1/upload?key=766268cd70aad6dfecb61cfb6d44917e`, { method: 'POST', body: formData });
+                const imgbb = await res.json();
+                if (!imgbb.success) throw new Error('Upload failed');
 
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const imgbbResult = await response.json();
-                
-                if (!imgbbResult.success) throw new Error('อัปโหลดรูปภาพไม่สำเร็จ');
-                const slipUrl = imgbbResult.data.url;
-
-                // บันทึกข้อมูลลง Firestore Database
                 await addDoc(collection(db, "Tickets"), {
-                    userId: currentUser.uid, 
-                    type: ticketType,
-                    drinkSet: drinkSet || null,
-                    paymentMethod: paymentMethodSelect.value,
-                    pricePaid: parseFloat(finalPriceDisplay.innerText.replace(/,/g, '')),
-                    slipUrl: slipUrl,
-                    status: "pending_verification",
-                    createdAt: serverTimestamp()
+                    userId: currentUser.uid, type: ticketType, drinkSet: drinkSet || null,
+                    paymentMethod: document.getElementById('paymentMethod').value,
+                    pricePaid: parseFloat(document.getElementById('finalPriceDisplay').innerText.replace(/,/g, '')),
+                    slipUrl: imgbb.data.url, status: "pending_verification", createdAt: serverTimestamp()
                 });
 
-                alert('บันทึกข้อมูลสำเร็จ! กรุณารอทีมงานตรวจสอบสลิปครับ');
+                alert('สำเร็จ! กรุณารอทีมงานตรวจสอบ');
                 localStorage.removeItem('bookingData');
                 window.location.href = 'profile.html';
-                
-            } catch (error) {
-                console.error("Error: ", error);
-                alert('เกิดข้อผิดพลาดในการอัปโหลดสลิปหรือบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
-                document.getElementById('submitOrderBtn').innerText = "ยืนยันการชำระเงิน";
-                document.getElementById('submitOrderBtn').disabled = false;
+            } catch (e) {
+                console.error(e); alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป');
+                btn.innerText = "ยืนยันการชำระเงิน"; btn.disabled = false;
             }
         });
     </script>
