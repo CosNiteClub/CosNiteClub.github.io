@@ -38,8 +38,7 @@
         </form>
     </div>
 
-    <script type="module">
-        // ดักจับการเปลี่ยนประเภทตั๋วเพื่อโชว์/ซ่อน ตัวเลือกเครื่องดื่ม
+    <script>
         const ticketSelect = document.getElementById('ticketType');
         const drinkDiv = document.getElementById('drinkSelection');
         
@@ -51,19 +50,16 @@
             }
         });
 
-        // จัดการเมื่อกดปุ่ม Submit เพื่อส่งข้อมูลไปหน้า Checkout
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const ticketType = document.getElementById('ticketType').value;
             const drinkSet = document.getElementById('drinkSet').value;
             
-            // บันทึกข้อมูลที่เลือกลงเครื่องชั่วคราว
             localStorage.setItem('bookingData', JSON.stringify({
                 ticketType: ticketType,
                 drinkSet: drinkSet
             }));
 
-            // เปลี่ยนหน้าไปที่ checkout.html
             window.location.href = 'checkout.html';
         });
     </script>
