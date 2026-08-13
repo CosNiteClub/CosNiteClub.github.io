@@ -3,345 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - CosNite Club</title>
+    <title>Admin - CosNite Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
-        input, button, select, textarea { padding: 8px; border-radius: 5px; border: none; }
-        button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        th, td { border: 1px solid #444; padding: 10px; text-align: left; vertical-align: top; }
-        th { background-color: #333; }
-        .slip-img { max-width: 80px; cursor: pointer; border-radius: 5px; }
-        .btn-approve { background-color: #4ade80; color: black; margin-bottom: 5px; width: 100%; }
-        .btn-edit { background-color: #3b82f6; color: white; margin-bottom: 5px; width: 100%; }
-        .btn-danger { background-color: #ef4444; color: white; width: 100%; }
+        :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #f9f9f9; --text: #333; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h2 { color: var(--primary); margin-top:0; }
+        input, button, select, textarea { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 14px; outline:none;}
+        button { background-color: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: left; vertical-align: top; }
+        th { background-color: var(--accent); color: #555; }
+        .tab-menu { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .tab-btn { background-color: transparent; color: #777; padding: 10px 20px; border-radius: 30px; font-weight: 500; border: 1px solid #ddd; }
+        .tab-btn.active { background-color: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(255,62,201,0.3); }
+        .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .dash-card { background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #ffe6f7; box-shadow: 0 4px 10px rgba(255,62,201,0.05); }
+        .dash-card h3 { margin: 0; color: #666; font-size: 14px; }
+        .dash-card p { margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: var(--primary); }
         
-        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { background-color: #444; color: white; padding: 10px 20px; flex: 1; border-radius: 5px; }
-        .tab-btn.active { background-color: #facc15; color: black; }
+        .guest-manage-box { background: #fffafc; border: 1px dashed var(--primary); padding: 20px; border-radius: 12px; margin-bottom:20px;}
+        .guest-item { display: inline-flex; align-items: center; background: white; padding: 5px 15px; border-radius: 20px; border: 1px solid var(--primary); margin: 5px; color: var(--primary); }
+        .guest-item span { cursor: pointer; color: #ef4444; margin-left: 10px; font-weight: bold; }
         
-        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-        .dash-card { background: #333; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #555; }
-        .dash-card h3 { margin: 0 0 10px 0; color: #facc15; font-size: 16px; }
-        .dash-card p { margin: 0; font-size: 20px; font-weight: bold; }
-        
-        .manual-add-box { background: #333; padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 1px dashed #facc15; }
-        
-        /* Modal สำหรับแก้ไขข้อมูล */
-        #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; padding: 20px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; border-radius: 10px; z-index: 1000; border: 2px solid #facc15; }
-        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
-        .edit-member-box { background: #333; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .edit-member-box input { width: 100%; margin-bottom: 5px; background: #444; color: white; }
+        /* Modal แก้ไขลูกค้า */
+        #editModalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; backdrop-filter: blur(2px);}
+        #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; border-radius: 20px; z-index: 101; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>แผงควบคุมแอดมิน - CosNite Club</h2>
+        <h2>ระบบจัดการหลังบ้าน (Admin)</h2>
         
-        <div id="loginSection">
-            <p>กรุณากรอกอีเมลแอดมินเพื่อเข้าสู่ระบบ</p>
-            <input type="email" id="adminEmail" placeholder="อีเมลแอดมิน" style="width: 80%;">
-            <button id="loginBtn">เข้าสู่ระบบ</button>
+        <div id="loginSection" style="text-align:center; padding: 50px 0;">
+            <input type="email" id="adminEmail" placeholder="อีเมลแอดมิน" style="width: 300px;">
+            <button id="loginBtn" style="padding: 10px 20px;">เข้าสู่ระบบ</button>
         </div>
 
         <div id="adminPanel" style="display: none;">
             <div class="tab-menu">
                 <button class="tab-btn active" onclick="switchTab('tab-pending')">ตรวจสอบสลิป</button>
                 <button class="tab-btn" onclick="switchTab('tab-manage')">สรุปยอด & จัดการตั๋ว</button>
+                <button class="tab-btn" onclick="switchTab('tab-settings')">ตั้งค่ารายชื่อเกสต์</button>
             </div>
 
             <div id="tab-pending">
-                <h3>รายการรอตรวจสอบ</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ประเภทตั๋ว</th>
-                            <th>ราคาที่จ่าย</th>
-                            <th>ช่องทาง</th>
-                            <th>สลิปโอนเงิน</th>
-                            <th style="width: 120px;">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pendingTableBody"></tbody>
+                <table id="pendingTable">
+                    <thead><tr><th>ประเภทตั๋ว</th><th>ราคา</th><th>ช่องทาง</th><th>สลิป</th><th style="width:100px;">จัดการ</th></tr></thead>
+                    <tbody></tbody>
                 </table>
             </div>
 
             <div id="tab-manage" style="display: none;">
-                <div class="dashboard">
-                    <div class="dash-card"><h3>รวมที่นั่งทั้งหมด (500)</h3><p id="dashTotal">0 / 500</p></div>
-                    <div class="dash-card"><h3>VIP (โควตา 78)</h3><p id="dashVip">0 / 78</p></div>
-                    <div class="dash-card"><h3>Party (โควตา 372)</h3><p id="dashParty">0 / 372</p></div>
-                    <div class="dash-card"><h3>Solo (โควตา 50)</h3><p id="dashSolo">0 / 50</p></div>
+                <div class="dash-grid">
+                    <div class="dash-card"><h3>รวม (500)</h3><p id="dashTotal">0/500</p></div>
+                    <div class="dash-card"><h3>VIP (78)</h3><p id="dashVip">0/78</p></div>
+                    <div class="dash-card"><h3>Party (372)</h3><p id="dashParty">0/372</p></div>
+                    <div class="dash-card"><h3>Solo (50)</h3><p id="dashSolo">0/50</p></div>
                 </div>
-
-                <div class="manual-add-box">
-                    <h3 style="margin-top:0; color:#4ade80;">+ เพิ่มตั๋วลูกค้าเก่า (Manual Add)</h3>
-                    <select id="manualType">
-                        <option value="solo">Solo (เดี่ยว)</option>
-                        <option value="party4">Party 4 คน</option>
-                        <option value="party6">Party 6 คน</option>
-                        <option value="vip4">VIP 4 คน</option>
-                        <option value="vip6">VIP 6 คน</option>
-                    </select>
-                    <input type="text" id="manualRef" placeholder="ชื่ออ้างอิงลูกค้าเก่า" style="width: 250px;">
-                    <button onclick="addManualTicket()">เพิ่มตั๋วเข้าระบบ</button>
-                </div>
-
-                <h3>รายชื่อตั๋วทั้งหมดในระบบ (Paid)</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID / อ้างอิง</th>
-                            <th>ประเภท</th>
-                            <th>รายละเอียด / รายชื่อผู้เข้าร่วม</th>
-                            <th style="width: 120px;">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="paidTableBody"></tbody>
+                
+                <table id="paidTable">
+                    <thead><tr><th>ID</th><th>ประเภท</th><th>ข้อมูลผู้ร่วมงาน</th><th style="width:100px;">จัดการ</th></tr></thead>
+                    <tbody></tbody>
                 </table>
+            </div>
+
+            <div id="tab-settings" style="display: none;">
+                <div class="guest-manage-box">
+                    <h3 style="margin-top:0; color:var(--primary);">รายชื่อ Guest สำหรับ VIP</h3>
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <input type="text" id="newGuestName" placeholder="เพิ่มชื่อเกสต์ใหม่..." style="flex:1;">
+                        <button onclick="addGuest()">เพิ่มเกสต์</button>
+                    </div>
+                    <div id="guestListContainer">กำลังโหลด...</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="modalOverlay" onclick="closeModal()"></div>
+    <div id="editModalOverlay" onclick="closeModal()"></div>
     <div id="editModal">
-        <h3 style="color: #facc15; margin-top: 0;">แก้ไขข้อมูลตั๋วโดยแอดมิน</h3>
-        <input type="hidden" id="editTicketId">
-        <input type="hidden" id="editTicketType">
-        
-        <label><b>รีเควสเพิ่มเติม (Zone / อื่นๆ):</b></label>
-        <textarea id="editRequest" rows="2" style="width: 100%; background: #444; color: white; margin-bottom: 15px;"></textarea>
-        
+        <h3 style="color:var(--primary); margin-top:0;">แก้ไขข้อมูลลูกค้า (Admin)</h3>
+        <input type="hidden" id="editTid"><input type="hidden" id="editType">
+        <textarea id="editReq" rows="2" style="width:100%; margin-bottom:15px;" placeholder="รีเควสโซน/อื่นๆ"></textarea>
         <div id="editMembersArea"></div>
-        
-        <button onclick="saveAdminEdit()" style="background: #4ade80; width: 100%; margin-top: 10px;">บันทึกการแก้ไข</button>
-        <button onclick="closeModal()" style="background: #ef4444; color: white; width: 100%; margin-top: 5px;">ยกเลิก</button>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button onclick="saveAdminEdit()" style="flex:1; background:#10b981;">บันทึก</button>
+            <button onclick="closeModal()" style="flex:1; background:#ef4444;">ยกเลิก</button>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        const firebaseConfig = {
+        const app = initializeApp({
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
             authDomain: "cosniteclub.firebaseapp.com",
-            projectId: "cosniteclub",
-            storageBucket: "cosniteclub.firebasestorage.app",
-            messagingSenderId: "429033863377",
-            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0"
-        };
-
-        const app = initializeApp(firebaseConfig);
+            projectId: "cosniteclub"
+        });
         const db = getFirestore(app);
         
-        const guestList = ["เกสต์ A", "เกสต์ B", "เกสต์ C", "เกสต์ D", "เกสต์ E", "เกสต์ F"];
+        let globalGuests = [];
 
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        window.switchTab = function(id) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-pending').style.display = 'none';
             document.getElementById('tab-manage').style.display = 'none';
+            document.getElementById('tab-settings').style.display = 'none';
             event.target.classList.add('active');
-            document.getElementById(tabId).style.display = 'block';
-            if(tabId === 'tab-manage') loadDashboardAndTickets();
-            else loadPendingTickets();
-        };
+            document.getElementById(id).style.display = 'block';
+            
+            if(id === 'tab-pending') loadPending();
+            if(id === 'tab-manage') loadPaid();
+            if(id === 'tab-settings') loadGuests();
+        }
 
         document.getElementById('loginBtn').addEventListener('click', () => {
-            const email = document.getElementById('adminEmail').value;
-            if (email === 'cosniteclubparty@gmail.com') {
+            if(document.getElementById('adminEmail').value === 'cosniteclubparty@gmail.com') {
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
-                loadPendingTickets();
-            } else {
-                alert('อีเมลไม่ถูกต้อง');
-            }
+                loadPending(); loadGuests();
+            } else alert('อีเมลผิด');
         });
 
-        async function loadPendingTickets() {
-            const tbody = document.getElementById('pendingTableBody');
-            tbody.innerHTML = '<tr><td colspan="5">กำลังโหลด...</td></tr>';
+        // --- ระบบ Guest ---
+        async function loadGuests() {
             try {
-                const q = query(collection(db, "Tickets"), where("status", "==", "pending_verification"));
-                const qs = await getDocs(q);
-                tbody.innerHTML = ''; 
-                if (qs.empty) return tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">ไม่มีรายการรอตรวจสอบ</td></tr>';
-
-                qs.forEach((d) => {
-                    const data = d.data();
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${data.type.toUpperCase()} ${data.drinkSet ? '(Set '+data.drinkSet+')' : ''}</td>
-                            <td>${data.pricePaid} บาท</td>
-                            <td>${data.paymentMethod}</td>
-                            <td><a href="${data.slipUrl}" target="_blank"><img src="${data.slipUrl}" class="slip-img"></a></td>
-                            <td>
-                                <button class="btn-approve" onclick="approveTicket('${d.id}')">ยืนยันยอด</button>
-                                <button class="btn-danger" onclick="deleteTicket('${d.id}')">ลบทิ้ง</button>
-                            </td>
-                        </tr>`;
-                });
-            } catch (error) { console.error(error); }
-        }
-
-        async function loadDashboardAndTickets() {
-            const tbody = document.getElementById('paidTableBody');
-            tbody.innerHTML = '<tr><td colspan="4">กำลังโหลด...</td></tr>';
-            let countVip = 0, countParty = 0, countSolo = 0, countTotal = 0;
-
-            try {
-                const q = query(collection(db, "Tickets"), where("status", "==", "paid"));
-                const qs = await getDocs(q);
-                tbody.innerHTML = ''; 
-                if (qs.empty) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ยังไม่มีตั๋วที่ขายได้</td></tr>';
-
-                qs.forEach((d) => {
-                    const data = d.data();
-                    let seats = 1;
-                    if(data.type.includes('4')) seats = 4;
-                    if(data.type.includes('6')) seats = 6;
-                    
-                    countTotal += seats;
-                    if(data.type.includes('vip')) countVip += seats;
-                    if(data.type.includes('party')) countParty += seats;
-                    if(data.type.includes('solo')) countSolo += seats;
-
-                    let isVip = data.type.includes('vip');
-                    let membersDisplay = data.request ? `<div style="color:#facc15; margin-bottom:5px;">Req: ${data.request}</div>` : '';
-                    
-                    if (data.members && data.members.length > 0) {
-                        data.members.forEach((m, idx) => {
-                            if(m.name) membersDisplay += `<div>${idx+1}. ${m.name} | ${m.dob} | ${m.facebook} ${isVip ? `| <b>[${m.guest || 'ไม่ได้เลือก'}]</b>` : ''}</div>`;
-                        });
-                    } else {
-                        membersDisplay += '<span style="color:#f87171;">ลูกค้ายืนยันตั๋วแล้ว แต่ยังไม่กรอกข้อมูล</span>';
-                    }
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="font-size:12px; color:#aaa;">${d.id}<br><span style="color:#facc15;">${data.refName || ''}</span></td>
-                            <td>${data.type.toUpperCase()}</td>
-                            <td>${membersDisplay}</td>
-                            <td>
-                                <button class="btn-edit" onclick="openEditModal('${d.id}')">แก้ไขข้อมูล</button>
-                                <button class="btn-danger" onclick="deleteTicket('${d.id}')">ลบตั๋ว</button>
-                            </td>
-                        </tr>`;
-                });
-
-                document.getElementById('dashTotal').innerText = `${countTotal} / 500`;
-                document.getElementById('dashVip').innerText = `${countVip} / 78`;
-                document.getElementById('dashParty').innerText = `${countParty} / 372`;
-                document.getElementById('dashSolo').innerText = `${countSolo} / 50`;
-
-            } catch (error) { console.error(error); }
-        }
-
-        window.addManualTicket = async function() {
-            const type = document.getElementById('manualType').value;
-            const refName = document.getElementById('manualRef').value || 'แอดมินเพิ่มระบบ';
-            if(!confirm(`ยืนยันการเพิ่มตั๋ว ${type} ให้กับ: ${refName} ใช่หรือไม่?`)) return;
-            try {
-                await addDoc(collection(db, "Tickets"), {
-                    userId: "manual_admin_added",
-                    refName: refName, type: type, status: "paid", isMembersLocked: false, createdAt: serverTimestamp()
-                });
-                alert('เพิ่มตั๋วเข้าระบบสำเร็จ!');
-                loadDashboardAndTickets();
-            } catch (e) { console.error(e); }
-        }
-
-        window.approveTicket = async function(id) {
-            if (confirm('ยืนยันยอดเงินนี้?')) {
-                await updateDoc(doc(db, "Tickets", id), { status: "paid" });
-                loadPendingTickets();
-            }
-        };
-
-        window.deleteTicket = async function(id) {
-            if (confirm('คำเตือน: คุณต้องการลบตั๋วนี้ออกจากระบบอย่างถาวรใช่หรือไม่!?')) {
-                await deleteDoc(doc(db, "Tickets", id));
-                alert('ลบตั๋วเรียบร้อยแล้ว');
-                loadPendingTickets();
-                loadDashboardAndTickets();
-            }
-        };
-
-        // --- ระบบแก้ไขโดยแอดมิน ---
-        window.openEditModal = async function(id) {
-            const docRef = doc(db, "Tickets", id);
-            const docSnap = await getDoc(docRef);
-            if (!docSnap.exists()) return;
-            
-            const data = docSnap.data();
-            document.getElementById('editTicketId').value = id;
-            document.getElementById('editTicketType').value = data.type;
-            document.getElementById('editRequest').value = data.request || '';
-            
-            let seats = 1;
-            if(data.type.includes('4')) seats = 4;
-            if(data.type.includes('6')) seats = 6;
-            let isVip = data.type.includes('vip');
-
-            let html = '';
-            for(let i=0; i<seats; i++) {
-                let m = data.members && data.members[i] ? data.members[i] : {name:'', dob:'', facebook:'', guest:''};
-                html += `<div class="edit-member-box">
-                    <strong>คนที่ ${i+1}</strong>
-                    <input type="text" id="edit_name_${i}" placeholder="ชื่อ-สกุล" value="${m.name}">
-                    <input type="text" id="edit_dob_${i}" placeholder="เกิด (วว/ดด/ปป)" value="${m.dob}">
-                    <input type="text" id="edit_fb_${i}" placeholder="Facebook" value="${m.facebook}">`;
-                
-                if (isVip) {
-                    let opts = `<option value="">-- ไม่ระบุเกสต์ --</option>`;
-                    guestList.forEach(g => { opts += `<option value="${g}" ${m.guest === g ? 'selected' : ''}>${g}</option>`; });
-                    html += `<select id="edit_guest_${i}" style="width:100%; background:#444; color:white; padding:8px; border:none; margin-top:5px;">${opts}</select>`;
+                const docRef = doc(db, "Settings", "GuestList");
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists() && docSnap.data().guests) {
+                    globalGuests = docSnap.data().guests;
+                } else {
+                    await setDoc(docRef, { guests: ["เกสต์ A", "เกสต์ B"] });
+                    globalGuests = ["เกสต์ A", "เกสต์ B"];
                 }
-                html += `</div>`;
-            }
-            document.getElementById('editMembersArea').innerHTML = html;
+                renderGuests();
+            } catch(e) { console.error(e); }
+        }
+        function renderGuests() {
+            const div = document.getElementById('guestListContainer');
+            div.innerHTML = '';
+            globalGuests.forEach((g, idx) => {
+                div.innerHTML += `<div class="guest-item">${g} <span onclick="removeGuest(${idx})">×</span></div>`;
+            });
+        }
+        window.addGuest = async function() {
+            const val = document.getElementById('newGuestName').value.trim();
+            if(!val) return;
+            globalGuests.push(val);
+            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests });
+            document.getElementById('newGuestName').value = '';
+            renderGuests();
+        }
+        window.removeGuest = async function(idx) {
+            if(!confirm('ลบเกสต์ท่านนี้?')) return;
+            globalGuests.splice(idx, 1);
+            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests });
+            renderGuests();
+        }
+
+        // --- โหลดตั๋ว ---
+        async function loadPending() {
+            const tbody = document.querySelector('#pendingTable tbody');
+            tbody.innerHTML = '<tr><td colspan="5">โหลด...</td></tr>';
+            const qs = await getDocs(query(collection(db, "Tickets"), where("status", "==", "pending_verification")));
+            tbody.innerHTML = '';
+            qs.forEach(d => {
+                const data = d.data();
+                tbody.innerHTML += `<tr>
+                    <td>${data.type}</td><td>${data.pricePaid}</td><td>${data.paymentMethod}</td>
+                    <td><a href="${data.slipUrl}" target="_blank"><img src="${data.slipUrl}" style="max-width:80px; border-radius:5px;"></a></td>
+                    <td><button onclick="approve('${d.id}')" style="background:#10b981; width:100%; margin-bottom:5px;">ยืนยัน</button>
+                        <button onclick="delTicket('${d.id}')" style="background:#ef4444; width:100%;">ลบ</button></td>
+                </tr>`;
+            });
+        }
+
+        async function loadPaid() {
+            const tbody = document.querySelector('#paidTable tbody');
+            tbody.innerHTML = '<tr><td colspan="4">โหลด...</td></tr>';
+            const qs = await getDocs(query(collection(db, "Tickets"), where("status", "==", "paid")));
+            tbody.innerHTML = '';
+            let cTotal=0, cVip=0, cParty=0, cSolo=0;
+
+            qs.forEach(d => {
+                const data = d.data();
+                let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
+                cTotal += s; if(data.type.includes('vip')) cVip+=s; if(data.type.includes('party')) cParty+=s; if(data.type.includes('solo')) cSolo+=s;
+                
+                let mHtml = data.request ? `<div style="color:var(--primary); font-size:12px;">Req: ${data.request}</div>` : '';
+                if(data.members) {
+                    data.members.forEach((m,i) => mHtml += `<div style="font-size:12px;">${i+1}.${m.name||'-'}|${m.dob||'-'}|${m.facebook||'-'} ${data.type.includes('vip')?`<b>[${m.guest||''}]</b>`:''}</div>`);
+                }
+                
+                tbody.innerHTML += `<tr>
+                    <td style="font-size:11px; color:#aaa;">${d.id}</td><td>${data.type}</td><td>${mHtml}</td>
+                    <td><button onclick="openEdit('${d.id}')" style="width:100%; margin-bottom:5px;">แก้ไข</button></td>
+                </tr>`;
+            });
+            document.getElementById('dashTotal').innerText = `${cTotal}/500`;
+            document.getElementById('dashVip').innerText = `${cVip}/78`;
+            document.getElementById('dashParty').innerText = `${cParty}/372`;
+            document.getElementById('dashSolo').innerText = `${cSolo}/50`;
+        }
+
+        window.approve = async (id) => { if(confirm('ยืนยัน?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); } }
+        window.delTicket = async (id) => { if(confirm('ลบทิ้ง?')) { await deleteDoc(doc(db,"Tickets",id)); loadPending(); loadPaid(); } }
+
+        // --- แก้ไขโดยแอดมิน ---
+        window.openEdit = async function(id) {
+            const dSnap = await getDoc(doc(db, "Tickets", id));
+            const data = dSnap.data();
+            document.getElementById('editTid').value = id;
+            document.getElementById('editType').value = data.type;
+            document.getElementById('editReq').value = data.request || '';
             
-            document.getElementById('modalOverlay').style.display = 'block';
+            let s=1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
+            let isVip = data.type.includes('vip');
+            let h = '';
+            
+            for(let i=0; i<s; i++) {
+                let m = data.members && data.members[i] ? data.members[i] : {name:'',dob:'',facebook:'',guest:''};
+                h += `<div style="background:#f9f9f9; padding:10px; margin-bottom:10px; border-radius:8px;">
+                    <b style="color:var(--primary);">คนที่ ${i+1}</b>
+                    <input type="text" id="ed_n_${i}" value="${m.name}" placeholder="ชื่อ">
+                    <input type="text" id="ed_d_${i}" value="${m.dob}" placeholder="เกิด">
+                    <input type="text" id="ed_f_${i}" value="${m.facebook}" placeholder="FB">`;
+                if(isVip) {
+                    let opts = `<option value="">- เลือกเกสต์ -</option>`;
+                    globalGuests.forEach(g => opts += `<option value="${g}" ${m.guest===g?'selected':''}>${g}</option>`);
+                    h += `<select id="ed_g_${i}">${opts}</select>`;
+                }
+                h += `</div>`;
+            }
+            document.getElementById('editMembersArea').innerHTML = h;
+            document.getElementById('editModalOverlay').style.display = 'block';
             document.getElementById('editModal').style.display = 'block';
-        };
+        }
 
-        window.closeModal = function() {
-            document.getElementById('modalOverlay').style.display = 'none';
-            document.getElementById('editModal').style.display = 'none';
-        };
-
+        window.closeModal = () => { document.getElementById('editModalOverlay').style.display='none'; document.getElementById('editModal').style.display='none'; }
+        
         window.saveAdminEdit = async function() {
-            const id = document.getElementById('editTicketId').value;
-            const type = document.getElementById('editTicketType').value;
-            let seats = 1;
-            if(type.includes('4')) seats = 4;
-            if(type.includes('6')) seats = 6;
+            const id = document.getElementById('editTid').value;
+            const type = document.getElementById('editType').value;
+            let s=1; if(type.includes('4')) s=4; if(type.includes('6')) s=6;
             let isVip = type.includes('vip');
-
-            let membersArray = [];
-            for(let i=0; i<seats; i++) {
-                membersArray.push({
-                    name: document.getElementById(`edit_name_${i}`).value,
-                    dob: document.getElementById(`edit_dob_${i}`).value,
-                    facebook: document.getElementById(`edit_fb_${i}`).value,
-                    guest: isVip ? document.getElementById(`edit_guest_${i}`).value : ''
+            let arr = [];
+            for(let i=0; i<s; i++) {
+                arr.push({
+                    name: document.getElementById(`ed_n_${i}`).value,
+                    dob: document.getElementById(`ed_d_${i}`).value,
+                    facebook: document.getElementById(`ed_f_${i}`).value,
+                    guest: isVip ? document.getElementById(`ed_g_${i}`).value : ''
                 });
             }
-
-            try {
-                await updateDoc(doc(db, "Tickets", id), {
-                    request: document.getElementById('editRequest').value,
-                    members: membersArray,
-                    isMembersLocked: true // บังคับให้หน้าลูกค้าถูกล็อกอยู่เสมอ
-                });
-                alert('บันทึกข้อมูลเรียบร้อยแล้ว (แอดมินแก้ไข)');
-                closeModal();
-                loadDashboardAndTickets();
-            } catch (e) {
-                console.error(e);
-                alert('เกิดข้อผิดพลาดในการบันทึก');
-            }
-        };
+            await updateDoc(doc(db,"Tickets",id), { request: document.getElementById('editReq').value, members: arr, isMembersLocked: true });
+            closeModal(); loadPaid();
+        }
     </script>
 </body>
 </html>
