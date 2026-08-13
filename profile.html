@@ -20,31 +20,40 @@
         .status-paid { color: #10b981; font-weight: bold; background: #d1fae5; padding: 3px 10px; border-radius: 20px; font-size: 0.9rem; }
         .status-pending { color: #d97706; font-weight: bold; background: #fef3c7; padding: 3px 10px; border-radius: 20px; font-size: 0.9rem; }
         .member-block { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .google-btn { background-color: white; color: #444; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .google-btn { background-color: white; color: #444; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-top: 20px; }
         .locked-msg { color: #ef4444; font-size: 14px; margin-bottom: 15px; display: block; font-weight: 500; background: #fee2e2; padding: 10px; border-radius: 8px; text-align: center; }
         
-        /* สไตล์สำหรับ Chips */
         .chip-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
         .guest-chip { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--primary); background: transparent; color: var(--primary); cursor: pointer; transition: 0.2s; font-size: 0.9rem; user-select: none; }
         .guest-chip.selected { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(255,62,201,0.4); }
         .guest-chip.disabled { border-color: #ddd; color: #aaa; background: #f9f9f9; cursor: not-allowed; text-decoration: line-through; }
         
-        /* Custom Popup */
         #customPopupOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
         .custom-popup { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.2); animation: popIn 0.3s ease-out; }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .popup-btn-wrap { display: flex; gap: 10px; margin-top: 25px; }
+        
+        .uid-box { background: #f3f4f6; padding: 10px; border-radius: 10px; font-family: monospace; color: #4b5563; margin-top: 5px; font-size: 14px; border: 1px dashed #d1d5db; word-break: break-all; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>ระบบสมาชิก CosNite Club</h2>
+        
         <div id="authSection">
+            <p style="color: #666;">กรุณาเข้าสู่ระบบเพื่อจัดการตั๋วของคุณ</p>
             <button id="loginBtn" class="google-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20"> เข้าสู่ระบบด้วย Google</button>
         </div>
+        
         <div id="profileSection" style="display: none;">
-            <p>ยินดีต้อนรับ, <span id="displayEmail" style="color: var(--primary); font-weight:500;"></span></p>
+            <p style="margin-bottom: 5px; font-size: 1.1rem;">ยินดีต้อนรับ, <span id="displayEmail" style="color: var(--primary); font-weight:500;"></span></p>
+            <div class="uid-box">
+                <b>UID ของคุณ:</b> <span id="displayUid" style="user-select: all;"></span><br>
+                <small style="color: #ef4444;">(ก๊อปปี้รหัสนี้ส่งให้แอดมิน กรณีที่ซื้อตั๋วไว้ก่อนมีเว็บไซต์ หรือต้องการรับโอนสิทธิ์ตั๋ว)</small>
+            </div>
+            
             <div id="ticketContainer"></div>
+            
             <button id="logoutBtn" style="background:#ef4444; margin-top:30px;">ออกจากระบบ</button>
         </div>
     </div>
@@ -84,8 +93,8 @@
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('profileSection').style.display = 'block';
                 document.getElementById('displayEmail').innerText = user.email;
+                document.getElementById('displayUid').innerText = user.uid;
                 
-                // ดึงรายชื่อ Guest จาก Firestore
                 try {
                     const guestDoc = await getDoc(doc(db, "Settings", "GuestList"));
                     if(guestDoc.exists() && guestDoc.data().guests) globalGuestList = guestDoc.data().guests;
@@ -103,10 +112,10 @@
 
         async function loadMyTickets(uid) {
             const container = document.getElementById('ticketContainer');
-            container.innerHTML = '<p>กำลังโหลดตั๋ว...</p>';
+            container.innerHTML = '<p style="margin-top:20px;">กำลังโหลดตั๋ว...</p>';
             try {
                 const qs = await getDocs(query(collection(db, "Tickets"), where("userId", "==", uid)));
-                if (qs.empty) return container.innerHTML = '<p>คุณยังไม่มีตั๋วที่ทำการจองไว้</p>';
+                if (qs.empty) return container.innerHTML = '<p style="margin-top:20px; color:#666;">คุณยังไม่มีตั๋วที่ทำการจองไว้</p>';
                 container.innerHTML = '';
                 
                 qs.forEach((d) => {
@@ -118,7 +127,13 @@
                     const isParty = data.type.includes('party');
                     let seats = 1; if(data.type.includes('4')) seats=4; if(data.type.includes('6')) seats=6;
 
+                    // โชว์เลขโต๊ะ เฉพาะถ้ามีข้อมูลเลขโต๊ะ และแอดมินเปิด isTableVisible ให้เป็น true
+                    let tableHtml = (data.tableNumber && data.isTableVisible === true) 
+                        ? `<div style="background: var(--primary); color: white; padding: 8px 15px; border-radius: 50px; display: inline-block; font-weight: bold; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(255,62,201,0.3);">📍 หมายเลขโต๊ะของคุณ: ${data.tableNumber}</div>` 
+                        : '';
+
                     let html = `<div class="ticket-box">
+                        ${tableHtml}
                         <h3 style="margin-top:0; color:var(--primary);">🎟️ ตั๋ว: ${data.type.toUpperCase()}</h3>
                         <p>สถานะ: <span class="${isPaid ? 'status-paid' : 'status-pending'}">${isPaid ? 'ยืนยันชำระเงินแล้ว' : 'รอตรวจสอบสลิป'}</span></p>
                         ${isPaid ? `<div style="text-align:center;"><p style="font-size:14px; color:#666;">QR Code สำหรับสแกนเข้างาน</p><div class="qrcode-container" id="qr_${tId}"></div></div>` : ''}
@@ -142,7 +157,6 @@
                                      <input type="date" id="dob_${tId}_${i}" value="${m.dob||''}">
                                      <input type="text" id="fb_${tId}_${i}" placeholder="ลิงก์ Facebook" value="${m.facebook||''}">`;
                             
-                            // ระบบ Chips สำหรับ VIP
                             if (isVip && globalGuestList.length > 0) {
                                 html += `<div style="font-size:14px; color:#555; margin-top:5px;">เลือก Guest (ห้ามซ้ำในโต๊ะ):</div><div class="chip-container">`;
                                 globalGuestList.forEach(g => {
@@ -165,31 +179,22 @@
                     }
                 });
                 
-                // อัปเดตสถานะ Disabled Chips ทันทีที่โหลดเสร็จ
                 document.querySelectorAll('.guest-chip').forEach(c => updateChipStates(c.dataset.t));
 
             } catch(e) { console.error(e); }
         }
 
-        // ลอจิกการกด Chips
         window.toggleChip = function(el) {
             if(el.classList.contains('disabled')) return;
             const tId = el.dataset.t, seat = el.dataset.seat, guest = el.dataset.g;
-            
-            // ลบ selected ในที่นั่งเดียวกัน
             document.querySelectorAll(`.guest-chip[data-t="${tId}"][data-seat="${seat}"]`).forEach(c => c.classList.remove('selected'));
-            
-            // สลับสถานะ
             el.classList.toggle('selected');
             document.getElementById(`guest_${tId}_${seat}`).value = el.classList.contains('selected') ? guest : '';
-            
             updateChipStates(tId);
         }
 
         function updateChipStates(tId) {
-            // หาว่าตอนนี้โต๊ะนี้เลือกเกสต์ใครไปแล้วบ้าง
             let selectedGuests = Array.from(document.querySelectorAll(`.guest-chip[data-t="${tId}"].selected`)).map(el => el.dataset.g);
-            
             document.querySelectorAll(`.guest-chip[data-t="${tId}"]`).forEach(chip => {
                 if(!chip.classList.contains('selected') && selectedGuests.includes(chip.dataset.g)) {
                     chip.classList.add('disabled');
@@ -199,7 +204,6 @@
             });
         }
 
-        // ระบบ Popup Save
         let pendingSaveData = null;
         window.prepareSave = function(tId, seats, isVip, isParty) {
             let arr = [];
