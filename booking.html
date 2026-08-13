@@ -76,40 +76,40 @@
         });
         const db = getFirestore(app);
 
-        // โควตาสูงสุด
-        const maxVip = 78, maxParty = 372, maxSolo = 50;
+        // โควตาแยกตามประเภทโต๊ะ (รวม 486 ที่นั่ง)
+        const maxVip4Tables = 3;   // VIP 4 คน 3 โต๊ะ
+        const maxVip6Tables = 9;   // VIP 6 คน 9 โต๊ะ
+        const maxParty = 372;      // Party รวม
+        const maxSolo = 48;        // Solo ปรับเป็น 48 เพื่อให้หาร 4/6 ลงตัว
 
         async function checkAvailability() {
             try {
                 const qs = await getDocs(collection(db, "Tickets"));
-                let countVip = 0, countParty = 0, countSolo = 0;
+                let countVip4 = 0, countVip6 = 0, countParty = 0, countSolo = 0;
 
                 qs.forEach(doc => {
                     const d = doc.data();
-                    // นับเฉพาะคนที่จ่ายเงินแล้ว หรือ กำลังรอตรวจสลิป (จองไว้)
                     if (d.status === 'paid' || d.status === 'pending_verification') {
-                        let seats = 1; 
-                        if(d.type.includes('4')) seats = 4;
-                        if(d.type.includes('6')) seats = 6;
-
-                        if(d.type.includes('vip')) countVip += seats;
-                        if(d.type.includes('party')) countParty += seats;
-                        if(d.type.includes('solo')) countSolo += seats;
+                        if(d.type === 'vip4') countVip4++;
+                        if(d.type === 'vip6') countVip6++;
+                        if(d.type === 'party4') countParty += 4;
+                        if(d.type === 'party6') countParty += 6;
+                        if(d.type === 'solo') countSolo += 1;
                     }
                 });
 
-                // ฟังก์ชันปิดการ์ดถ้าเต็ม
                 const setSoldOut = (id) => {
                     const el = document.getElementById(id);
                     el.classList.add('sold-out');
                     el.innerHTML += `<div class="sold-out-badge">SOLD OUT</div>`;
                 };
 
-                if (maxSolo - countSolo < 1) setSoldOut('opt_solo');
+                // เช็กลิมิต
+                if (countSolo >= maxSolo) setSoldOut('opt_solo');
                 if (maxParty - countParty < 4) setSoldOut('opt_party4');
                 if (maxParty - countParty < 6) setSoldOut('opt_party6');
-                if (maxVip - countVip < 4) setSoldOut('opt_vip4');
-                if (maxVip - countVip < 6) setSoldOut('opt_vip6');
+                if (countVip4 >= maxVip4Tables) setSoldOut('opt_vip4');
+                if (countVip6 >= maxVip6Tables) setSoldOut('opt_vip6');
 
                 document.getElementById('loaderOverlay').style.display = 'none';
 
@@ -119,7 +119,7 @@
             }
         }
         
-        checkAvailability(); // สั่งรันเช็กตอนเปิดหน้า
+        checkAvailability();
 
         let selectedTicket = null;
         let selectedDrink = 'A'; 
@@ -130,7 +130,7 @@
 
         ticketCards.forEach(card => {
             card.addEventListener('click', () => {
-                if (card.classList.contains('sold-out')) return; // ถ้าเต็ม ห้ามกด
+                if (card.classList.contains('sold-out')) return;
 
                 ticketCards.forEach(c => c.classList.remove('active'));
                 card.classList.add('active');
