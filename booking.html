@@ -60,7 +60,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        // นำเข้า onSnapshot แทน getDocs เพื่อให้ข้อมูลวิ่งแบบ Real-time
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
@@ -73,13 +72,10 @@
         const auth = getAuth(app);
         
         onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                alert("กรุณาเข้าสู่ระบบก่อนทำการจองบัตรครับ!");
-                window.location.href = "index.html"; 
-            }
+            if (!user) { alert("กรุณาเข้าสู่ระบบก่อนทำการจองบัตรครับ!"); window.location.href = "index.html"; }
         });
 
-        // โควตา (รวม 500 ที่นั่ง)
+        // โควตาแยกเป๊ะๆ ตามที่คำนวณ 500 ที่นั่ง
         const maxVip4Tables = 3;   
         const maxVip6Tables = 9;   
         const maxParty = 384;      
@@ -92,7 +88,6 @@
         const drinkSection = document.getElementById('drinkSection');
         const btnNext = document.getElementById('btnNext');
 
-        // ฟังก์ชันเริ่มฟังข้อมูลแบบ Real-time
         function startRealtimeSync() {
             onSnapshot(collection(db, "Tickets"), (snapshot) => {
                 let countVip4 = 0, countVip6 = 0, countParty = 0, countSolo = 0;
@@ -108,7 +103,6 @@
                     }
                 });
 
-                // ฟังก์ชันเปลี่ยนเป็น SOLD OUT
                 const setSoldOut = (id) => {
                     const el = document.getElementById(id);
                     if (!el.classList.contains('sold-out')) {
@@ -117,7 +111,6 @@
                     }
                 };
 
-                // ฟังก์ชันยกเลิก SOLD OUT (เผื่อแอดมินลบตั๋วแล้วที่ว่างกลับมา)
                 const setAvailable = (id) => {
                     const el = document.getElementById(id);
                     if (el.classList.contains('sold-out')) {
@@ -127,17 +120,16 @@
                     }
                 };
 
-                // รีเซ็ตทุกบัตรให้ Available ไว้ก่อน
                 ['opt_solo', 'opt_party4', 'opt_party6', 'opt_vip4', 'opt_vip6'].forEach(setAvailable);
 
-                // เช็กลิมิตแล้วปรับสถานะใหม่
+                // เช็กลิมิต
                 if (countSolo >= maxSolo) setSoldOut('opt_solo');
                 if (maxParty - countParty < 4) setSoldOut('opt_party4');
                 if (maxParty - countParty < 6) setSoldOut('opt_party6');
                 if (countVip4 >= maxVip4Tables) setSoldOut('opt_vip4');
                 if (countVip6 >= maxVip6Tables) setSoldOut('opt_vip6');
 
-                // ดักจับกรณีที่ลูกค้ากำลังเลือกบัตรอยู่ แล้วบัตรนั้นเต็มกะทันหัน
+                // ดักจับกรณีจองชนกัน (คนนึงจองโต๊ะสุดท้ายไปก่อน แล้วเรากดปุ่มช้ากว่า)
                 if (selectedTicket) {
                     const activeCard = document.getElementById(`opt_${selectedTicket}`);
                     if (activeCard.classList.contains('sold-out')) {
@@ -149,7 +141,6 @@
                     }
                 }
 
-                // ซ่อนโหลดดิ้งหลังจากเช็กข้อมูลสำเร็จ
                 document.getElementById('inlineLoader').style.display = 'none';
             });
         }
