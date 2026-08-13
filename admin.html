@@ -25,6 +25,7 @@
         .dash-card { background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #ffe6f7; }
         .dash-card h3 { margin: 0; color: #666; font-size: 14px; }
         .dash-card p { margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: var(--primary); }
+        .dash-sub { font-size: 12px; color: #f59e0b; margin-top: 5px; font-weight: 500; }
         
         .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
         .action-btns button { padding: 8px; font-size: 12px; border-radius: 6px; }
@@ -76,10 +77,26 @@
 
             <div id="tab-manage" style="display: none;">
                 <div class="dash-grid">
-                    <div class="dash-card"><h3>รวมที่ขายได้ (500)</h3><p id="dashTotal">0/500</p></div>
-                    <div class="dash-card"><h3>VIP (โควตา 66)</h3><p id="dashVip">0/66</p></div>
-                    <div class="dash-card"><h3>Party (โควตา 384)</h3><p id="dashParty">0/384</p></div>
-                    <div class="dash-card"><h3>Solo (โควตา 50)</h3><p id="dashSolo">0/50</p></div>
+                    <div class="dash-card">
+                        <h3>ที่นั่งทั้งหมด (500)</h3>
+                        <p id="dashTotal">0/500</p>
+                        <div class="dash-sub" id="dashTotalSub">(จ่ายแล้ว 0 | รอตรวจ 0)</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>VIP (โควตา 66)</h3>
+                        <p id="dashVip">0/66</p>
+                        <div class="dash-sub" id="dashVipSub">(จ่ายแล้ว 0 | รอตรวจ 0)</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>Party (โควตา 384)</h3>
+                        <p id="dashParty">0/384</p>
+                        <div class="dash-sub" id="dashPartySub">(จ่ายแล้ว 0 | รอตรวจ 0)</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>Solo (โควตา 50)</h3>
+                        <p id="dashSolo">0/50</p>
+                        <div class="dash-sub" id="dashSoloSub">(จ่ายแล้ว 0 | รอตรวจ 0)</div>
+                    </div>
                 </div>
                 
                 <div class="manual-add-box">
@@ -107,7 +124,6 @@
                             <option value="solo">เฉพาะ Solo</option>
                         </select>
                     </div>
-                    
                     <div class="toolbar-group">
                         <button onclick="toggleAllTables(true)" style="background:#3b82f6; padding:8px 15px;">👁️ เปิดชื่อโต๊ะทั้งหมด</button>
                         <button onclick="toggleAllTables(false)" style="background:#ef4444; padding:8px 15px;">🙈 ซ่อนชื่อโต๊ะทั้งหมด</button>
@@ -142,12 +158,10 @@
         <div class="admin-note-box">
             <label style="font-weight:bold; color:var(--primary); font-size:14px;">สำหรับแอดมินจัดผังโต๊ะ:</label>
             <input type="text" id="editTableNum" class="full-width" placeholder="ระบุหมายเลข / ชื่อโต๊ะ (เช่น V01, P12)" style="margin-top:5px;">
-            
             <div class="switch-wrap">
                 <input type="checkbox" id="editShowTable">
                 <label for="editShowTable" style="color: #ef4444; font-weight: bold; cursor:pointer;">เปิดให้ลูกค้าเห็นเลขโต๊ะนี้ในเว็บลูกค้า</label>
             </div>
-            
             <textarea id="editNote" class="full-width" rows="2" placeholder="Note ภายในแอดมิน (ลูกค้าไม่เห็น)" style="margin-top:10px;"></textarea>
         </div>
 
@@ -183,7 +197,7 @@
             document.getElementById(id).style.display = 'block';
             
             if(id === 'tab-pending') loadPending();
-            if(id === 'tab-manage') loadPaid();
+            if(id === 'tab-manage') loadDashboardStats(); // โหลดสถิติใหม่
             if(id === 'tab-settings') loadGuests();
         }
 
@@ -191,46 +205,48 @@
             if(document.getElementById('adminEmail').value === 'cosniteclubparty@gmail.com') {
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
-                loadPending(); loadGuests();
+                loadPending(); loadDashboardStats(); loadGuests();
             } else alert('อีเมลผิด');
         });
 
-        // --- 1. ระบบจัดการเกสต์ ---
-        async function loadGuests() {
-            try {
-                const docSnap = await getDoc(doc(db, "Settings", "GuestList"));
-                if (docSnap.exists() && docSnap.data().guests) {
-                    globalGuests = docSnap.data().guests;
-                } else {
-                    await setDoc(doc(db, "Settings", "GuestList"), { guests: ["เกสต์ A", "เกสต์ B"] });
-                    globalGuests = ["เกสต์ A", "เกสต์ B"];
-                }
-                renderGuests();
-            } catch(e) { console.error(e); }
-        }
-        function renderGuests() {
-            const div = document.getElementById('guestListContainer');
-            div.innerHTML = '';
-            globalGuests.forEach((g, idx) => {
-                div.innerHTML += `<div class="guest-item">${g} <span onclick="removeGuest(${idx})">×</span></div>`;
+        // ------------------ ระบบ Dashboard ใหม่ที่นับรวมยอด Pending ------------------
+        async function loadDashboardStats() {
+            const qsPaid = await getDocs(query(collection(db, "Tickets"), where("status", "==", "paid")));
+            const qsPending = await getDocs(query(collection(db, "Tickets"), where("status", "==", "pending_verification")));
+
+            let cTotal=0, cVip=0, cParty=0, cSolo=0;
+            let pTotal=0, pVip=0, pParty=0, pSolo=0;
+
+            allPaidTickets = qsPaid.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            qsPaid.forEach(d => {
+                const data = d.data();
+                let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
+                cTotal += s; if(data.type.includes('vip')) cVip+=s; if(data.type.includes('party')) cParty+=s; if(data.type.includes('solo')) cSolo+=s;
             });
-        }
-        window.addGuest = async function() {
-            const val = document.getElementById('newGuestName').value.trim();
-            if(!val) return;
-            globalGuests.push(val);
-            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests });
-            document.getElementById('newGuestName').value = '';
-            renderGuests();
-        }
-        window.removeGuest = async function(idx) {
-            if(!confirm('ยืนยันลบเกสต์ท่านนี้?')) return;
-            globalGuests.splice(idx, 1);
-            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests });
-            renderGuests();
+
+            qsPending.forEach(d => {
+                const data = d.data();
+                let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
+                pTotal += s; if(data.type.includes('vip')) pVip+=s; if(data.type.includes('party')) pParty+=s; if(data.type.includes('solo')) pSolo+=s;
+            });
+
+            document.getElementById('dashTotal').innerText = `${cTotal + pTotal}/500`;
+            document.getElementById('dashTotalSub').innerText = `(จ่ายแล้ว ${cTotal} | รอตรวจ ${pTotal})`;
+
+            document.getElementById('dashVip').innerText = `${cVip + pVip}/66`;
+            document.getElementById('dashVipSub').innerText = `(จ่ายแล้ว ${cVip} | รอตรวจ ${pVip})`;
+
+            document.getElementById('dashParty').innerText = `${cParty + pParty}/384`;
+            document.getElementById('dashPartySub').innerText = `(จ่ายแล้ว ${cParty} | รอตรวจ ${pParty})`;
+
+            document.getElementById('dashSolo').innerText = `${cSolo + pSolo}/50`;
+            document.getElementById('dashSoloSub').innerText = `(จ่ายแล้ว ${cSolo} | รอตรวจ ${pSolo})`;
+
+            renderPaidTable(); // วาดตารางตั๋วที่จ่ายแล้ว
         }
 
-        // --- 2. โหลดตั๋ว ---
+        // --- โหลดตั๋ว ---
         async function loadPending() {
             const tbody = document.querySelector('#pendingTable tbody');
             tbody.innerHTML = '<tr><td colspan="4">โหลด...</td></tr>';
@@ -252,35 +268,13 @@
             });
         }
 
-        async function loadPaid() {
-            const tbody = document.querySelector('#paidTable tbody');
-            tbody.innerHTML = '<tr><td colspan="4">กำลังโหลดข้อมูล...</td></tr>';
-            
-            const qs = await getDocs(query(collection(db, "Tickets"), where("status", "==", "paid")));
-            allPaidTickets = qs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            let cTotal=0, cVip=0, cParty=0, cSolo=0;
-            allPaidTickets.forEach(data => {
-                let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
-                cTotal += s; if(data.type.includes('vip')) cVip+=s; if(data.type.includes('party')) cParty+=s; if(data.type.includes('solo')) cSolo+=s;
-            });
-            document.getElementById('dashTotal').innerText = `${cTotal}/500`;
-            document.getElementById('dashVip').innerText = `${cVip}/66`;
-            document.getElementById('dashParty').innerText = `${cParty}/384`;
-            document.getElementById('dashSolo').innerText = `${cSolo}/50`;
-
-            renderPaidTable(); 
-        }
-
         window.renderPaidTable = function() {
             const filterVal = document.getElementById('ticketFilter').value;
             const tbody = document.querySelector('#paidTable tbody');
             tbody.innerHTML = '';
 
             let displayTickets = allPaidTickets;
-            if (filterVal !== 'all') {
-                displayTickets = allPaidTickets.filter(t => t.type.includes(filterVal));
-            }
+            if (filterVal !== 'all') displayTickets = allPaidTickets.filter(t => t.type.includes(filterVal));
 
             if(displayTickets.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ไม่มีข้อมูลในหมวดหมู่นี้</td></tr>';
@@ -309,27 +303,43 @@
             });
         }
 
-        // --- ระบบเปิด/ปิดเลขโต๊ะทั้งหมด (Bulk Action) ---
+        // --- ระบบเกสต์ & Actions ---
+        async function loadGuests() {
+            try {
+                const docSnap = await getDoc(doc(db, "Settings", "GuestList"));
+                if (docSnap.exists() && docSnap.data().guests) globalGuests = docSnap.data().guests;
+                else { await setDoc(doc(db, "Settings", "GuestList"), { guests: ["เกสต์ A", "เกสต์ B"] }); globalGuests = ["เกสต์ A", "เกสต์ B"]; }
+                renderGuests();
+            } catch(e) { console.error(e); }
+        }
+        function renderGuests() {
+            const div = document.getElementById('guestListContainer'); div.innerHTML = '';
+            globalGuests.forEach((g, idx) => { div.innerHTML += `<div class="guest-item">${g} <span onclick="removeGuest(${idx})">×</span></div>`; });
+        }
+        window.addGuest = async function() {
+            const val = document.getElementById('newGuestName').value.trim();
+            if(!val) return; globalGuests.push(val);
+            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests });
+            document.getElementById('newGuestName').value = ''; renderGuests();
+        }
+        window.removeGuest = async function(idx) {
+            if(!confirm('ยืนยันลบเกสต์ท่านนี้?')) return;
+            globalGuests.splice(idx, 1);
+            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests }); renderGuests();
+        }
+
         window.toggleAllTables = async function(isVisible) {
             const actionText = isVisible ? 'เปิดให้ลูกค้าเห็น' : 'ซ่อนไม่ให้ลูกค้าเห็น';
             if(!confirm(`⚠️ ยืนยันการ ${actionText} "หมายเลข/ชื่อโต๊ะ" ของลูกค้าทั้งหมดใช่หรือไม่?\n(ระบบจะใช้เวลาอัปเดตสักครู่)`)) return;
-            
             try {
                 const promises = [];
-                allPaidTickets.forEach(t => {
-                    promises.push(updateDoc(doc(db, "Tickets", t.id), { isTableVisible: isVisible }));
-                });
-                
+                allPaidTickets.forEach(t => { promises.push(updateDoc(doc(db, "Tickets", t.id), { isTableVisible: isVisible })); });
                 await Promise.all(promises);
                 alert(`✅ อัปเดตสถานะสำเร็จ! (${actionText} เรียบร้อยแล้ว)`);
-                loadPaid(); 
-            } catch(e) {
-                console.error(e);
-                alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
-            }
+                loadDashboardStats(); 
+            } catch(e) { console.error(e); alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล'); }
         };
 
-        // --- 4. โหลดเป็นไฟล์ CSV (Excel) ---
         window.exportCSV = function() {
             if(allPaidTickets.length === 0) return alert('ไม่มีข้อมูลตั๋วให้ดาวน์โหลด');
             let csvContent = "\uFEFFลำดับ,รหัสตั๋ว,อ้างอิงลูกค้า,ประเภทตั๋ว,เลขโต๊ะ,โซนที่รีเควส,รายละเอียดผู้ร่วมงาน (คนที่. ชื่อ | วันเกิด | FB | เกสต์)\n";
@@ -341,14 +351,11 @@
                 csvContent += rowString + "\n";
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
             link.download = `CosNite_Tickets_${new Date().toISOString().slice(0,10)}.csv`;
-            link.style.display = "none"; document.body.appendChild(link);
-            link.click(); document.body.removeChild(link);
+            link.style.display = "none"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- ฟังก์ชันช่วยเหลืออื่นๆ ---
         window.addManualTicket = async function() {
             const type = document.getElementById('manualType').value;
             const refName = document.getElementById('manualRef').value || 'ลูกค้าเก่า (Manual)';
@@ -362,23 +369,18 @@
                 });
                 alert('เพิ่มตั๋วเข้าระบบสำเร็จ!');
                 document.getElementById('manualRef').value = ''; document.getElementById('manualUid').value = '';
-                loadPaid();
+                loadDashboardStats();
             } catch (e) { console.error(e); }
         }
 
-        window.approve = async (id) => { if(confirm('ยืนยันสลิปยอดเงิน?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); loadPaid(); } }
-        window.delTicket = async (id) => { if(confirm('ลบตั๋วใบนี้ทิ้งอย่างถาวร?')) { await deleteDoc(doc(db,"Tickets",id)); loadPending(); loadPaid(); } }
-        
+        window.approve = async (id) => { if(confirm('ยืนยันสลิปยอดเงิน?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); loadDashboardStats(); } }
+        window.delTicket = async (id) => { if(confirm('ลบตั๋วใบนี้ทิ้งอย่างถาวร?')) { await deleteDoc(doc(db,"Tickets",id)); loadPending(); loadDashboardStats(); } }
         window.transferTicket = async function(id) {
             const newUid = prompt("กรอก UID ใหม่:");
             if(!newUid) return;
-            if(confirm(`โอนตั๋วไปที่ UID: ${newUid.trim()} ?`)) {
-                await updateDoc(doc(db, "Tickets", id), { userId: newUid.trim() });
-                alert("✅ โอนสิทธิ์สำเร็จ!"); loadPaid();
-            }
+            if(confirm(`โอนตั๋วไปที่ UID: ${newUid.trim()} ?`)) { await updateDoc(doc(db, "Tickets", id), { userId: newUid.trim() }); alert("✅ โอนสิทธิ์สำเร็จ!"); loadDashboardStats(); }
         };
 
-        // --- แก้ไขข้อมูล (UI Grid ใหม่) ---
         window.openEdit = async function(id) {
             const dSnap = await getDoc(doc(db, "Tickets", id));
             const data = dSnap.data();
@@ -396,14 +398,12 @@
             
             for(let i=0; i<s; i++) {
                 let m = data.members && data.members[i] ? data.members[i] : {name:'',dob:'',facebook:'',guest:''};
-                
                 h += `<div class="member-edit-card">
                     <b style="color:var(--primary); font-size:14px; margin-bottom:5px; display:block;">คนที่ ${i+1}</b>
                     <div class="member-edit-grid">
                         <input class="full-width" type="text" id="ed_n_${i}" value="${m.name}" placeholder="ชื่อ-สกุล">
                         <input type="text" id="ed_d_${i}" value="${m.dob}" placeholder="วันเกิด">
                         <input type="text" id="ed_f_${i}" value="${m.facebook}" placeholder="Facebook">`;
-                
                 if(isVip) {
                     let opts = `<option value="">- เลือกเกสต์ -</option>`;
                     globalGuests.forEach(g => opts += `<option value="${g}" ${m.guest===g?'selected':''}>${g}</option>`);
@@ -429,12 +429,10 @@
                            facebook: document.getElementById(`ed_f_${i}`).value, guest: isVip ? document.getElementById(`ed_g_${i}`).value : '' });
             }
             await updateDoc(doc(db,"Tickets",id), { 
-                tableNumber: document.getElementById('editTableNum').value, 
-                adminNote: document.getElementById('editNote').value,
-                isTableVisible: document.getElementById('editShowTable').checked,
-                request: document.getElementById('editReq').value, members: arr, isMembersLocked: true 
+                tableNumber: document.getElementById('editTableNum').value, adminNote: document.getElementById('editNote').value,
+                isTableVisible: document.getElementById('editShowTable').checked, request: document.getElementById('editReq').value, members: arr, isMembersLocked: true 
             });
-            closeModal(); loadPaid();
+            closeModal(); loadDashboardStats();
         }
     </script>
 </body>
