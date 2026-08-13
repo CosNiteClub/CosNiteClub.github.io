@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จองบัตร - CosNite Club</title>
+    <style>
+        body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
+        select, input, button { width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 20px; border-radius: 5px; border: none; }
+        button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>เลือกแพ็กเกจที่คุณต้องการ</h2>
+        <form id="bookingForm">
+            <label for="ticketType">ประเภทบัตร:</label>
+            <select id="ticketType" required>
+                <option value="">-- กรุณาเลือก --</option>
+                <option value="solo">Solo (เดี่ยว) - 690 บาท</option>
+                <option value="party4">Party โต๊ะ 4 คน - 3,400 บาท</option>
+                <option value="party6">Party โต๊ะ 6 คน - 5,100 บาท</option>
+                <option value="vip4">VIP โต๊ะ 4 คน - 6,000 บาท</option>
+                <option value="vip6">VIP โต๊ะ 6 คน - 9,000 บาท</option>
+            </select>
+
+            <div id="drinkSelection" style="display: none;">
+                <label for="drinkSet">เลือกเซ็ตเครื่องดื่ม:</label>
+                <select id="drinkSet">
+                    <option value="A">Set A - Sangsom + Mixer</option>
+                    <option value="B">Set B - Leo Beer</option>
+                    <option value="C">Set C - Soju (+39 บาท/คน)</option>
+                </select>
+            </div>
+
+            <button type="submit">ไปหน้าชำระเงิน</button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // คอนฟิก Firebase ของคุณ
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
+            authDomain: "cosniteclub.firebaseapp.com",
+            projectId: "cosniteclub",
+            storageBucket: "cosniteclub.firebasestorage.app",
+            messagingSenderId: "429033863377",
+            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0",
+            measurementId: "G-8GSH09B7P2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ดักจับการเปลี่ยนประเภทตั๋วเพื่อโชว์/ซ่อน ตัวเลือกเครื่องดื่ม
+        const ticketSelect = document.getElementById('ticketType');
+        const drinkDiv = document.getElementById('drinkSelection');
+        
+        ticketSelect.addEventListener('change', function() {
+            if(this.value.includes('party')) {
+                drinkDiv.style.display = 'block';
+            } else {
+                drinkDiv.style.display = 'none';
+            }
+        });
+
+        // จัดการเมื่อกดปุ่ม Submit (เดี๋ยวเราจะทำลอจิกส่งข้อมูลไปหน้า Checkout ต่อ)
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('บันทึกข้อมูลเบื้องต้นสำเร็จ! (เดี๋ยวเราจะทำระบบส่งข้อมูลไปหน้า Checkout ต่อ)');
+            // โค้ดสำหรับบันทึกลง Firestore และเปลี่ยนหน้าจะอยู่ตรงนี้
+        });
+    </script>
+</body>
+</html>
