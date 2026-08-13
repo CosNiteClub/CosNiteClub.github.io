@@ -7,39 +7,74 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #fffafc; --text: #333; }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; text-align: center; }
-        .container { max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; text-align: center; margin: 0;}
+        .container { max-width: 500px; margin: auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
         h2 { color: var(--primary); margin-top: 0; }
-        select, input, button { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 20px; border-radius: 10px; border: 1px solid #ddd; font-family: inherit; font-size: 1rem; outline: none; box-sizing: border-box; }
-        select:focus, input:focus { border-color: var(--primary); }
-        button { background-color: var(--primary); color: white; font-weight: 500; cursor: pointer; border: none; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; }
-        button:hover:not(:disabled) { background-color: #e62eb3; transform: translateY(-2px); }
-        button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
-        .summary-box { background: var(--accent); padding: 20px; border-radius: 15px; margin-bottom: 25px; text-align: left; color: #555; }
-        #qrCodeDisplay { max-width: 250px; display: none; margin: 20px auto; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 3px solid var(--primary); }
+        
+        .summary-box { background: #fffafc; padding: 20px; border-radius: 15px; margin-bottom: 25px; text-align: left; border: 1px dashed var(--primary); }
+        .summary-box p { margin: 5px 0; font-size: 1.1rem; }
+        
+        /* ปุ่มเลือกช่องทางชำระเงิน */
+        .pay-methods { display: flex; gap: 10px; margin-bottom: 20px; }
+        .pay-btn { flex: 1; padding: 15px 10px; background: #f9f9f9; border: 2px solid #eee; border-radius: 12px; cursor: pointer; font-family: 'Kanit'; font-weight: 500; font-size: 1rem; color: #555; transition: 0.3s; }
+        .pay-btn.active { border-color: var(--primary); background: #fff0f9; color: var(--primary); box-shadow: 0 4px 10px rgba(255,62,201,0.2); }
+        
+        #qrCodeDisplay { max-width: 220px; display: none; margin: 15px auto; border-radius: 15px; border: 3px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        input[type="file"] { width: 100%; padding: 12px; border: 2px dashed #ddd; border-radius: 10px; background: #fdfdfd; margin-bottom: 20px; cursor: pointer; }
+        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; }
+        button.submit-btn:hover { background-color: #e62eb3; transform: translateY(-2px); }
+
+        /* Loading & Success Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; }
+        .custom-modal { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 15px 35px rgba(255,62,201,0.2); border: 2px solid #ffe6f7; animation: popIn 0.3s ease-out; }
+        
+        /* Spinner */
+        .spinner { width: 50px; height: 50px; border: 5px solid #ffe6f7; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .success-icon { font-size: 4rem; color: #10b981; margin-bottom: 10px; animation: popIn 0.5s ease-out; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>สรุปรายการจองและชำระเงิน</h2>
+        <h2>สรุปรายการ & ชำระเงิน 💸</h2>
         <div class="summary-box" id="orderSummary"></div>
 
-        <label for="paymentMethod" style="font-weight:500; display:block; text-align:left;">เลือกช่องทางการชำระเงิน:</label>
-        <select id="paymentMethod">
-            <option value="normal">โอนเงิน / PromptPay / Mobile Banking</option>
-            <option value="credit">บัตรเครดิต (ชาร์จ 3%)</option>
-        </select>
+        <h3 style="text-align: left; font-size: 1.1rem; color: #555;">เลือกช่องทางการชำระเงิน</h3>
+        <div class="pay-methods">
+            <button class="pay-btn active" data-method="normal">โอนเงิน / QR Code</button>
+            <button class="pay-btn" data-method="credit">บัตรเครดิต (+3%)</button>
+        </div>
 
-        <div id="paymentArea" style="display: none;">
-            <h3 style="color: var(--primary); font-size: 1.5rem;">ยอดที่ต้องชำระ: <span id="finalPriceDisplay">0</span> บาท</h3>
-            <p style="color: #666;">สแกน QR Code เพื่อชำระเงิน</p>
+        <div id="paymentArea">
+            <h3 style="color: var(--primary); font-size: 1.5rem; margin: 10px 0;">ยอดชำระ: <span id="finalPriceDisplay">0</span> ฿</h3>
+            <p style="color: #666; font-size: 0.9rem; margin:0;">สแกน QR Code ด้านล่างเพื่อชำระเงิน</p>
             <img id="qrCodeDisplay" src="" alt="QR Code">
             
-            <hr style="border:none; border-top: 1px dashed #ccc; margin: 25px 0;">
+            <hr style="border:none; border-top: 1px dashed #ddd; margin: 25px 0;">
             
-            <h3 style="text-align:left; color:#555;">อัปโหลดหลักฐานการโอนเงิน (สลิป)</h3>
+            <h3 style="text-align:left; color:#555; font-size: 1.1rem; margin-top:0;">แนบหลักฐาน (สลิป)</h3>
             <input type="file" id="slipUpload" accept="image/*" required>
-            <button id="submitOrderBtn">ยืนยันการชำระเงิน</button>
+            <button id="submitOrderBtn" class="submit-btn">ยืนยันการชำระเงิน</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="loadingModal">
+        <div class="custom-modal">
+            <div class="spinner"></div>
+            <h3 style="color: var(--primary); margin:0;">กำลังประมวลผล...</h3>
+            <p style="color:#666; font-size:0.9rem;">กรุณารอสักครู่ ห้ามปิดหน้านี้</p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="successModal">
+        <div class="custom-modal">
+            <div class="success-icon">✅</div>
+            <h3 style="color: #10b981; margin:0;">ส่งข้อมูลสำเร็จ!</h3>
+            <p style="color:#666; font-size:0.9rem;">รอแอดมินตรวจสอบสลิปสักครู่นะครับ</p>
+            <button onclick="window.location.href='profile.html'" class="submit-btn" style="margin-top:15px; padding:10px;">ไปดูตั๋วของฉัน</button>
         </div>
     </div>
 
@@ -59,17 +94,15 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
         let currentUser = null;
+        let selectedMethod = 'normal';
 
         onAuthStateChanged(auth, (user) => {
             if (user) currentUser = user;
-            else {
-                alert('กรุณาเข้าสู่ระบบก่อนชำระเงิน');
-                window.location.href = 'profile.html';
-            }
+            else { alert('กรุณาเข้าสู่ระบบ'); window.location.href = 'profile.html'; }
         });
 
         const bookingData = JSON.parse(localStorage.getItem('bookingData'));
-        if(!bookingData) { alert('ไม่พบข้อมูลการจอง'); window.location.href = 'booking.html'; }
+        if(!bookingData) { window.location.href = 'booking.html'; }
 
         const ticketType = bookingData.ticketType;
         const drinkSet = bookingData.drinkSet;
@@ -82,31 +115,36 @@
         else if(ticketType === 'vip6') basePrice = 9000;
 
         document.getElementById('orderSummary').innerHTML = `
-            <p style="margin:5px 0;"><b>ประเภทบัตร:</b> ${ticketType.toUpperCase()}</p>
-            ${ticketType.includes('party') ? `<p style="margin:5px 0;"><b>เซ็ตเครื่องดื่ม:</b> Set ${drinkSet}</p>` : ''}
+            <p><b>บัตร:</b> <span style="color:var(--primary);">${ticketType.toUpperCase()}</span></p>
+            ${ticketType.includes('party') ? `<p><b>เครื่องดื่ม:</b> Set ${drinkSet}</p>` : ''}
         `;
 
-        function updatePaymentDisplay() {
-            const method = document.getElementById('paymentMethod').value;
-            let finalPrice = method === 'credit' ? basePrice * 1.03 : basePrice;
+        const updateDisplay = () => {
+            let finalPrice = selectedMethod === 'credit' ? basePrice * 1.03 : basePrice;
             document.getElementById('finalPriceDisplay').innerText = finalPrice.toLocaleString('th-TH', {minimumFractionDigits: 2});
-            
             let sojuText = hasSoju ? "-soju" : "";
-            document.getElementById('qrCodeDisplay').src = `assets/images/qrcodes/qr-${ticketType}${sojuText}-${method}.jpg`;
+            document.getElementById('qrCodeDisplay').src = `assets/images/qrcodes/qr-${ticketType}${sojuText}-${selectedMethod}.jpg`;
             document.getElementById('qrCodeDisplay').style.display = 'block';
-            document.getElementById('paymentArea').style.display = 'block';
-        }
+        };
+        updateDisplay();
 
-        updatePaymentDisplay();
-        document.getElementById('paymentMethod').addEventListener('change', updatePaymentDisplay);
+        // กดปุ่มเลือกชำระเงิน
+        document.querySelectorAll('.pay-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedMethod = btn.dataset.method;
+                updateDisplay();
+            });
+        });
 
         document.getElementById('submitOrderBtn').addEventListener('click', async () => {
-            if(!currentUser) return alert('เซสชันขาดหาย กรุณาเข้าสู่ระบบอีกครั้ง');
+            if(!currentUser) return;
             const slipFile = document.getElementById('slipUpload').files[0];
-            if(!slipFile) return alert('กรุณาอัปโหลดสลิปครับ');
+            if(!slipFile) return alert('กรุณาแนบรูปสลิปด้วยครับ!');
 
-            const btn = document.getElementById('submitOrderBtn');
-            btn.innerText = "กำลังอัปโหลด..."; btn.disabled = true;
+            // โชว์ Loading Modal
+            document.getElementById('loadingModal').style.display = 'flex';
 
             try {
                 const formData = new FormData(); formData.append('image', slipFile);
@@ -116,17 +154,20 @@
 
                 await addDoc(collection(db, "Tickets"), {
                     userId: currentUser.uid, type: ticketType, drinkSet: drinkSet || null,
-                    paymentMethod: document.getElementById('paymentMethod').value,
+                    paymentMethod: selectedMethod,
                     pricePaid: parseFloat(document.getElementById('finalPriceDisplay').innerText.replace(/,/g, '')),
                     slipUrl: imgbb.data.url, status: "pending_verification", createdAt: serverTimestamp()
                 });
 
-                alert('สำเร็จ! กรุณารอทีมงานตรวจสอบ');
                 localStorage.removeItem('bookingData');
-                window.location.href = 'profile.html';
+                // ปิด Loading โชว์ Success
+                document.getElementById('loadingModal').style.display = 'none';
+                document.getElementById('successModal').style.display = 'flex';
+                
             } catch (e) {
-                console.error(e); alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป');
-                btn.innerText = "ยืนยันการชำระเงิน"; btn.disabled = false;
+                console.error(e); 
+                document.getElementById('loadingModal').style.display = 'none';
+                alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป กรุณาลองใหม่');
             }
         });
     </script>
