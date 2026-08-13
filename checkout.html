@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ชำระเงิน - CosNite Club</title>
+    <style>
+        body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
+        select, input, button { width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 20px; border-radius: 5px; border: none; box-sizing: border-box; }
+        button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .summary-box { background: #333; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: left; }
+        #qrCodeDisplay { max-width: 300px; display: none; margin: 20px auto; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>สรุปรายการจองและชำระเงิน</h2>
+        
+        <div class="summary-box" id="orderSummary">
+            </div>
+
+        <label for="paymentMethod"><b>เลือกช่องทางการชำระเงิน:</b></label>
+        <select id="paymentMethod">
+            <option value="normal">โอนเงิน / PromptPay / Mobile Banking / E-Wallet</option>
+            <option value="credit">บัตรเครดิต (ชาร์จค่าธรรมเนียม 3%)</option>
+        </select>
+
+        <div id="paymentArea" style="display: none;">
+            <h3 style="color: #facc15;">ยอดที่ต้องชำระ: <span id="finalPriceDisplay">0</span> บาท</h3>
+            <p>สแกน QR Code ด้านล่างเพื่อชำระเงิน</p>
+            <img id="qrCodeDisplay" src="" alt="QR Code ชำระเงิน">
+            
+            <hr style="border-color: #444; margin: 20px 0;">
+            
+            <h3>อัปโหลดหลักฐานการโอนเงิน (สลิป)</h3>
+            <input type="file" id="slipUpload" accept="image/*" required>
+            <button id="submitOrderBtn">ยืนยันการชำระเงิน</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+        // นำเข้า Firebase Auth เพิ่มเติม
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
+            authDomain: "cosniteclub.firebaseapp.com",
+            projectId: "cosniteclub",
+            storageBucket: "cosniteclub.firebasestorage.app",
+            messagingSenderId: "429033863377",
+            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0",
+            measurementId: "G-8GSH09B7P2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const auth = getAuth(app); // กำหนดตัวแปร Auth
+
+        let currentUser = null;
+
+        // ตรวจสอบว่าผู้ใช้ล็อกอินอยู่หรือไม่ ถ้ายังให้กลับไปล็อกอินก่อน
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+            } else {
+                alert('กรุณาเข้าสู่ระบบก่อนทำการชำระเงิน');
+                window.location.href = 'profile.html'; // เด้งไปหน้าให้ล็อกอิน
+            }
+        });
+
+        // ดึงข้อมูลจากการจอง
+        const bookingData = JSON.parse(localStorage.getItem('bookingData'));
+        if(!bookingData) {
+            alert('ไม่พบข้อมูลการจอง กรุณาทำรายการใหม่');
+            window.location.href = 'booking.html';
+        }
+
+        const ticketType = bookingData.ticketType;
+        const drinkSet = bookingData.drinkSet;
+        let basePrice = 0;
+        let hasSoju = false;
+
+        if(ticketType === 'solo') basePrice = 690;
+        else if(ticketType === 'party4') { basePrice = 3400; if(drinkSet === 'C') { basePrice = 3556; hasSoju = true; } }
+        else if(ticketType === 'party6') { basePrice = 5100; if(drinkSet === 'C') { basePrice = 5334; hasSoju = true; } }
+        else if(ticketType === 'vip4') basePrice = 6000;
+        else if(ticketType === 'vip6') basePrice = 9000;
+
+        document.getElementById('orderSummary').innerHTML = `
+            <p><b>ประเภทบัตร:</b> ${ticketType.toUpperCase()}</p>
+            ${ticketType.includes('party') ? `<p><b>เซ็ตเครื่องดื่ม:</b> Set ${drinkSet}</p>` : ''}
+        `;
+
+        const paymentMethodSelect = document.getElementById('paymentMethod');
+        const paymentArea = document.getElementById('paymentArea');
+        const finalPriceDisplay = document.getElementById('finalPriceDisplay');
+        const qrCodeDisplay = document.getElementById('qrCodeDisplay');
+
+        function updatePaymentDisplay() {
+            const method = paymentMethodSelect.value;
+            let finalPrice = basePrice;
+            if(method === 'credit') {
+                finalPrice = basePrice * 1.03;
+            }
+
+            finalPriceDisplay.innerText = finalPrice.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            let sojuText = hasSoju ? "-soju" : "";
+            let fileName = `qr-${ticketType}${sojuText}-${method}.jpg`;
+            
+            qrCodeDisplay.src = `assets/images/qrcodes/${fileName}`;
+            qrCodeDisplay.style.display = 'block';
+            paymentArea.style.display = 'block';
+        }
+
+        updatePaymentDisplay();
+        paymentMethodSelect.addEventListener('change', updatePaymentDisplay);
+
+        document.getElementById('submitOrderBtn').addEventListener('click', async () => {
+            if(!currentUser) {
+                alert('เซสชันขาดหาย กรุณาเข้าสู่ระบบอีกครั้ง');
+                return;
+            }
+
+            const slipFile = document.getElementById('slipUpload').files[0];
+            if(!slipFile) {
+                alert('กรุณาอัปโหลดหลักฐานการโอนเงินครับ');
+                return;
+            }
+
+            document.getElementById('submitOrderBtn').innerText = "กำลังดำเนินการ...";
+            document.getElementById('submitOrderBtn').disabled = true;
+
+            try {
+                // 1. อัปโหลดรูปสลิปไปที่ Firebase Storage
+                const slipRef = ref(storage, `slips/${Date.now()}_${slipFile.name}`);
+                await uploadBytes(slipRef, slipFile);
+                const slipUrl = await getDownloadURL(slipRef);
+
+                // 2. บันทึกข้อมูลตั๋วลง Firestore พร้อมเพิ่ม userId
+                const docRef = await addDoc(collection(db, "Tickets"), {
+                    userId: currentUser.uid, // <--- จุดที่เพิ่มเข้ามาเพื่อให้ผูกกับผู้ใช้
+                    type: ticketType,
+                    drinkSet: drinkSet || null,
+                    paymentMethod: paymentMethodSelect.value,
+                    pricePaid: parseFloat(finalPriceDisplay.innerText.replace(/,/g, '')),
+                    slipUrl: slipUrl,
+                    status: "pending_verification",
+                    createdAt: serverTimestamp()
+                });
+
+                alert('บันทึกข้อมูลสำเร็จ! กรุณารอทีมงานตรวจสอบสลิปครับ');
+                localStorage.removeItem('bookingData');
+                window.location.href = 'profile.html'; // เด้งไปหน้า Profile เพื่อดูตั๋ว
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
+                document.getElementById('submitOrderBtn').innerText = "ยืนยันการชำระเงิน";
+                document.getElementById('submitOrderBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
