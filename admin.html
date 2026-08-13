@@ -6,7 +6,6 @@
     <title>Admin - CosNite Club</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* ... สไตล์อื่นๆ เหมือนเดิม เพิ่มเติมเฉพาะส่วนจัดการปุ่ม ... */
         :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #f9f9f9; --text: #333; }
         body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
         .container { max-width: 1100px; margin: auto; background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
@@ -27,17 +26,22 @@
         .dash-card h3 { margin: 0; color: #666; font-size: 14px; }
         .dash-card p { margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: var(--primary); }
         
-        /* สไตล์ปุ่มตารางที่จัดระเบียบใหม่ */
         .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
         .action-btns button { padding: 8px; font-size: 12px; border-radius: 6px; }
-        .btn-edit { background-color: #3b82f6; } /* สีฟ้า */
-        .btn-transfer { background-color: #f59e0b; } /* สีส้ม */
-        .btn-del { background-color: #ef4444; grid-column: span 2; } /* สีแดง ยาวเต็ม */
-        .btn-approve { background-color: #10b981; grid-column: span 2; } /* สีเขียว */
+        .btn-edit { background-color: #3b82f6; }
+        .btn-transfer { background-color: #f59e0b; }
+        .btn-del { background-color: #ef4444; grid-column: span 2; }
+        .btn-approve { background-color: #10b981; grid-column: span 2; }
+        
+        .manual-add-box { background: #fffafc; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px dashed var(--primary); }
 
         #editModalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; backdrop-filter: blur(2px);}
         #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; border-radius: 20px; z-index: 101; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         .admin-note-box { background: #fff0f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed var(--primary); }
+        
+        /* สวิตช์ Toggle เปิดปิดโต๊ะ */
+        .switch-wrap { display: flex; align-items: center; gap: 10px; margin-top: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        .switch-wrap input { width: auto; transform: scale(1.3); cursor: pointer; }
     </style>
 </head>
 <body>
@@ -69,6 +73,23 @@
                     <div class="dash-card"><h3>Solo (50)</h3><p id="dashSolo">0/50</p></div>
                 </div>
                 
+                <div class="manual-add-box">
+                    <h3 style="margin-top:0; color:var(--primary);">+ เพิ่มตั๋วให้ลูกค้าเก่า (Manual)</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <select id="manualType">
+                            <option value="solo">Solo (เดี่ยว)</option>
+                            <option value="party4">Party 4 คน</option>
+                            <option value="party6">Party 6 คน</option>
+                            <option value="vip4">VIP 4 คน</option>
+                            <option value="vip6">VIP 6 คน</option>
+                        </select>
+                        <input type="text" id="manualRef" placeholder="ชื่ออ้างอิงลูกค้า" style="flex: 1;">
+                        <input type="text" id="manualUid" placeholder="UID ลูกค้า (ถ้ามี)" style="flex: 1;">
+                        <button onclick="addManualTicket()" style="background:#10b981; padding: 10px 20px;">เพิ่มเข้าระบบ</button>
+                    </div>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">* หากนำ UID จากลูกค้ามากรอก ตั๋วจะถูกโอนเข้าบัญชีลูกค้าทันที (ถ้ายังไม่มีให้เว้นว่างไว้ แล้วค่อยใช้ปุ่ม "โอนสิทธิ์" ภายหลัง)</p>
+                </div>
+
                 <table id="paidTable">
                     <thead><tr><th>อ้างอิง/โต๊ะ</th><th>ประเภท</th><th>รายละเอียดลูกค้า</th><th style="width:150px;">จัดการ (Admin)</th></tr></thead>
                     <tbody></tbody>
@@ -83,9 +104,15 @@
         <input type="hidden" id="editTid"><input type="hidden" id="editType">
         
         <div class="admin-note-box">
-            <label style="font-weight:bold; color:var(--primary); font-size:13px;">สำหรับแอดมินจัดผังโต๊ะ:</label>
-            <input type="text" id="editTableNum" placeholder="ระบุหมายเลข / ชื่อโต๊ะ (เช่น V01, P12)" style="width:100%; margin-bottom:10px;">
-            <textarea id="editNote" rows="2" placeholder="Note ภายในแอดมิน (ลูกค้าไม่เห็น)" style="width:100%;"></textarea>
+            <label style="font-weight:bold; color:var(--primary); font-size:14px;">สำหรับแอดมินจัดผังโต๊ะ:</label>
+            <input type="text" id="editTableNum" placeholder="ระบุหมายเลข / ชื่อโต๊ะ (เช่น V01, P12)" style="width:100%; margin-top:5px;">
+            
+            <div class="switch-wrap">
+                <input type="checkbox" id="editShowTable">
+                <label for="editShowTable" style="color: #ef4444; font-weight: bold; cursor:pointer;">เปิดให้ลูกค้าเห็นเลขโต๊ะนี้ในหน้าเว็บของลูกค้า</label>
+            </div>
+            
+            <textarea id="editNote" rows="2" placeholder="Note ภายในแอดมิน (ลูกค้าไม่เห็น)" style="width:100%; margin-top:10px;"></textarea>
         </div>
 
         <textarea id="editReq" rows="2" style="width:100%; margin-bottom:15px;" placeholder="รีเควสโซน/อื่นๆ"></textarea>
@@ -99,7 +126,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const app = initializeApp({
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
@@ -108,7 +135,6 @@
         });
         const db = getFirestore(app);
 
-        // ... (ระบบ Login & Tabs เหมือนเดิม) ...
         window.switchTab = function(id) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-pending').style.display = 'none';
@@ -127,7 +153,6 @@
             } else alert('อีเมลผิด');
         });
 
-        // 1. โหลดตั๋วรอตรวจ
         async function loadPending() {
             const tbody = document.querySelector('#pendingTable tbody');
             tbody.innerHTML = '<tr><td colspan="4">โหลด...</td></tr>';
@@ -149,7 +174,6 @@
             });
         }
 
-        // 2. โหลดตั๋วที่ขายแล้ว (จัดหน้าปุ่มใหม่)
         async function loadPaid() {
             const tbody = document.querySelector('#paidTable tbody');
             tbody.innerHTML = '<tr><td colspan="4">โหลด...</td></tr>';
@@ -162,7 +186,7 @@
                 let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
                 cTotal += s; if(data.type.includes('vip')) cVip+=s; if(data.type.includes('party')) cParty+=s; if(data.type.includes('solo')) cSolo+=s;
                 
-                let tableTag = data.tableNumber ? `<div style="color:var(--primary); font-weight:bold; font-size:14px;">📍 โต๊ะ: ${data.tableNumber}</div>` : '';
+                let tableTag = data.tableNumber ? `<div style="color:var(--primary); font-weight:bold; font-size:14px;">📍 โต๊ะ: ${data.tableNumber} ${data.isTableVisible ? '(ลูกค้าเห็น)' : '(ซ่อน)'}</div>` : '';
                 let mHtml = data.request ? `<div style="color:#f59e0b; font-size:12px;">Req: ${data.request}</div>` : '';
                 if(data.members) {
                     data.members.forEach((m,i) => mHtml += `<div style="font-size:12px; margin-top:3px;">${i+1}.${m.name||'-'} | ${data.type.includes('vip')?`<b style="color:var(--primary);">[${m.guest||'ไม่ระบุ'}]</b>`:''}</div>`);
@@ -172,6 +196,7 @@
                     <td>
                         ${tableTag}
                         <span style="font-size:10px; color:#aaa;">ID: ${d.id}</span>
+                        ${data.refName ? `<br><b style="font-size:12px; color:#10b981;">(Ref: ${data.refName})</b>` : ''}
                     </td>
                     <td>${data.type.toUpperCase()}</td>
                     <td>${mHtml}</td>
@@ -184,42 +209,54 @@
                     </td>
                 </tr>`;
             });
-            // อัปเดตตัวเลข
             document.getElementById('dashTotal').innerText = `${cTotal}/500`;
             document.getElementById('dashVip').innerText = `${cVip}/78`;
             document.getElementById('dashParty').innerText = `${cParty}/372`;
             document.getElementById('dashSolo').innerText = `${cSolo}/50`;
         }
 
-        // ฟังก์ชัน Action ของแอดมิน
+        window.addManualTicket = async function() {
+            const type = document.getElementById('manualType').value;
+            const refName = document.getElementById('manualRef').value || 'ลูกค้าเก่า (Manual)';
+            const inputUid = document.getElementById('manualUid').value.trim();
+            const finalUid = inputUid !== '' ? inputUid : 'manual_admin_added';
+
+            if(!confirm(`ยืนยันการเพิ่มตั๋ว ${type} ให้กับ: ${refName} ใช่หรือไม่?`)) return;
+            try {
+                await addDoc(collection(db, "Tickets"), {
+                    userId: finalUid,
+                    refName: refName, type: type, status: "paid", isMembersLocked: false, isTableVisible: false, createdAt: serverTimestamp()
+                });
+                alert('เพิ่มตั๋วเข้าระบบสำเร็จ!');
+                document.getElementById('manualRef').value = '';
+                document.getElementById('manualUid').value = '';
+                loadPaid();
+            } catch (e) { console.error(e); }
+        }
+
         window.approve = async (id) => { if(confirm('ยืนยันสลิปยอดเงิน?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); } }
         window.delTicket = async (id) => { if(confirm('ลบตั๋วใบนี้ทิ้งอย่างถาวร?')) { await deleteDoc(doc(db,"Tickets",id)); loadPending(); loadPaid(); } }
         
-        // ฟังก์ชันโอนสิทธิ์ตั๋ว (Transfer)
         window.transferTicket = async function(id) {
-            const newUid = prompt("กรุณากรอก UID ของลูกค้าใหม่ที่ต้องการรับโอนตั๋วนี้\\n(ลูกค้าสามารถดู UID ของตัวเองได้ที่หน้าเว็บ 'ตั๋วของฉัน'):");
+            const newUid = prompt("กรุณากรอก UID ของลูกค้าใหม่ที่ต้องการรับโอนตั๋วนี้\\n(ลูกค้าสามารถก๊อปปี้ UID ตัวเองได้จากหน้าเว็บ):");
             if(!newUid || newUid.trim() === '') return;
-            
-            if(confirm(`ยืนยันการโอนสิทธิ์ตั๋วไปยัง UID: ${newUid.trim()} ใช่หรือไม่?`)) {
+            if(confirm(`ยืนยันโอนตั๋วไปที่ UID: ${newUid.trim()} ใช่หรือไม่?`)) {
                 try {
                     await updateDoc(doc(db, "Tickets", id), { userId: newUid.trim() });
-                    alert("✅ โอนสิทธิ์สำเร็จ! ตั๋วจะย้ายไปที่บัญชีของลูกค้าใหม่ทันที");
+                    alert("✅ โอนสิทธิ์สำเร็จ!");
                     loadPaid();
-                } catch(e) {
-                    console.error(e); alert("เกิดข้อผิดพลาดในการโอน");
-                }
+                } catch(e) { console.error(e); alert("ผิดพลาด"); }
             }
         };
 
-        // --- แก้ไขข้อมูล & จัดการผังโต๊ะ ---
         window.openEdit = async function(id) {
             const dSnap = await getDoc(doc(db, "Tickets", id));
             const data = dSnap.data();
             document.getElementById('editTid').value = id;
             document.getElementById('editType').value = data.type;
             
-            // ดึงข้อมูลโต๊ะ/Note
             document.getElementById('editTableNum').value = data.tableNumber || '';
+            document.getElementById('editShowTable').checked = data.isTableVisible === true;
             document.getElementById('editNote').value = data.adminNote || '';
             document.getElementById('editReq').value = data.request || '';
             
@@ -259,7 +296,9 @@
                            facebook: document.getElementById(`ed_f_${i}`).value, guest: isVip ? document.getElementById(`ed_g_${i}`).value : '' });
             }
             await updateDoc(doc(db,"Tickets",id), { 
-                tableNumber: document.getElementById('editTableNum').value, adminNote: document.getElementById('editNote').value,
+                tableNumber: document.getElementById('editTableNum').value, 
+                adminNote: document.getElementById('editNote').value,
+                isTableVisible: document.getElementById('editShowTable').checked,
                 request: document.getElementById('editReq').value, members: arr, isMembersLocked: true 
             });
             closeModal(); loadPaid();
