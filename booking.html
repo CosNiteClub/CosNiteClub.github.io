@@ -35,9 +35,9 @@
     <div class="container">
         <h2>เลือกแพ็กเกจบัตร 🎟️</h2>
         
-        <div id="inlineLoader">⏳ กำลังอัปเดตสถานะที่นั่งแบบ Real-time...</div>
+        <div id="inlineLoader">⏳ กำลังเชื่อมต่อระบบเช็กที่นั่ง...</div>
         
-        <label>ประเภทบัตร:</label>
+        <label>ประเภทบัตร (อัปเดตแบบ Real-time):</label>
         <div class="grid-options" id="ticketGrid">
             <div class="card-opt full-width" id="opt_solo" data-val="solo"><strong>Solo (เดี่ยว)</strong><span>690 บาท</span></div>
             <div class="card-opt" id="opt_party4" data-val="party4"><strong>Party โต๊ะ 4 คน</strong><span>3,400 บาท</span></div>
@@ -60,8 +60,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        // นำเข้า Auth เพิ่มเติม
+        // นำเข้า onSnapshot แทน getDocs เพื่อให้ข้อมูลวิ่งแบบ Real-time
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         const app = initializeApp({
@@ -70,28 +70,34 @@
             projectId: "cosniteclub"
         });
         const db = getFirestore(app);
-        
-        // 🔒 ระบบดักจับการล็อกอิน
         const auth = getAuth(app);
+        
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 alert("กรุณาเข้าสู่ระบบก่อนทำการจองบัตรครับ!");
-                window.location.href = "index.html"; // เตะกลับไปหน้าแรก
+                window.location.href = "index.html"; 
             }
         });
 
-        // โควตาใหม่ 500 ที่นั่งเป๊ะ!
+        // โควตา (รวม 500 ที่นั่ง)
         const maxVip4Tables = 3;   
         const maxVip6Tables = 9;   
         const maxParty = 384;      
         const maxSolo = 50;        
 
-        async function checkAvailability() {
-            try {
-                const qs = await getDocs(collection(db, "Tickets"));
+        let selectedTicket = null;
+        let selectedDrink = 'A'; 
+        const ticketCards = document.querySelectorAll('#ticketGrid .card-opt');
+        const drinkCards = document.querySelectorAll('#drinkGrid .card-opt');
+        const drinkSection = document.getElementById('drinkSection');
+        const btnNext = document.getElementById('btnNext');
+
+        // ฟังก์ชันเริ่มฟังข้อมูลแบบ Real-time
+        function startRealtimeSync() {
+            onSnapshot(collection(db, "Tickets"), (snapshot) => {
                 let countVip4 = 0, countVip6 = 0, countParty = 0, countSolo = 0;
 
-                qs.forEach(doc => {
+                snapshot.forEach(doc => {
                     const d = doc.data();
                     if (d.status === 'paid' || d.status === 'pending_verification') {
                         if(d.type === 'vip4') countVip4++;
@@ -102,34 +108,53 @@
                     }
                 });
 
+                // ฟังก์ชันเปลี่ยนเป็น SOLD OUT
                 const setSoldOut = (id) => {
                     const el = document.getElementById(id);
-                    el.classList.add('sold-out');
-                    el.innerHTML += `<div class="sold-out-badge">SOLD OUT</div>`;
+                    if (!el.classList.contains('sold-out')) {
+                        el.classList.add('sold-out');
+                        el.innerHTML += `<div class="sold-out-badge">SOLD OUT</div>`;
+                    }
                 };
 
+                // ฟังก์ชันยกเลิก SOLD OUT (เผื่อแอดมินลบตั๋วแล้วที่ว่างกลับมา)
+                const setAvailable = (id) => {
+                    const el = document.getElementById(id);
+                    if (el.classList.contains('sold-out')) {
+                        el.classList.remove('sold-out');
+                        const badge = el.querySelector('.sold-out-badge');
+                        if (badge) badge.remove();
+                    }
+                };
+
+                // รีเซ็ตทุกบัตรให้ Available ไว้ก่อน
+                ['opt_solo', 'opt_party4', 'opt_party6', 'opt_vip4', 'opt_vip6'].forEach(setAvailable);
+
+                // เช็กลิมิตแล้วปรับสถานะใหม่
                 if (countSolo >= maxSolo) setSoldOut('opt_solo');
                 if (maxParty - countParty < 4) setSoldOut('opt_party4');
                 if (maxParty - countParty < 6) setSoldOut('opt_party6');
                 if (countVip4 >= maxVip4Tables) setSoldOut('opt_vip4');
                 if (countVip6 >= maxVip6Tables) setSoldOut('opt_vip6');
 
-                // ซ่อนข้อความโหลดเมื่อเช็กเสร็จ
-                document.getElementById('inlineLoader').style.display = 'none';
+                // ดักจับกรณีที่ลูกค้ากำลังเลือกบัตรอยู่ แล้วบัตรนั้นเต็มกะทันหัน
+                if (selectedTicket) {
+                    const activeCard = document.getElementById(`opt_${selectedTicket}`);
+                    if (activeCard.classList.contains('sold-out')) {
+                        activeCard.classList.remove('active');
+                        selectedTicket = null;
+                        drinkSection.style.display = 'none';
+                        btnNext.disabled = true;
+                        alert("ขออภัยครับ บัตรที่คุณกำลังเลือกอยู่ ถูกจองเต็มไปเมื่อสักครู่นี้!");
+                    }
+                }
 
-            } catch(e) {
-                console.error(e);
-            }
+                // ซ่อนโหลดดิ้งหลังจากเช็กข้อมูลสำเร็จ
+                document.getElementById('inlineLoader').style.display = 'none';
+            });
         }
         
-        checkAvailability();
-
-        let selectedTicket = null;
-        let selectedDrink = 'A'; 
-        const ticketCards = document.querySelectorAll('#ticketGrid .card-opt');
-        const drinkCards = document.querySelectorAll('#drinkGrid .card-opt');
-        const drinkSection = document.getElementById('drinkSection');
-        const btnNext = document.getElementById('btnNext');
+        startRealtimeSync();
 
         ticketCards.forEach(card => {
             card.addEventListener('click', () => {
