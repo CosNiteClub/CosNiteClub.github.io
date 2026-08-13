@@ -27,22 +27,17 @@
         button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; margin-top: 10px; }
         button.submit-btn:hover:not(:disabled) { background-color: #e62eb3; transform: translateY(-3px); }
         button.submit-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
-
-        #loaderOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 20px; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #ffe6f7; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #inlineLoader { text-align: center; color: #888; font-size: 14px; margin-bottom: 15px; transition: 0.3s; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="loaderOverlay">
-            <div class="spinner"></div>
-            <p style="color: var(--primary); font-weight: bold;">กำลังเช็กสถานะที่นั่ง...</p>
-        </div>
-
         <h2>เลือกแพ็กเกจบัตร 🎟️</h2>
         
-        <label>ประเภทบัตร (อัปเดตแบบ Real-time):</label>
+        <div id="inlineLoader">⏳ กำลังอัปเดตสถานะที่นั่งแบบ Real-time...</div>
+        
+        <label>ประเภทบัตร:</label>
         <div class="grid-options" id="ticketGrid">
             <div class="card-opt full-width" id="opt_solo" data-val="solo"><strong>Solo (เดี่ยว)</strong><span>690 บาท</span></div>
             <div class="card-opt" id="opt_party4" data-val="party4"><strong>Party โต๊ะ 4 คน</strong><span>3,400 บาท</span></div>
@@ -66,6 +61,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        // นำเข้า Auth เพิ่มเติม
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         const app = initializeApp({
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
@@ -73,169 +70,21 @@
             projectId: "cosniteclub"
         });
         const db = getFirestore(app);
-
-        // โควตาใหม่ 500 ที่นั่งเป๊ะ!
-        const maxVip4Tables = 3;   // VIP 4 คน 3 โต๊ะ (12)
-        const maxVip6Tables = 9;   // VIP 6 คน 9 โต๊ะ (54)
-        const maxParty = 384;      // Party รวม 384
-        const maxSolo = 50;        // Solo รวม 50
-
-        async function checkAvailability() {
-            try {
-                const qs = await getDocs(collection(db, "Tickets"));
-                let countVip4 = 0, countVip6 = 0, countParty = 0, countSolo = 0;
-
-                qs.forEach(doc => {
-                    const d = doc.data();
-                    if (d.status === 'paid' || d.status === 'pending_verification') {
-                        if(d.type === 'vip4') countVip4++;
-                        if(d.type === 'vip6') countVip6++;
-                        if(d.type === 'party4') countParty += 4;
-                        if(d.type === 'party6') countParty += 6;
-                        if(d.type === 'solo') countSolo += 1;
-                    }
-                });
-
-                const setSoldOut = (id) => {
-                    const el = document.getElementById(id);
-                    el.classList.add('sold-out');
-                    el.innerHTML += `<div class="sold-out-badge">SOLD OUT</div>`;
-                };
-
-                // เช็กลิมิต
-                if (countSolo >= maxSolo) setSoldOut('opt_solo');
-                if (maxParty - countParty < 4) setSoldOut('opt_party4');
-                if (maxParty - countParty < 6) setSoldOut('opt_party6');
-                if (countVip4 >= maxVip4Tables) setSoldOut('opt_vip4');
-                if (countVip6 >= maxVip6Tables) setSoldOut('opt_vip6');
-
-                document.getElementById('loaderOverlay').style.display = 'none';
-
-            } catch(e) {
-                console.error(e);
-                alert('โหลดข้อมูลล้มเหลว กรุณารีเฟรชหน้าเว็บ');
+        
+        // 🔒 ระบบดักจับการล็อกอิน
+        const auth = getAuth(app);
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                alert("กรุณาเข้าสู่ระบบก่อนทำการจองบัตรครับ!");
+                window.location.href = "index.html"; // เตะกลับไปหน้าแรก
             }
-        }
-        
-        checkAvailability();
-
-        let selectedTicket = null;
-        let selectedDrink = 'A'; 
-        const ticketCards = document.querySelectorAll('#ticketGrid .card-opt');
-        const drinkCards = document.querySelectorAll('#drinkGrid .card-opt');
-        const drinkSection = document.getElementById('drinkSection');
-        const btnNext = document.getElementById('btnNext');
-
-        ticketCards.forEach(card => {
-            card.addEventListener('click', () => {
-                if (card.classList.contains('sold-out')) return;
-
-                ticketCards.forEach(c => c.classList.remove('active'));
-                card.classList.add('active');
-                selectedTicket = card.dataset.val;
-                
-                if(selectedTicket.includes('party')) drinkSection.style.display = 'block';
-                else { drinkSection.style.display = 'none'; selectedDrink = null; }
-                btnNext.disabled = false;
-            });
         });
-
-        drinkCards.forEach(card => {
-            card.addEventListener('click', () => {
-                drinkCards.forEach(c => c.classList.remove('active'));
-                card.classList.add('active');
-                selectedDrink = card.dataset.val;
-            });
-        });
-
-        btnNext.addEventListener('click', () => {
-            if(!selectedTicket) return;
-            localStorage.setItem('bookingData', JSON.stringify({ ticketType: selectedTicket, drinkSet: selectedDrink }));
-            window.location.href = 'checkout.html';
-        });
-    </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>จองบัตร - CosNite Club</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #fffafc; --text: #333; }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
-        .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; position: relative; }
-        h2 { color: var(--primary); text-align: center; margin-top: 0; }
-        
-        .grid-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; margin-bottom: 25px; }
-        .card-opt { background: #f9f9f9; border: 2px solid #eee; padding: 15px; border-radius: 12px; cursor: pointer; text-align: center; transition: 0.3s; display: flex; flex-direction: column; justify-content: center; min-height: 80px; position: relative; overflow: hidden; }
-        .card-opt:not(.sold-out):hover { border-color: #ffb3e6; background: #fff5fb; }
-        .card-opt.active { border-color: var(--primary); background: #fff0f9; box-shadow: 0 5px 15px rgba(255,62,201,0.2); }
-        .card-opt strong { font-size: 1.1rem; color: var(--primary); }
-        .card-opt span { font-size: 0.9rem; color: #666; }
-        .full-width { grid-column: span 2; }
-        
-        .card-opt.sold-out { background: #eee; border-color: #ccc; cursor: not-allowed; opacity: 0.7; }
-        .card-opt.sold-out strong { color: #888; text-decoration: line-through; }
-        .sold-out-badge { position: absolute; top: 10px; right: -25px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 3px 25px; transform: rotate(45deg); letter-spacing: 1px; }
-
-        label { font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
-        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; margin-top: 10px; }
-        button.submit-btn:hover:not(:disabled) { background-color: #e62eb3; transform: translateY(-3px); }
-        button.submit-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
-
-        #loaderOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 20px; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #ffe6f7; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div id="loaderOverlay">
-            <div class="spinner"></div>
-            <p style="color: var(--primary); font-weight: bold;">กำลังเช็กสถานะที่นั่ง...</p>
-        </div>
-
-        <h2>เลือกแพ็กเกจบัตร 🎟️</h2>
-        
-        <label>ประเภทบัตร (อัปเดตแบบ Real-time):</label>
-        <div class="grid-options" id="ticketGrid">
-            <div class="card-opt full-width" id="opt_solo" data-val="solo"><strong>Solo (เดี่ยว)</strong><span>690 บาท</span></div>
-            <div class="card-opt" id="opt_party4" data-val="party4"><strong>Party โต๊ะ 4 คน</strong><span>3,400 บาท</span></div>
-            <div class="card-opt" id="opt_party6" data-val="party6"><strong>Party โต๊ะ 6 คน</strong><span>5,100 บาท</span></div>
-            <div class="card-opt" id="opt_vip4" data-val="vip4"><strong>VIP โต๊ะ 4 คน</strong><span>6,000 บาท</span></div>
-            <div class="card-opt" id="opt_vip6" data-val="vip6"><strong>VIP โต๊ะ 6 คน</strong><span>9,000 บาท</span></div>
-        </div>
-
-        <div id="drinkSection" style="display: none;">
-            <label>เลือกเซ็ตเครื่องดื่ม (สำหรับ Party):</label>
-            <div class="grid-options" id="drinkGrid">
-                <div class="card-opt active" data-val="A"><strong>Set A</strong><span>Sangsom + Mixer</span></div>
-                <div class="card-opt" data-val="B"><strong>Set B</strong><span>Leo Beer</span></div>
-                <div class="card-opt" data-val="C"><strong>Set C (Soju)</strong><span>+39 บาท/คน</span></div>
-            </div>
-        </div>
-
-        <button id="btnNext" class="submit-btn" disabled>ไปหน้าชำระเงิน</button>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-        const app = initializeApp({
-            apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
-            authDomain: "cosniteclub.firebaseapp.com",
-            projectId: "cosniteclub"
-        });
-        const db = getFirestore(app);
 
         // โควตาใหม่ 500 ที่นั่งเป๊ะ!
-        const maxVip4Tables = 3;   // VIP 4 คน 3 โต๊ะ (12)
-        const maxVip6Tables = 9;   // VIP 6 คน 9 โต๊ะ (54)
-        const maxParty = 384;      // Party รวม 384
-        const maxSolo = 50;        // Solo รวม 50
+        const maxVip4Tables = 3;   
+        const maxVip6Tables = 9;   
+        const maxParty = 384;      
+        const maxSolo = 50;        
 
         async function checkAvailability() {
             try {
@@ -259,18 +108,17 @@
                     el.innerHTML += `<div class="sold-out-badge">SOLD OUT</div>`;
                 };
 
-                // เช็กลิมิต
                 if (countSolo >= maxSolo) setSoldOut('opt_solo');
                 if (maxParty - countParty < 4) setSoldOut('opt_party4');
                 if (maxParty - countParty < 6) setSoldOut('opt_party6');
                 if (countVip4 >= maxVip4Tables) setSoldOut('opt_vip4');
                 if (countVip6 >= maxVip6Tables) setSoldOut('opt_vip6');
 
-                document.getElementById('loaderOverlay').style.display = 'none';
+                // ซ่อนข้อความโหลดเมื่อเช็กเสร็จ
+                document.getElementById('inlineLoader').style.display = 'none';
 
             } catch(e) {
                 console.error(e);
-                alert('โหลดข้อมูลล้มเหลว กรุณารีเฟรชหน้าเว็บ');
             }
         }
         
