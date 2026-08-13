@@ -8,7 +8,7 @@
     <style>
         body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; text-align: center; }
         .container { max-width: 700px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
-        input, button { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border-radius: 5px; border: none; box-sizing: border-box; }
+        input, button, select, textarea { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border-radius: 5px; border: none; box-sizing: border-box; }
         button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; }
         .ticket-box { background: #333; padding: 20px; border-radius: 10px; margin-top: 20px; text-align: left; border: 1px solid #444; }
         #qrcode { margin: 20px auto; display: flex; justify-content: center; padding: 10px; background: white; width: max-content; border-radius: 5px; }
@@ -18,7 +18,7 @@
         .member-input { background: #222; color: white; border: 1px solid #555; }
         .logout-btn { background-color: #ef4444; color: white; margin-top: 20px; }
         .google-btn { background-color: #ffffff; color: #444; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #ddd; }
-        .locked-msg { color: #f87171; font-size: 14px; margin-top: -10px; margin-bottom: 15px; display: block; }
+        .locked-msg { color: #f87171; font-size: 14px; margin-top: -10px; margin-bottom: 15px; display: block; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -59,6 +59,9 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
+        // รายชื่อ Guest สามารถมาแก้ตรงนี้ได้เลย
+        const guestList = ["เกสต์ A", "เกสต์ B", "เกสต์ C", "เกสต์ D", "เกสต์ E", "เกสต์ F"];
+
         const authSection = document.getElementById('authSection');
         const profileSection = document.getElementById('profileSection');
         const displayEmail = document.getElementById('displayEmail');
@@ -84,59 +87,83 @@
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 
         async function loadMyTickets(uid) {
-            ticketContainer.innerHTML = '<p>กำลังค้นหาตั๋วของคุณ...</p>';
+            ticketContainer.innerHTML = '<p>กำลังค้นหาตั๋ว...</p>';
             try {
                 const q = query(collection(db, "Tickets"), where("userId", "==", uid));
-                const querySnapshot = await getDocs(q);
+                const qs = await getDocs(q);
                 
-                if (querySnapshot.empty) {
+                if (qs.empty) {
                     ticketContainer.innerHTML = '<p>คุณยังไม่มีตั๋วที่ทำการจองไว้</p>';
                     return;
                 }
 
                 ticketContainer.innerHTML = '';
-                querySnapshot.forEach((documentSnapshot) => {
-                    const data = documentSnapshot.data();
-                    const ticketId = documentSnapshot.id;
+                qs.forEach((d) => {
+                    const data = d.data();
+                    const ticketId = d.id;
                     const isPaid = data.status === 'paid';
                     const isLocked = data.isMembersLocked === true;
                     const statusText = isPaid ? 'ยืนยันการชำระเงินแล้ว' : 'รอแอดมินตรวจสอบสลิป';
                     const statusClass = isPaid ? 'status-paid' : 'status-pending';
 
+                    const isVip = data.type.includes('vip');
+                    const isParty = data.type.includes('party');
+
                     let memberCount = 1;
                     if(data.type.includes('4')) memberCount = 4;
                     if(data.type.includes('6')) memberCount = 6;
 
-                    let membersHtml = `<h4 style="margin-bottom: 5px;">รายชื่อผู้เข้าร่วม:</h4>`;
+                    let membersHtml = ``;
                     
                     if (isLocked) {
                         membersHtml += `<span class="locked-msg">** ข้อมูลถูกบันทึกแล้ว หากต้องการแก้ไขข้อมูล กรุณาติดต่อเพจเฟซบุ๊ก **</span>`;
+                        if (isParty || isVip) {
+                            membersHtml += `<p><strong>รีเควสเพิ่มเติม:</strong> ${data.request || '-'}</p>`;
+                        }
+                    } else {
+                        if (isParty || isVip) {
+                            membersHtml += `
+                                <strong>รีเควสเพิ่มเติม (โซนที่นั่ง หรือ อื่นๆ):</strong>
+                                <textarea id="request_${ticketId}" class="member-input" rows="2" placeholder="ระบุความต้องการของคุณ (ถ้ามี)">${data.request || ''}</textarea>
+                            `;
+                        }
                     }
 
+                    membersHtml += `<h4 style="margin-bottom: 5px;">รายชื่อผู้เข้าร่วม:</h4>`;
+
                     for(let i = 0; i < memberCount; i++) {
-                        let member = data.members && data.members[i] ? data.members[i] : {name: '', dob: '', facebook: ''};
+                        let member = data.members && data.members[i] ? data.members[i] : {name: '', dob: '', facebook: '', guest: ''};
                         
-                        membersHtml += `<div class="member-block">
-                            <strong>คนที่ ${i+1}</strong><br>`;
+                        membersHtml += `<div class="member-block"><strong>คนที่ ${i+1}</strong><br>`;
                         
                         if (isLocked) {
                             membersHtml += `
                                 <p style="margin: 5px 0;">ชื่อ-สกุล: ${member.name || '-'}</p>
                                 <p style="margin: 5px 0;">วันเกิด: ${member.dob || '-'}</p>
                                 <p style="margin: 5px 0;">Facebook: ${member.facebook || '-'}</p>
+                                ${isVip ? `<p style="margin: 5px 0; color: #facc15;">Guest (2-shot): ${member.guest || '-'}</p>` : ''}
                             `;
                         } else {
                             membersHtml += `
-                                <input type="text" id="member_name_${ticketId}_${i}" class="member-input" placeholder="ชื่อ-นามสกุล" value="${member.name || ''}">
-                                <input type="date" id="member_dob_${ticketId}_${i}" class="member-input" placeholder="วัน/เดือน/ปีเกิด" value="${member.dob || ''}">
-                                <input type="text" id="member_fb_${ticketId}_${i}" class="member-input" placeholder="ลิงก์หรือชื่อ Facebook" value="${member.facebook || ''}">
+                                <input type="text" id="m_name_${ticketId}_${i}" class="member-input" placeholder="ชื่อ-นามสกุล" value="${member.name || ''}">
+                                <input type="text" id="m_dob_${ticketId}_${i}" class="member-input" placeholder="วัน/เดือน/ปีเกิด" value="${member.dob || ''}">
+                                <input type="text" id="m_fb_${ticketId}_${i}" class="member-input" placeholder="ลิงก์หรือชื่อ Facebook" value="${member.facebook || ''}">
                             `;
+                            
+                            // ดรอปดาวน์เลือกเกสต์สำหรับ VIP
+                            if (isVip) {
+                                let guestOptions = `<option value="">-- เลือก Guest 2-shot --</option>`;
+                                guestList.forEach(g => {
+                                    guestOptions += `<option value="${g}" ${member.guest === g ? 'selected' : ''}>${g}</option>`;
+                                });
+                                membersHtml += `<select id="m_guest_${ticketId}_${i}" class="member-input" style="border: 1px solid #facc15;">${guestOptions}</select>`;
+                            }
                         }
                         membersHtml += `</div>`;
                     }
 
                     if (!isLocked) {
-                        membersHtml += `<button onclick="updateMembers('${ticketId}', ${memberCount})" style="background-color: #3b82f6; color: white;">บันทึกรายชื่อ (บันทึกได้ครั้งเดียวเท่านั้น)</button>`;
+                        membersHtml += `<button onclick="updateMembers('${ticketId}', ${memberCount}, ${isVip}, ${isParty})" style="background-color: #3b82f6; color: white;">บันทึกข้อมูล (บันทึกได้ครั้งเดียวเท่านั้น)</button>`;
                     }
 
                     const ticketDiv = document.createElement('div');
@@ -155,9 +182,7 @@
                     ticketContainer.appendChild(ticketDiv);
 
                     if(isPaid) {
-                        new QRCode(document.getElementById(`qrcode_${ticketId}`), {
-                            text: ticketId, width: 150, height: 150
-                        });
+                        new QRCode(document.getElementById(`qrcode_${ticketId}`), { text: ticketId, width: 150, height: 150 });
                     }
                 });
             } catch (error) {
@@ -166,28 +191,51 @@
             }
         }
 
-        window.updateMembers = async function(ticketId, count) {
-            if(!confirm('คุณสามารถบันทึกข้อมูลได้เพียงครั้งเดียว หากต้องการแก้ไขภายหลังต้องติดต่อเพจเฟซบุ๊ก ต้องการบันทึกเลยหรือไม่?')) return;
-
+        window.updateMembers = async function(ticketId, count, isVip, isParty) {
             let membersArray = [];
+            let selectedGuests = [];
+            let hasDuplicateGuest = false;
+            
             for(let i = 0; i < count; i++) {
+                let guestVal = isVip ? document.getElementById(`m_guest_${ticketId}_${i}`).value : '';
+                
+                // ตรวจสอบเกสต์ซ้ำเฉพาะ VIP
+                if (isVip && guestVal !== '') {
+                    if (selectedGuests.includes(guestVal)) {
+                        hasDuplicateGuest = true;
+                    }
+                    selectedGuests.push(guestVal);
+                }
+
                 membersArray.push({
-                    name: document.getElementById(`member_name_${ticketId}_${i}`).value,
-                    dob: document.getElementById(`member_dob_${ticketId}_${i}`).value,
-                    facebook: document.getElementById(`member_fb_${ticketId}_${i}`).value
+                    name: document.getElementById(`m_name_${ticketId}_${i}`).value,
+                    dob: document.getElementById(`m_dob_${ticketId}_${i}`).value,
+                    facebook: document.getElementById(`m_fb_${ticketId}_${i}`).value,
+                    guest: guestVal
                 });
             }
+
+            if (hasDuplicateGuest) {
+                alert('ห้ามเลือก Guest ซ้ำกันในโต๊ะเดียวกันครับ กรุณาเลือกใหม่');
+                return;
+            }
+
+            if(!confirm('คุณสามารถบันทึกข้อมูลได้เพียงครั้งเดียว หากต้องการแก้ไขภายหลังต้องติดต่อเพจเฟซบุ๊ก ต้องการบันทึกเลยหรือไม่?')) return;
+
+            let requestVal = (isParty || isVip) ? document.getElementById(`request_${ticketId}`).value : '';
+
             try {
                 const ticketRef = doc(db, "Tickets", ticketId);
                 await updateDoc(ticketRef, { 
                     members: membersArray,
-                    isMembersLocked: true // ล็อกการแก้ไขหลังบันทึก
+                    request: requestVal,
+                    isMembersLocked: true 
                 });
-                alert('บันทึกรายชื่อสำเร็จ!');
+                alert('บันทึกข้อมูลสำเร็จ!');
                 window.location.reload();
             } catch (error) {
                 console.error(error);
-                alert('เกิดข้อผิดพลาดในการอัปเดตรายชื่อ');
+                alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
             }
         };
     </script>
