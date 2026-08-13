@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th"> 
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -34,10 +34,7 @@
 
         <div id="profileSection" style="display: none;">
             <p>ยินดีต้อนรับ, <span id="displayEmail" style="color: #facc15;"></span></p>
-            
-            <div id="ticketContainer">
-                </div>
-
+            <div id="ticketContainer"></div>
             <button id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
         </div>
     </div>
@@ -45,7 +42,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        // นำเข้า GoogleAuthProvider และ signInWithPopup
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -60,14 +56,13 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const provider = new GoogleAuthProvider(); // สร้างตัวแปร Provider สำหรับ Google
+        const provider = new GoogleAuthProvider();
 
         const authSection = document.getElementById('authSection');
         const profileSection = document.getElementById('profileSection');
         const displayEmail = document.getElementById('displayEmail');
         const ticketContainer = document.getElementById('ticketContainer');
 
-        // ตรวจสอบสถานะการล็อกอิน
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 authSection.style.display = 'none';
@@ -81,16 +76,13 @@
             }
         });
 
-        // ล็อกอินด้วย Google (เปลี่ยนจาก Email/Pass)
         document.getElementById('loginBtn').addEventListener('click', () => {
-            signInWithPopup(auth, provider)
-                .catch((error) => {
-                    console.error(error);
-                    alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย Google');
-                });
+            signInWithPopup(auth, provider).catch((error) => {
+                console.error(error);
+                alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย Google');
+            });
         });
 
-        // ออกจากระบบ
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth);
         });
@@ -107,7 +99,6 @@
                 }
 
                 ticketContainer.innerHTML = '';
-                
                 querySnapshot.forEach((documentSnapshot) => {
                     const data = documentSnapshot.data();
                     const ticketId = documentSnapshot.id;
@@ -131,12 +122,10 @@
                     ticketDiv.innerHTML = `
                         <h3>ตั๋วประเภท: ${data.type.toUpperCase()}</h3>
                         <p>สถานะ: <span class="${statusClass}">${statusText}</span></p>
-                        
                         ${isPaid ? `
                             <p style="text-align:center; font-size: 14px; margin-top: 15px;">นำ QR Code นี้ให้สตาฟฟ์สแกนหน้างาน</p>
                             <div id="qrcode_${ticketId}" id="qrcode"></div>
                         ` : ''}
-                        
                         <hr style="border-color: #555; margin: 15px 0;">
                         ${membersHtml}
                     `;
@@ -145,9 +134,7 @@
 
                     if(isPaid) {
                         new QRCode(document.getElementById(`qrcode_${ticketId}`), {
-                            text: ticketId,
-                            width: 150,
-                            height: 150
+                            text: ticketId, width: 150, height: 150
                         });
                     }
                 });
@@ -162,12 +149,9 @@
             for(let i = 0; i < count; i++) {
                 membersArray.push(document.getElementById(`member_${ticketId}_${i}`).value);
             }
-            
             try {
                 const ticketRef = doc(db, "Tickets", ticketId);
-                await updateDoc(ticketRef, {
-                    members: membersArray
-                });
+                await updateDoc(ticketRef, { members: membersArray });
                 alert('บันทึกรายชื่อสำเร็จ!');
             } catch (error) {
                 console.error("Error updating document: ", error);
