@@ -75,6 +75,21 @@
             alert('บันทึกข้อมูลเบื้องต้นสำเร็จ! (เดี๋ยวเราจะทำระบบส่งข้อมูลไปหน้า Checkout ต่อ)');
             // โค้ดสำหรับบันทึกลง Firestore และเปลี่ยนหน้าจะอยู่ตรงนี้
         });
+        // จัดการเมื่อกดปุ่ม Submit เพื่อส่งข้อมูลไปหน้า Checkout
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ticketType = document.getElementById('ticketType').value;
+            const drinkSet = document.getElementById('drinkSet').value;
+            
+            // บันทึกข้อมูลที่เลือกลงเครื่องชั่วคราว
+            localStorage.setItem('bookingData', JSON.stringify({
+                ticketType: ticketType,
+                drinkSet: drinkSet
+            }));
+
+            // เปลี่ยนหน้าไปที่ checkout.html
+            window.location.href = 'checkout.html';
+        });
     </script>
 </body>
 </html>
