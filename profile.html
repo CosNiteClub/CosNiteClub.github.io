@@ -4,239 +4,237 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Ticket - CosNite Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #1a1a1a; color: white; padding: 20px; text-align: center; }
-        .container { max-width: 700px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 10px; }
-        input, button, select, textarea { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border-radius: 5px; border: none; box-sizing: border-box; }
-        button { background-color: #facc15; color: black; font-weight: bold; cursor: pointer; }
-        .ticket-box { background: #333; padding: 20px; border-radius: 10px; margin-top: 20px; text-align: left; border: 1px solid #444; }
-        #qrcode { margin: 20px auto; display: flex; justify-content: center; padding: 10px; background: white; width: max-content; border-radius: 5px; }
-        .status-paid { color: #4ade80; font-weight: bold; }
-        .status-pending { color: #facc15; font-weight: bold; }
-        .member-block { background: #444; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .member-input { background: #222; color: white; border: 1px solid #555; }
-        .logout-btn { background-color: #ef4444; color: white; margin-top: 20px; }
-        .google-btn { background-color: #ffffff; color: #444; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #ddd; }
-        .locked-msg { color: #f87171; font-size: 14px; margin-top: -10px; margin-bottom: 15px; display: block; font-weight: bold; }
+        :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #fffafc; --text: #333; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; text-align: center; margin: 0; }
+        .container { max-width: 700px; margin: auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
+        h2 { color: var(--primary); margin-top: 0; }
+        input, button, textarea { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ddd; font-family: inherit; font-size: 1rem; outline: none; box-sizing: border-box; }
+        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 5px rgba(255,62,201,0.2); }
+        button { background-color: var(--primary); color: white; font-weight: 500; cursor: pointer; border: none; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; }
+        button:hover { background-color: #e62eb3; transform: translateY(-2px); }
+        .ticket-box { background: #fafafa; padding: 25px; border-radius: 15px; margin-top: 25px; text-align: left; border: 2px solid #ffe6f7; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
+        .qrcode-container { margin: 20px auto; padding: 15px; background: white; width: max-content; border-radius: 15px; border: 2px dashed var(--primary); }
+        .status-paid { color: #10b981; font-weight: bold; background: #d1fae5; padding: 3px 10px; border-radius: 20px; font-size: 0.9rem; }
+        .status-pending { color: #d97706; font-weight: bold; background: #fef3c7; padding: 3px 10px; border-radius: 20px; font-size: 0.9rem; }
+        .member-block { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .google-btn { background-color: white; color: #444; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .locked-msg { color: #ef4444; font-size: 14px; margin-bottom: 15px; display: block; font-weight: 500; background: #fee2e2; padding: 10px; border-radius: 8px; text-align: center; }
+        
+        /* สไตล์สำหรับ Chips */
+        .chip-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .guest-chip { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--primary); background: transparent; color: var(--primary); cursor: pointer; transition: 0.2s; font-size: 0.9rem; user-select: none; }
+        .guest-chip.selected { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(255,62,201,0.4); }
+        .guest-chip.disabled { border-color: #ddd; color: #aaa; background: #f9f9f9; cursor: not-allowed; text-decoration: line-through; }
+        
+        /* Custom Popup */
+        #customPopupOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+        .custom-popup { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.2); animation: popIn 0.3s ease-out; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .popup-btn-wrap { display: flex; gap: 10px; margin-top: 25px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>ระบบสมาชิก CosNite Club</h2>
-
         <div id="authSection">
-            <p>เข้าสู่ระบบเพื่อดูตั๋วของคุณ</p>
-            <button id="loginBtn" class="google-btn">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" width="20">
-                เข้าสู่ระบบด้วย Google
-            </button>
+            <button id="loginBtn" class="google-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20"> เข้าสู่ระบบด้วย Google</button>
         </div>
-
         <div id="profileSection" style="display: none;">
-            <p>ยินดีต้อนรับ, <span id="displayEmail" style="color: #facc15;"></span></p>
+            <p>ยินดีต้อนรับ, <span id="displayEmail" style="color: var(--primary); font-weight:500;"></span></p>
             <div id="ticketContainer"></div>
-            <button id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
+            <button id="logoutBtn" style="background:#ef4444; margin-top:30px;">ออกจากระบบ</button>
+        </div>
+    </div>
+
+    <div id="customPopupOverlay">
+        <div class="custom-popup">
+            <h3 style="color: var(--primary); margin-top:0;">ยืนยันการบันทึกข้อมูล?</h3>
+            <p style="color: #666;">คุณสามารถบันทึกข้อมูลได้เพียง <b style="color:#ef4444;">ครั้งเดียวเท่านั้น</b> หากต้องการแก้ไขภายหลังจะต้องติดต่อเพจเฟซบุ๊ก</p>
+            <div class="popup-btn-wrap">
+                <button id="btnConfirmYes">ยืนยันบันทึก</button>
+                <button id="btnConfirmNo" style="background:#e5e7eb; color:#444; box-shadow:none;">ยกเลิก</button>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-        const firebaseConfig = {
+        const app = initializeApp({
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
             authDomain: "cosniteclub.firebaseapp.com",
             projectId: "cosniteclub",
             storageBucket: "cosniteclub.firebasestorage.app",
             messagingSenderId: "429033863377",
             appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0"
-        };
-
-        const app = initializeApp(firebaseConfig);
+        });
         const db = getFirestore(app);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // รายชื่อ Guest สามารถมาแก้ตรงนี้ได้เลย
-        const guestList = ["เกสต์ A", "เกสต์ B", "เกสต์ C", "เกสต์ D", "เกสต์ E", "เกสต์ F"];
+        let globalGuestList = [];
 
-        const authSection = document.getElementById('authSection');
-        const profileSection = document.getElementById('profileSection');
-        const displayEmail = document.getElementById('displayEmail');
-        const ticketContainer = document.getElementById('ticketContainer');
-
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                authSection.style.display = 'none';
-                profileSection.style.display = 'block';
-                displayEmail.innerText = user.email;
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('profileSection').style.display = 'block';
+                document.getElementById('displayEmail').innerText = user.email;
+                
+                // ดึงรายชื่อ Guest จาก Firestore
+                try {
+                    const guestDoc = await getDoc(doc(db, "Settings", "GuestList"));
+                    if(guestDoc.exists() && guestDoc.data().guests) globalGuestList = guestDoc.data().guests;
+                } catch(e) { console.error("Guest list error"); }
+
                 loadMyTickets(user.uid);
             } else {
-                authSection.style.display = 'block';
-                profileSection.style.display = 'none';
-                ticketContainer.innerHTML = '';
+                document.getElementById('authSection').style.display = 'block';
+                document.getElementById('profileSection').style.display = 'none';
             }
         });
 
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch((error) => console.error(error));
-        });
-
+        document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider));
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 
         async function loadMyTickets(uid) {
-            ticketContainer.innerHTML = '<p>กำลังค้นหาตั๋ว...</p>';
+            const container = document.getElementById('ticketContainer');
+            container.innerHTML = '<p>กำลังโหลดตั๋ว...</p>';
             try {
-                const q = query(collection(db, "Tickets"), where("userId", "==", uid));
-                const qs = await getDocs(q);
+                const qs = await getDocs(query(collection(db, "Tickets"), where("userId", "==", uid)));
+                if (qs.empty) return container.innerHTML = '<p>คุณยังไม่มีตั๋วที่ทำการจองไว้</p>';
+                container.innerHTML = '';
                 
-                if (qs.empty) {
-                    ticketContainer.innerHTML = '<p>คุณยังไม่มีตั๋วที่ทำการจองไว้</p>';
-                    return;
-                }
-
-                ticketContainer.innerHTML = '';
                 qs.forEach((d) => {
                     const data = d.data();
-                    const ticketId = d.id;
+                    const tId = d.id;
                     const isPaid = data.status === 'paid';
                     const isLocked = data.isMembersLocked === true;
-                    const statusText = isPaid ? 'ยืนยันการชำระเงินแล้ว' : 'รอแอดมินตรวจสอบสลิป';
-                    const statusClass = isPaid ? 'status-paid' : 'status-pending';
-
                     const isVip = data.type.includes('vip');
                     const isParty = data.type.includes('party');
+                    let seats = 1; if(data.type.includes('4')) seats=4; if(data.type.includes('6')) seats=6;
 
-                    let memberCount = 1;
-                    if(data.type.includes('4')) memberCount = 4;
-                    if(data.type.includes('6')) memberCount = 6;
+                    let html = `<div class="ticket-box">
+                        <h3 style="margin-top:0; color:var(--primary);">🎟️ ตั๋ว: ${data.type.toUpperCase()}</h3>
+                        <p>สถานะ: <span class="${isPaid ? 'status-paid' : 'status-pending'}">${isPaid ? 'ยืนยันชำระเงินแล้ว' : 'รอตรวจสอบสลิป'}</span></p>
+                        ${isPaid ? `<div style="text-align:center;"><p style="font-size:14px; color:#666;">QR Code สำหรับสแกนเข้างาน</p><div class="qrcode-container" id="qr_${tId}"></div></div>` : ''}
+                        <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">`;
 
-                    let membersHtml = ``;
-                    
                     if (isLocked) {
-                        membersHtml += `<span class="locked-msg">** ข้อมูลถูกบันทึกแล้ว หากต้องการแก้ไขข้อมูล กรุณาติดต่อเพจเฟซบุ๊ก **</span>`;
-                        if (isParty || isVip) {
-                            membersHtml += `<p><strong>รีเควสเพิ่มเติม:</strong> ${data.request || '-'}</p>`;
-                        }
+                        html += `<div class="locked-msg">🔒 ข้อมูลถูกบันทึกแล้ว หากต้องการแก้ไขกรุณาติดต่อเพจ</div>`;
+                        if (isParty || isVip) html += `<p><b>รีเควส:</b> ${data.request || '-'}</p>`;
                     } else {
-                        if (isParty || isVip) {
-                            membersHtml += `
-                                <strong>รีเควสเพิ่มเติม (โซนที่นั่ง หรือ อื่นๆ):</strong>
-                                <textarea id="request_${ticketId}" class="member-input" rows="2" placeholder="ระบุความต้องการของคุณ (ถ้ามี)">${data.request || ''}</textarea>
-                            `;
-                        }
+                        if (isParty || isVip) html += `<label style="color:#555; font-size:14px;">รีเควสเพิ่มเติม (โซนที่นั่ง/อื่นๆ):</label><textarea id="req_${tId}" rows="2" placeholder="ระบุความต้องการ (ถ้ามี)">${data.request || ''}</textarea>`;
                     }
 
-                    membersHtml += `<h4 style="margin-bottom: 5px;">รายชื่อผู้เข้าร่วม:</h4>`;
-
-                    for(let i = 0; i < memberCount; i++) {
-                        let member = data.members && data.members[i] ? data.members[i] : {name: '', dob: '', facebook: '', guest: ''};
-                        
-                        membersHtml += `<div class="member-block"><strong>คนที่ ${i+1}</strong><br>`;
-                        
+                    for(let i=0; i<seats; i++) {
+                        let m = data.members && data.members[i] ? data.members[i] : {};
+                        html += `<div class="member-block"><h4 style="margin:0 0 10px 0; color:var(--primary);">คนที่ ${i+1}</h4>`;
                         if (isLocked) {
-                            membersHtml += `
-                                <p style="margin: 5px 0;">ชื่อ-สกุล: ${member.name || '-'}</p>
-                                <p style="margin: 5px 0;">วันเกิด: ${member.dob || '-'}</p>
-                                <p style="margin: 5px 0;">Facebook: ${member.facebook || '-'}</p>
-                                ${isVip ? `<p style="margin: 5px 0; color: #facc15;">Guest (2-shot): ${member.guest || '-'}</p>` : ''}
-                            `;
+                            html += `<p style="margin:3px 0;">ชื่อ: ${m.name||'-'} | เกิด: ${m.dob||'-'}</p><p style="margin:3px 0; font-size:14px; color:#666;">FB: ${m.facebook||'-'}</p>
+                                    ${isVip ? `<p style="margin:3px 0; color:var(--primary);"><b>เกสต์: ${m.guest||'ไม่ระบุ'}</b></p>` : ''}`;
                         } else {
-                            membersHtml += `
-                                <input type="text" id="m_name_${ticketId}_${i}" class="member-input" placeholder="ชื่อ-นามสกุล" value="${member.name || ''}">
-                                <input type="text" id="m_dob_${ticketId}_${i}" class="member-input" placeholder="วัน/เดือน/ปีเกิด" value="${member.dob || ''}">
-                                <input type="text" id="m_fb_${ticketId}_${i}" class="member-input" placeholder="ลิงก์หรือชื่อ Facebook" value="${member.facebook || ''}">
-                            `;
+                            html += `<input type="text" id="name_${tId}_${i}" placeholder="ชื่อ-สกุล" value="${m.name||''}">
+                                     <input type="date" id="dob_${tId}_${i}" value="${m.dob||''}">
+                                     <input type="text" id="fb_${tId}_${i}" placeholder="ลิงก์ Facebook" value="${m.facebook||''}">`;
                             
-                            // ดรอปดาวน์เลือกเกสต์สำหรับ VIP
-                            if (isVip) {
-                                let guestOptions = `<option value="">-- เลือก Guest 2-shot --</option>`;
-                                guestList.forEach(g => {
-                                    guestOptions += `<option value="${g}" ${member.guest === g ? 'selected' : ''}>${g}</option>`;
+                            // ระบบ Chips สำหรับ VIP
+                            if (isVip && globalGuestList.length > 0) {
+                                html += `<div style="font-size:14px; color:#555; margin-top:5px;">เลือก Guest (ห้ามซ้ำในโต๊ะ):</div><div class="chip-container">`;
+                                globalGuestList.forEach(g => {
+                                    let isSel = (m.guest === g) ? 'selected' : '';
+                                    html += `<div class="guest-chip ${isSel}" data-t="${tId}" data-seat="${i}" data-g="${g}" onclick="toggleChip(this)">${g}</div>`;
                                 });
-                                membersHtml += `<select id="m_guest_${ticketId}_${i}" class="member-input" style="border: 1px solid #facc15;">${guestOptions}</select>`;
+                                html += `</div><input type="hidden" id="guest_${tId}_${i}" value="${m.guest||''}">`;
                             }
                         }
-                        membersHtml += `</div>`;
+                        html += `</div>`;
                     }
 
-                    if (!isLocked) {
-                        membersHtml += `<button onclick="updateMembers('${ticketId}', ${memberCount}, ${isVip}, ${isParty})" style="background-color: #3b82f6; color: white;">บันทึกข้อมูล (บันทึกได้ครั้งเดียวเท่านั้น)</button>`;
-                    }
-
-                    const ticketDiv = document.createElement('div');
-                    ticketDiv.className = 'ticket-box';
-                    ticketDiv.innerHTML = `
-                        <h3>ตั๋วประเภท: ${data.type.toUpperCase()}</h3>
-                        <p>สถานะ: <span class="${statusClass}">${statusText}</span></p>
-                        ${isPaid ? `
-                            <p style="text-align:center; font-size: 14px; margin-top: 15px;">นำ QR Code นี้ให้สตาฟฟ์สแกนหน้างาน</p>
-                            <div id="qrcode_${ticketId}" id="qrcode"></div>
-                        ` : ''}
-                        <hr style="border-color: #555; margin: 15px 0;">
-                        ${membersHtml}
-                    `;
+                    if (!isLocked) html += `<button onclick="prepareSave('${tId}', ${seats}, ${isVip}, ${isParty})">บันทึกข้อมูล (บันทึกได้ครั้งเดียว)</button>`;
+                    html += `</div>`;
                     
-                    ticketContainer.appendChild(ticketDiv);
-
+                    container.insertAdjacentHTML('beforeend', html);
+                    
                     if(isPaid) {
-                        new QRCode(document.getElementById(`qrcode_${ticketId}`), { text: ticketId, width: 150, height: 150 });
+                        setTimeout(() => { new QRCode(document.getElementById(`qr_${tId}`), { text: tId, width: 140, height: 140, colorDark: "#ff3ec9" }); }, 100);
                     }
                 });
-            } catch (error) {
-                console.error(error);
-                ticketContainer.innerHTML = '<p style="color:red;">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
-            }
+                
+                // อัปเดตสถานะ Disabled Chips ทันทีที่โหลดเสร็จ
+                document.querySelectorAll('.guest-chip').forEach(c => updateChipStates(c.dataset.t));
+
+            } catch(e) { console.error(e); }
         }
 
-        window.updateMembers = async function(ticketId, count, isVip, isParty) {
-            let membersArray = [];
-            let selectedGuests = [];
-            let hasDuplicateGuest = false;
+        // ลอจิกการกด Chips
+        window.toggleChip = function(el) {
+            if(el.classList.contains('disabled')) return;
+            const tId = el.dataset.t, seat = el.dataset.seat, guest = el.dataset.g;
             
-            for(let i = 0; i < count; i++) {
-                let guestVal = isVip ? document.getElementById(`m_guest_${ticketId}_${i}`).value : '';
-                
-                // ตรวจสอบเกสต์ซ้ำเฉพาะ VIP
-                if (isVip && guestVal !== '') {
-                    if (selectedGuests.includes(guestVal)) {
-                        hasDuplicateGuest = true;
-                    }
-                    selectedGuests.push(guestVal);
+            // ลบ selected ในที่นั่งเดียวกัน
+            document.querySelectorAll(`.guest-chip[data-t="${tId}"][data-seat="${seat}"]`).forEach(c => c.classList.remove('selected'));
+            
+            // สลับสถานะ
+            el.classList.toggle('selected');
+            document.getElementById(`guest_${tId}_${seat}`).value = el.classList.contains('selected') ? guest : '';
+            
+            updateChipStates(tId);
+        }
+
+        function updateChipStates(tId) {
+            // หาว่าตอนนี้โต๊ะนี้เลือกเกสต์ใครไปแล้วบ้าง
+            let selectedGuests = Array.from(document.querySelectorAll(`.guest-chip[data-t="${tId}"].selected`)).map(el => el.dataset.g);
+            
+            document.querySelectorAll(`.guest-chip[data-t="${tId}"]`).forEach(chip => {
+                if(!chip.classList.contains('selected') && selectedGuests.includes(chip.dataset.g)) {
+                    chip.classList.add('disabled');
+                } else {
+                    chip.classList.remove('disabled');
                 }
+            });
+        }
 
-                membersArray.push({
-                    name: document.getElementById(`m_name_${ticketId}_${i}`).value,
-                    dob: document.getElementById(`m_dob_${ticketId}_${i}`).value,
-                    facebook: document.getElementById(`m_fb_${ticketId}_${i}`).value,
-                    guest: guestVal
+        // ระบบ Popup Save
+        let pendingSaveData = null;
+        window.prepareSave = function(tId, seats, isVip, isParty) {
+            let arr = [];
+            for(let i=0; i<seats; i++) {
+                let gVal = isVip && document.getElementById(`guest_${tId}_${i}`) ? document.getElementById(`guest_${tId}_${i}`).value : '';
+                arr.push({
+                    name: document.getElementById(`name_${tId}_${i}`).value,
+                    dob: document.getElementById(`dob_${tId}_${i}`).value,
+                    facebook: document.getElementById(`fb_${tId}_${i}`).value,
+                    guest: gVal
                 });
             }
+            pendingSaveData = {
+                tId: tId,
+                req: (isParty || isVip) ? document.getElementById(`req_${tId}`).value : '',
+                members: arr
+            };
+            document.getElementById('customPopupOverlay').style.display = 'flex';
+        };
 
-            if (hasDuplicateGuest) {
-                alert('ห้ามเลือก Guest ซ้ำกันในโต๊ะเดียวกันครับ กรุณาเลือกใหม่');
-                return;
-            }
+        document.getElementById('btnConfirmNo').onclick = () => {
+            document.getElementById('customPopupOverlay').style.display = 'none';
+            pendingSaveData = null;
+        };
 
-            if(!confirm('คุณสามารถบันทึกข้อมูลได้เพียงครั้งเดียว หากต้องการแก้ไขภายหลังต้องติดต่อเพจเฟซบุ๊ก ต้องการบันทึกเลยหรือไม่?')) return;
-
-            let requestVal = (isParty || isVip) ? document.getElementById(`request_${ticketId}`).value : '';
-
+        document.getElementById('btnConfirmYes').onclick = async () => {
+            if(!pendingSaveData) return;
+            document.getElementById('btnConfirmYes').innerText = "กำลังบันทึก...";
             try {
-                const ticketRef = doc(db, "Tickets", ticketId);
-                await updateDoc(ticketRef, { 
-                    members: membersArray,
-                    request: requestVal,
-                    isMembersLocked: true 
+                await updateDoc(doc(db, "Tickets", pendingSaveData.tId), {
+                    request: pendingSaveData.req, members: pendingSaveData.members, isMembersLocked: true
                 });
-                alert('บันทึกข้อมูลสำเร็จ!');
+                alert('บันทึกเรียบร้อย!');
                 window.location.reload();
-            } catch (error) {
-                console.error(error);
-                alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
-            }
+            } catch(e) { console.error(e); alert('เกิดข้อผิดพลาด'); }
         };
     </script>
 </body>
