@@ -48,7 +48,6 @@
         .member-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .full-width { grid-column: span 2; }
         
-        /* แก้ไข Toolbar ให้รองรับปุ่มเยอะๆ แบบสวยงาม */
         .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #f1f5f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         .toolbar-group { display: flex; gap: 8px; flex-wrap: wrap; }
     </style>
@@ -77,10 +76,10 @@
 
             <div id="tab-manage" style="display: none;">
                 <div class="dash-grid">
-                    <div class="dash-card"><h3>รวมที่ขายได้ (486)</h3><p id="dashTotal">0/486</p></div>
+                    <div class="dash-card"><h3>รวมที่ขายได้ (500)</h3><p id="dashTotal">0/500</p></div>
                     <div class="dash-card"><h3>VIP (โควตา 66)</h3><p id="dashVip">0/66</p></div>
-                    <div class="dash-card"><h3>Party (โควตา 372)</h3><p id="dashParty">0/372</p></div>
-                    <div class="dash-card"><h3>Solo (โควตา 48)</h3><p id="dashSolo">0/48</p></div>
+                    <div class="dash-card"><h3>Party (โควตา 384)</h3><p id="dashParty">0/384</p></div>
+                    <div class="dash-card"><h3>Solo (โควตา 50)</h3><p id="dashSolo">0/50</p></div>
                 </div>
                 
                 <div class="manual-add-box">
@@ -112,7 +111,6 @@
                     <div class="toolbar-group">
                         <button onclick="toggleAllTables(true)" style="background:#3b82f6; padding:8px 15px;">👁️ เปิดชื่อโต๊ะทั้งหมด</button>
                         <button onclick="toggleAllTables(false)" style="background:#ef4444; padding:8px 15px;">🙈 ซ่อนชื่อโต๊ะทั้งหมด</button>
-                        
                         <button onclick="exportCSV()" style="background:#10b981; padding:8px 15px;">📥 โหลดชีท</button>
                     </div>
                 </div>
@@ -266,10 +264,10 @@
                 let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
                 cTotal += s; if(data.type.includes('vip')) cVip+=s; if(data.type.includes('party')) cParty+=s; if(data.type.includes('solo')) cSolo+=s;
             });
-            document.getElementById('dashTotal').innerText = `${cTotal}/486`;
+            document.getElementById('dashTotal').innerText = `${cTotal}/500`;
             document.getElementById('dashVip').innerText = `${cVip}/66`;
-            document.getElementById('dashParty').innerText = `${cParty}/372`;
-            document.getElementById('dashSolo').innerText = `${cSolo}/48`;
+            document.getElementById('dashParty').innerText = `${cParty}/384`;
+            document.getElementById('dashSolo').innerText = `${cSolo}/50`;
 
             renderPaidTable(); 
         }
@@ -317,7 +315,6 @@
             if(!confirm(`⚠️ ยืนยันการ ${actionText} "หมายเลข/ชื่อโต๊ะ" ของลูกค้าทั้งหมดใช่หรือไม่?\n(ระบบจะใช้เวลาอัปเดตสักครู่)`)) return;
             
             try {
-                // อัปเดตตั๋วทีละใบ (สามารถใช้ Promise.all ได้เพราะจำนวนไม่ได้เยอะหลักแสน)
                 const promises = [];
                 allPaidTickets.forEach(t => {
                     promises.push(updateDoc(doc(db, "Tickets", t.id), { isTableVisible: isVisible }));
@@ -325,7 +322,7 @@
                 
                 await Promise.all(promises);
                 alert(`✅ อัปเดตสถานะสำเร็จ! (${actionText} เรียบร้อยแล้ว)`);
-                loadPaid(); // โหลดตารางใหม่
+                loadPaid(); 
             } catch(e) {
                 console.error(e);
                 alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
