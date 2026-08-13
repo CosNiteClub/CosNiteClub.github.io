@@ -48,7 +48,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // คอนฟิก Firebase ของคุณ
         const firebaseConfig = {
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
             authDomain: "cosniteclub.firebaseapp.com",
@@ -62,7 +61,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ระบบ Login เบื้องต้น
         document.getElementById('loginBtn').addEventListener('click', () => {
             const email = document.getElementById('adminEmail').value;
             if (email === 'cosniteclubparty@gmail.com') {
@@ -74,7 +72,6 @@
             }
         });
 
-        // ฟังก์ชันดึงข้อมูลตั๋วที่รอตรวจสอบ
         async function loadPendingTickets() {
             const tableBody = document.getElementById('ticketTableBody');
             tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">กำลังโหลดข้อมูล...</td></tr>';
@@ -83,7 +80,7 @@
                 const q = query(collection(db, "Tickets"), where("status", "==", "pending_verification"));
                 const querySnapshot = await getDocs(q);
                 
-                tableBody.innerHTML = ''; // ล้างข้อความกำลังโหลด
+                tableBody.innerHTML = ''; 
                 
                 if (querySnapshot.empty) {
                     tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">ไม่มีรายการรอตรวจสอบครับ</td></tr>';
@@ -112,7 +109,6 @@
             }
         }
 
-        // ฟังก์ชันอนุมัติตั๋ว (เปลี่ยนสถานะเป็น paid)
         window.approveTicket = async function(ticketId) {
             if (confirm('คุณตรวจสอบสลิปและต้องการยืนยันยอดเงินนี้ใช่หรือไม่?')) {
                 try {
@@ -121,7 +117,7 @@
                         status: "paid"
                     });
                     alert('อัปเดตสถานะเป็น Paid สำเร็จ!');
-                    loadPendingTickets(); // โหลดข้อมูลใหม่
+                    loadPendingTickets(); 
                 } catch (error) {
                     console.error("Error updating document: ", error);
                     alert('เกิดข้อผิดพลาดในการอัปเดตสถานะ');
