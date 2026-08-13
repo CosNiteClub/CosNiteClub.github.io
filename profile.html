@@ -16,6 +16,8 @@
         .status-pending { color: #facc15; font-weight: bold; }
         .member-input { background: #444; color: white; border: 1px solid #555; }
         .logout-btn { background-color: #ef4444; color: white; margin-top: 20px; }
+        .google-btn { background-color: #ffffff; color: #444; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #ddd; }
+        .google-btn:hover { background-color: #f1f1f1; }
     </style>
 </head>
 <body>
@@ -24,10 +26,10 @@
 
         <div id="authSection">
             <p>เข้าสู่ระบบเพื่อดูตั๋วของคุณ</p>
-            <input type="email" id="userEmail" placeholder="อีเมล">
-            <input type="password" id="userPassword" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัว)">
-            <button id="loginBtn">เข้าสู่ระบบ</button>
-            <button id="registerBtn" style="background-color: #444; color: white;">สมัครสมาชิกใหม่</button>
+            <button id="loginBtn" class="google-btn">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" width="20">
+                เข้าสู่ระบบด้วย Google
+            </button>
         </div>
 
         <div id="profileSection" style="display: none;">
@@ -43,7 +45,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        // นำเข้า GoogleAuthProvider และ signInWithPopup
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
@@ -57,6 +60,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        const provider = new GoogleAuthProvider(); // สร้างตัวแปร Provider สำหรับ Google
 
         const authSection = document.getElementById('authSection');
         const profileSection = document.getElementById('profileSection');
@@ -77,21 +81,16 @@
             }
         });
 
-        document.getElementById('registerBtn').addEventListener('click', () => {
-            const email = document.getElementById('userEmail').value;
-            const pass = document.getElementById('userPassword').value;
-            createUserWithEmailAndPassword(auth, email, pass)
-                .then(() => alert('สมัครสมาชิกสำเร็จ!'))
-                .catch((error) => alert('เกิดข้อผิดพลาด: ' + error.message));
-        });
-
+        // ล็อกอินด้วย Google (เปลี่ยนจาก Email/Pass)
         document.getElementById('loginBtn').addEventListener('click', () => {
-            const email = document.getElementById('userEmail').value;
-            const pass = document.getElementById('userPassword').value;
-            signInWithEmailAndPassword(auth, email, pass)
-                .catch((error) => alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง'));
+            signInWithPopup(auth, provider)
+                .catch((error) => {
+                    console.error(error);
+                    alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย Google');
+                });
         });
 
+        // ออกจากระบบ
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth);
         });
