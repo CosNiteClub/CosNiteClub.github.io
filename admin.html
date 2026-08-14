@@ -7,58 +7,63 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #f9f9f9; --text: #333; }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
-        .container { max-width: 1100px; margin: auto; background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        h2 { color: var(--primary); margin-top:0; }
-        input, button, select, textarea { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 14px; outline:none; box-sizing: border-box;}
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; }
+        .container { max-width: 1100px; margin: auto; background: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h2 { color: var(--primary); margin-top:0; font-size: 1.5rem; }
+        input, button, select, textarea { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; font-size: 0.95rem; outline:none; box-sizing: border-box; width: 100%;}
         button { cursor: pointer; transition: 0.2s; border: none; color: white; font-weight: 500;}
         button:hover { filter: brightness(1.1); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: left; vertical-align: top; }
-        th { background-color: var(--accent); color: #555; }
         
-        .tab-menu { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        .tab-btn { background-color: transparent; color: #777; padding: 10px 20px; border-radius: 30px; border: 1px solid #ddd; }
+        /* สร้าง Wrapper ให้ตารางเลื่อนซ้ายขวาบนมือถือได้ */
+        .table-responsive { overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid #eee; margin-top: 15px;}
+        table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: left; vertical-align: top; }
+        th { background-color: var(--accent); color: #555; white-space: nowrap; }
+        
+        .tab-menu { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; overflow-x: auto; white-space: nowrap; }
+        .tab-btn { background-color: transparent; color: #777; padding: 8px 15px; border-radius: 30px; border: 1px solid #ddd; width: auto; font-size: 0.95rem;}
         .tab-btn.active { background-color: var(--primary); color: white; border-color: var(--primary); }
         
         .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        .dash-card { background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #ffe6f7; }
-        .dash-card h3 { margin: 0; color: #666; font-size: 14px; }
-        .dash-card p { margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: var(--primary); }
-        .dash-sub { font-size: 12px; color: #f59e0b; margin-top: 5px; font-weight: 500; }
+        .dash-card { background: #fff; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #ffe6f7; box-shadow: 0 4px 10px rgba(255,62,201,0.05); }
+        .dash-card h3 { margin: 0; color: #666; font-size: 0.95rem; }
+        .dash-card p { margin: 5px 0 0 0; font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+        .dash-sub { font-size: 0.75rem; color: #f59e0b; margin-top: 5px; }
         
-        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-        .action-btns button { padding: 8px; font-size: 12px; border-radius: 6px; }
-        .btn-edit { background-color: #3b82f6; }
-        .btn-transfer { background-color: #f59e0b; }
-        .btn-del { background-color: #ef4444; grid-column: span 2; }
-        .btn-approve { background-color: #10b981; grid-column: span 2; }
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; min-width: 120px; }
+        .action-btns button { padding: 8px; font-size: 0.85rem; border-radius: 6px; }
+        .btn-edit { background-color: #3b82f6; } .btn-transfer { background-color: #f59e0b; }
+        .btn-del { background-color: #ef4444; grid-column: span 2; } .btn-approve { background-color: #10b981; grid-column: span 2; }
         
-        .manual-add-box { background: #fffafc; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--primary); }
-        .guest-manage-box { background: #fffafc; border: 1px dashed var(--primary); padding: 20px; border-radius: 12px; margin-bottom:20px;}
-        .guest-item { display: inline-flex; align-items: center; background: white; padding: 5px 15px; border-radius: 20px; border: 1px solid var(--primary); margin: 5px; color: var(--primary); }
-        .guest-item span { cursor: pointer; color: #ef4444; margin-left: 10px; font-weight: bold; }
-
-        #editModalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; backdrop-filter: blur(2px);}
-        #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; border-radius: 20px; z-index: 101; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        .admin-note-box { background: #fff0f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed var(--primary); }
-        .switch-wrap { display: flex; align-items: center; gap: 10px; margin-top: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
-        .switch-wrap input { width: auto; transform: scale(1.3); cursor: pointer; }
-        
-        .member-edit-card { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #eee; }
-        .member-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .full-width { grid-column: span 2; }
+        .manual-add-box, .guest-manage-box { background: #fffafc; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--primary); }
         
         .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #f1f5f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .toolbar-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .toolbar-group { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; align-items: center;}
+        .toolbar-group button { width: auto; font-size: 0.9rem;}
+        
+        /* Modal Responsive */
+        #editModalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; backdrop-filter: blur(2px);}
+        #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; width: 95%; max-width: 600px; max-height: 90vh; overflow-y: auto; border-radius: 20px; z-index: 101; box-sizing: border-box; }
+        .admin-note-box { background: #fff0f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed var(--primary); }
+        .switch-wrap { display: flex; align-items: center; gap: 10px; margin-top: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        
+        .member-edit-card { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #eee; }
+        .member-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .full-width { grid-column: span 2; }
+
+        @media (max-width: 768px) {
+            .dash-grid { grid-template-columns: 1fr 1fr; } /* โชว์ 2 แถวบนมือถือ/แท็บเล็ต */
+            .member-edit-grid { grid-template-columns: 1fr; } /* ช่องกรอกใน Modal เรียง 1 แถว */
+            .full-width { grid-column: span 1; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>ระบบจัดการหลังบ้าน (Admin)</h2>
         <div id="loginSection" style="text-align:center; padding: 50px 0;">
-            <input type="email" id="adminEmail" placeholder="อีเมลแอดมิน" style="width: 300px;">
-            <button id="loginBtn" style="padding: 10px 20px; background:var(--primary);">เข้าสู่ระบบ</button>
+            <input type="email" id="adminEmail" placeholder="ใส่อีเมลแอดมิน (cosniteclubparty@gmail.com)" style="max-width: 300px; margin: 0 auto 10px auto;">
+            <button id="loginBtn" style="padding: 12px 20px; background:var(--primary); max-width: 300px;">เข้าสู่ระบบ</button>
         </div>
 
         <div id="adminPanel" style="display: none;">
@@ -69,82 +74,72 @@
             </div>
 
             <div id="tab-pending">
-                <table id="pendingTable">
-                    <thead><tr><th>ประเภทตั๋ว</th><th>ราคา</th><th>สลิป</th><th style="width:120px;">จัดการ</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table id="pendingTable">
+                        <thead><tr><th>ประเภทตั๋ว</th><th>ราคา/ช่องทาง</th><th>สลิป</th><th style="width:120px;">จัดการ</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="tab-manage" style="display: none;">
                 <div class="dash-grid">
-                    <div class="dash-card">
-                        <h3>ที่นั่งทั้งหมด (500)</h3>
-                        <p id="dashTotal">0/500</p>
-                        <div class="dash-sub" id="dashTotalSub">(จ่ายแล้ว 0 | รอตรวจ 0)</div>
-                    </div>
-                    <div class="dash-card">
-                        <h3>VIP (โควตา 66)</h3>
-                        <p id="dashVip">0/66</p>
-                        <div class="dash-sub" id="dashVipSub">(จ่ายแล้ว 0 | รอตรวจ 0)</div>
-                    </div>
-                    <div class="dash-card">
-                        <h3>Party (โควตา 384)</h3>
-                        <p id="dashParty">0/384</p>
-                        <div class="dash-sub" id="dashPartySub">(จ่ายแล้ว 0 | รอตรวจ 0)</div>
-                    </div>
-                    <div class="dash-card">
-                        <h3>Solo (โควตา 50)</h3>
-                        <p id="dashSolo">0/50</p>
-                        <div class="dash-sub" id="dashSoloSub">(จ่ายแล้ว 0 | รอตรวจ 0)</div>
-                    </div>
+                    <div class="dash-card"><h3>ที่นั่งทั้งหมด (500)</h3><p id="dashTotal">0/500</p><div class="dash-sub" id="dashTotalSub"></div></div>
+                    <div class="dash-card"><h3>VIP (66)</h3><p id="dashVip">0/66</p><div class="dash-sub" id="dashVipSub"></div></div>
+                    <div class="dash-card"><h3>Party (384)</h3><p id="dashParty">0/384</p><div class="dash-sub" id="dashPartySub"></div></div>
+                    <div class="dash-card"><h3>Solo (50)</h3><p id="dashSolo">0/50</p><div class="dash-sub" id="dashSoloSub"></div></div>
                 </div>
                 
                 <div class="manual-add-box">
-                    <h3 style="margin-top:0; color:var(--primary);">+ เพิ่มตั๋วให้ลูกค้าเก่า (Manual)</h3>
+                    <h3 style="margin-top:0; color:var(--primary); font-size:1.1rem;">+ เพิ่มตั๋วให้ลูกค้าเก่าแบบกำหนดเอง (Manual Add)</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <select id="manualType" style="flex:1;">
+                        <select id="manualType" style="flex:1; min-width: 130px;">
                             <option value="solo">Solo (เดี่ยว)</option>
                             <option value="party4">Party 4 คน</option>
                             <option value="party6">Party 6 คน</option>
                             <option value="vip4">VIP 4 คน</option>
                             <option value="vip6">VIP 6 คน</option>
                         </select>
-                        <input type="text" id="manualRef" placeholder="ชื่ออ้างอิงลูกค้า" style="flex: 2;">
-                        <input type="text" id="manualUid" placeholder="UID ลูกค้า (เว้นว่างได้)" style="flex: 2;">
-                        <button onclick="addManualTicket()" style="background:#10b981; padding: 10px 20px;">เพิ่มเข้าระบบ</button>
+                        <input type="text" id="manualRef" placeholder="ชื่ออ้างอิงของลูกค้า" style="flex: 2; min-width: 150px;">
+                        <input type="text" id="manualUid" placeholder="UID ลูกค้า (ถ้ามี)" style="flex: 2; min-width: 150px;">
+                        <button onclick="addManualTicket()" style="background:#10b981; width:auto; padding:0 20px;">+ เพิ่ม</button>
                     </div>
                 </div>
 
                 <div class="toolbar">
-                    <div class="toolbar-group">
-                        <select id="ticketFilter" onchange="renderPaidTable()" style="padding:8px; border-radius: 8px;">
-                            <option value="all">กรอง: แสดงทั้งหมด</option>
+                    <div class="toolbar-group" style="justify-content: space-between;">
+                        <select id="ticketFilter" onchange="renderPaidTable()" style="padding:8px; width:auto;">
+                            <option value="all">กรองตั๋ว: ทั้งหมด</option>
                             <option value="vip">เฉพาะ VIP</option>
                             <option value="party">เฉพาะ Party</option>
                             <option value="solo">เฉพาะ Solo</option>
                         </select>
+                        <button onclick="exportCSV()" style="background:#10b981; padding:8px 15px;">📥 โหลดชีท (CSV)</button>
                     </div>
-                    <div class="toolbar-group">
-                        <button onclick="toggleAllTables(true)" style="background:#3b82f6; padding:8px 15px;">👁️ เปิดชื่อโต๊ะทั้งหมด</button>
-                        <button onclick="toggleAllTables(false)" style="background:#ef4444; padding:8px 15px;">🙈 ซ่อนชื่อโต๊ะทั้งหมด</button>
-                        <button onclick="exportCSV()" style="background:#10b981; padding:8px 15px;">📥 โหลดชีท</button>
+                    
+                    <div class="toolbar-group" style="background:#fff; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                        <b style="font-size:0.9rem; color:#555;">ควบคุมการโชว์เลขโต๊ะลูกค้า:</b>
+                        <button onclick="toggleAllTables(true)" style="background:#3b82f6;">👁️ เปิดทั้งหมด</button>
+                        <button onclick="toggleAllTables(false)" style="background:#ef4444;">🙈 ซ่อนทั้งหมด</button>
                     </div>
                 </div>
 
-                <table id="paidTable">
-                    <thead><tr><th>อ้างอิง/โต๊ะ</th><th>ประเภท</th><th>รายละเอียดลูกค้า</th><th style="width:150px;">จัดการ (Admin)</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table id="paidTable">
+                        <thead><tr><th>อ้างอิง/โต๊ะ</th><th>ประเภท</th><th>รายละเอียดลูกค้า</th><th style="width:150px;">จัดการ</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="tab-settings" style="display: none;">
                 <div class="guest-manage-box">
                     <h3 style="margin-top:0; color:var(--primary);">รายชื่อ Guest สำหรับบัตร VIP</h3>
-                    <div style="display:flex; gap:10px; margin-bottom:15px;">
-                        <input type="text" id="newGuestName" placeholder="พิมพ์ชื่อเกสต์ใหม่..." style="flex:1;">
-                        <button onclick="addGuest()" style="background:var(--primary);">+ เพิ่มเกสต์</button>
+                    <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+                        <input type="text" id="newGuestName" placeholder="พิมพ์ชื่อเกสต์ใหม่..." style="flex:1; min-width:200px;">
+                        <button onclick="addGuest()" style="background:var(--primary); width:auto; padding:0 20px;">+ เพิ่ม</button>
                     </div>
-                    <div id="guestListContainer">กำลังโหลด...</div>
+                    <div id="guestListContainer" style="display:flex; flex-wrap:wrap;">กำลังโหลด...</div>
                 </div>
             </div>
         </div>
@@ -156,11 +151,11 @@
         <input type="hidden" id="editTid"><input type="hidden" id="editType">
         
         <div class="admin-note-box">
-            <label style="font-weight:bold; color:var(--primary); font-size:14px;">สำหรับแอดมินจัดผังโต๊ะ:</label>
+            <label style="font-weight:bold; color:var(--primary); font-size:0.95rem;">สำหรับแอดมินจัดผังโต๊ะ:</label>
             <input type="text" id="editTableNum" class="full-width" placeholder="ระบุหมายเลข / ชื่อโต๊ะ (เช่น V01, P12)" style="margin-top:5px;">
             <div class="switch-wrap">
-                <input type="checkbox" id="editShowTable">
-                <label for="editShowTable" style="color: #ef4444; font-weight: bold; cursor:pointer;">เปิดให้ลูกค้าเห็นเลขโต๊ะนี้ในเว็บลูกค้า</label>
+                <input type="checkbox" id="editShowTable" style="width:auto;">
+                <label for="editShowTable" style="color: #ef4444; font-weight: bold; cursor:pointer; font-size:0.9rem;">เปิดให้ลูกค้าเห็นเลขโต๊ะ</label>
             </div>
             <textarea id="editNote" class="full-width" rows="2" placeholder="Note ภายในแอดมิน (ลูกค้าไม่เห็น)" style="margin-top:10px;"></textarea>
         </div>
@@ -169,8 +164,8 @@
         <div id="editMembersArea"></div>
         
         <div style="display:flex; gap:10px; margin-top:20px;">
-            <button onclick="saveAdminEdit()" style="flex:1; background:#10b981; font-size:16px;">บันทึกการแก้ไข</button>
-            <button onclick="closeModal()" style="flex:1; background:#ef4444; font-size:16px;">ยกเลิก</button>
+            <button onclick="saveAdminEdit()" style="flex:1; background:#10b981; font-size:1.1rem;">บันทึก</button>
+            <button onclick="closeModal()" style="flex:1; background:#ef4444; font-size:1.1rem;">ยกเลิก</button>
         </div>
     </div>
 
@@ -178,27 +173,17 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc, addDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        const app = initializeApp({
-            apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
-            authDomain: "cosniteclub.firebaseapp.com",
-            projectId: "cosniteclub"
-        });
+        const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
         const db = getFirestore(app);
 
-        let globalGuests = [];
-        let allPaidTickets = []; 
+        let globalGuests = []; let allPaidTickets = []; 
 
         window.switchTab = function(id) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-pending').style.display = 'none';
-            document.getElementById('tab-manage').style.display = 'none';
-            document.getElementById('tab-settings').style.display = 'none';
+            ['tab-pending', 'tab-manage', 'tab-settings'].forEach(t => document.getElementById(t).style.display = 'none');
             event.target.classList.add('active');
             document.getElementById(id).style.display = 'block';
-            
-            if(id === 'tab-pending') loadPending();
-            if(id === 'tab-manage') loadDashboardStats(); // โหลดสถิติใหม่
-            if(id === 'tab-settings') loadGuests();
+            if(id === 'tab-pending') loadPending(); if(id === 'tab-manage') loadDashboardStats(); if(id === 'tab-settings') loadGuests();
         }
 
         document.getElementById('loginBtn').addEventListener('click', () => {
@@ -206,232 +191,119 @@
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
                 loadPending(); loadDashboardStats(); loadGuests();
-            } else alert('อีเมลผิด');
+            } else alert('อีเมลไม่มีสิทธิ์เข้าถึง');
         });
 
-        // ------------------ ระบบ Dashboard ใหม่ที่นับรวมยอด Pending ------------------
         async function loadDashboardStats() {
             const qsPaid = await getDocs(query(collection(db, "Tickets"), where("status", "==", "paid")));
             const qsPending = await getDocs(query(collection(db, "Tickets"), where("status", "==", "pending_verification")));
 
-            let cTotal=0, cVip=0, cParty=0, cSolo=0;
-            let pTotal=0, pVip=0, pParty=0, pSolo=0;
-
+            let cTotal=0, cVip=0, cParty=0, cSolo=0, pTotal=0, pVip=0, pParty=0, pSolo=0;
             allPaidTickets = qsPaid.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-            qsPaid.forEach(d => {
-                const data = d.data();
-                let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
-                cTotal += s; if(data.type.includes('vip')) cVip+=s; if(data.type.includes('party')) cParty+=s; if(data.type.includes('solo')) cSolo+=s;
-            });
+            allPaidTickets.forEach(data => { let s=1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6; cTotal+=s; if(data.type.includes('vip')) cVip+=s; if(data.type.includes('party')) cParty+=s; if(data.type.includes('solo')) cSolo+=s; });
+            qsPending.forEach(d => { const data = d.data(); let s=1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6; pTotal+=s; if(data.type.includes('vip')) pVip+=s; if(data.type.includes('party')) pParty+=s; if(data.type.includes('solo')) pSolo+=s; });
 
-            qsPending.forEach(d => {
-                const data = d.data();
-                let s = 1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
-                pTotal += s; if(data.type.includes('vip')) pVip+=s; if(data.type.includes('party')) pParty+=s; if(data.type.includes('solo')) pSolo+=s;
-            });
+            document.getElementById('dashTotal').innerText = `${cTotal + pTotal}/500`; document.getElementById('dashTotalSub').innerText = `(จ่าย ${cTotal} | รอตรวจ ${pTotal})`;
+            document.getElementById('dashVip').innerText = `${cVip + pVip}/66`; document.getElementById('dashVipSub').innerText = `(จ่าย ${cVip} | รอตรวจ ${pVip})`;
+            document.getElementById('dashParty').innerText = `${cParty + pParty}/384`; document.getElementById('dashPartySub').innerText = `(จ่าย ${cParty} | รอตรวจ ${pParty})`;
+            document.getElementById('dashSolo').innerText = `${cSolo + pSolo}/50`; document.getElementById('dashSoloSub').innerText = `(จ่าย ${cSolo} | รอตรวจ ${pSolo})`;
 
-            document.getElementById('dashTotal').innerText = `${cTotal + pTotal}/500`;
-            document.getElementById('dashTotalSub').innerText = `(จ่ายแล้ว ${cTotal} | รอตรวจ ${pTotal})`;
-
-            document.getElementById('dashVip').innerText = `${cVip + pVip}/66`;
-            document.getElementById('dashVipSub').innerText = `(จ่ายแล้ว ${cVip} | รอตรวจ ${pVip})`;
-
-            document.getElementById('dashParty').innerText = `${cParty + pParty}/384`;
-            document.getElementById('dashPartySub').innerText = `(จ่ายแล้ว ${cParty} | รอตรวจ ${pParty})`;
-
-            document.getElementById('dashSolo').innerText = `${cSolo + pSolo}/50`;
-            document.getElementById('dashSoloSub').innerText = `(จ่ายแล้ว ${cSolo} | รอตรวจ ${pSolo})`;
-
-            renderPaidTable(); // วาดตารางตั๋วที่จ่ายแล้ว
+            renderPaidTable();
         }
 
-        // --- โหลดตั๋ว ---
         async function loadPending() {
-            const tbody = document.querySelector('#pendingTable tbody');
-            tbody.innerHTML = '<tr><td colspan="4">โหลด...</td></tr>';
+            const tbody = document.querySelector('#pendingTable tbody'); tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">โหลด...</td></tr>';
             const qs = await getDocs(query(collection(db, "Tickets"), where("status", "==", "pending_verification")));
             tbody.innerHTML = '';
             qs.forEach(d => {
                 const data = d.data();
-                tbody.innerHTML += `<tr>
-                    <td>${data.type}</td>
-                    <td>${data.pricePaid} ฿<br><span style="font-size:10px; color:#aaa;">(${data.paymentMethod})</span></td>
-                    <td><a href="${data.slipUrl}" target="_blank"><img src="${data.slipUrl}" style="max-width:80px; border-radius:5px;"></a></td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="btn-approve" onclick="approve('${d.id}')">ยืนยันสลิป</button>
-                            <button class="btn-del" onclick="delTicket('${d.id}')">ลบทิ้ง</button>
-                        </div>
-                    </td>
-                </tr>`;
+                tbody.innerHTML += `<tr><td>${data.type}</td><td>${data.pricePaid}฿<br><span style="font-size:11px; color:#aaa;">(${data.paymentMethod})</span></td>
+                    <td><a href="${data.slipUrl}" target="_blank"><img src="${data.slipUrl}" style="width:60px; border-radius:5px;"></a></td>
+                    <td><div class="action-btns"><button class="btn-approve" onclick="approve('${d.id}')">ยืนยัน</button><button class="btn-del" onclick="delTicket('${d.id}')">ลบ</button></div></td></tr>`;
             });
         }
 
         window.renderPaidTable = function() {
             const filterVal = document.getElementById('ticketFilter').value;
-            const tbody = document.querySelector('#paidTable tbody');
-            tbody.innerHTML = '';
+            const tbody = document.querySelector('#paidTable tbody'); tbody.innerHTML = '';
+            let displayTickets = filterVal === 'all' ? allPaidTickets : allPaidTickets.filter(t => t.type.includes(filterVal));
 
-            let displayTickets = allPaidTickets;
-            if (filterVal !== 'all') displayTickets = allPaidTickets.filter(t => t.type.includes(filterVal));
-
-            if(displayTickets.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ไม่มีข้อมูลในหมวดหมู่นี้</td></tr>';
-                return;
-            }
+            if(displayTickets.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ไม่มีข้อมูล</td></tr>';
 
             displayTickets.forEach(data => {
-                let tableTag = data.tableNumber ? `<div style="color:var(--primary); font-weight:bold; font-size:14px;">📍 โต๊ะ: ${data.tableNumber} ${data.isTableVisible ? '(ลูกค้าเห็น)' : '(ซ่อน)'}</div>` : '';
+                let tableTag = data.tableNumber ? `<div style="color:var(--primary); font-weight:bold; font-size:13px;">📍 ${data.tableNumber} ${data.isTableVisible ? '👁️' : '🙈'}</div>` : '';
                 let mHtml = data.request ? `<div style="color:#f59e0b; font-size:12px;">Req: ${data.request}</div>` : '';
-                if(data.members) {
-                    data.members.forEach((m,i) => mHtml += `<div style="font-size:12px; margin-top:3px;">${i+1}.${m.name||'-'} | ${data.type.includes('vip')?`<b style="color:var(--primary);">[${m.guest||'ไม่ระบุ'}]</b>`:''}</div>`);
-                }
+                if(data.members) data.members.forEach((m,i) => mHtml += `<div style="font-size:11px; margin-top:3px; padding-bottom:3px; border-bottom:1px dashed #eee;">${i+1}.${m.name||'-'} ${data.type.includes('vip')?`<br><b style="color:var(--primary);">[${m.guest||'ไม่ระบุ'}]</b>`:''}</div>`);
                 
                 tbody.innerHTML += `<tr>
-                    <td>${tableTag}<span style="font-size:10px; color:#aaa;">ID: ${data.id}</span>${data.refName ? `<br><b style="font-size:12px; color:#10b981;">(Ref: ${data.refName})</b>` : ''}</td>
-                    <td>${data.type.toUpperCase()}</td>
-                    <td>${mHtml}</td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="btn-edit" onclick="openEdit('${data.id}')">แก้ไข</button>
-                            <button class="btn-transfer" onclick="transferTicket('${data.id}')">โอนสิทธิ์</button>
-                            <button class="btn-del" onclick="delTicket('${data.id}')">ลบออก</button>
-                        </div>
-                    </td>
+                    <td>${tableTag}<span style="font-size:10px; color:#aaa;">ID: ${data.id}</span>${data.refName ? `<br><b style="font-size:11px; color:#10b981;">Ref: ${data.refName}</b>` : ''}</td>
+                    <td>${data.type.toUpperCase()}</td><td>${mHtml}</td>
+                    <td><div class="action-btns"><button class="btn-edit" onclick="openEdit('${data.id}')">แก้</button><button class="btn-transfer" onclick="transferTicket('${data.id}')">โอน</button><button class="btn-del" onclick="delTicket('${data.id}')">ลบ</button></div></td>
                 </tr>`;
             });
         }
 
-        // --- ระบบเกสต์ & Actions ---
         async function loadGuests() {
-            try {
-                const docSnap = await getDoc(doc(db, "Settings", "GuestList"));
-                if (docSnap.exists() && docSnap.data().guests) globalGuests = docSnap.data().guests;
-                else { await setDoc(doc(db, "Settings", "GuestList"), { guests: ["เกสต์ A", "เกสต์ B"] }); globalGuests = ["เกสต์ A", "เกสต์ B"]; }
-                renderGuests();
-            } catch(e) { console.error(e); }
+            try { const ds = await getDoc(doc(db, "Settings", "GuestList")); if (ds.exists() && ds.data().guests) globalGuests = ds.data().guests; else { await setDoc(doc(db, "Settings", "GuestList"), { guests: ["เกสต์ A"] }); globalGuests = ["เกสต์ A"]; } renderGuests(); } catch(e) {}
         }
-        function renderGuests() {
-            const div = document.getElementById('guestListContainer'); div.innerHTML = '';
-            globalGuests.forEach((g, idx) => { div.innerHTML += `<div class="guest-item">${g} <span onclick="removeGuest(${idx})">×</span></div>`; });
-        }
-        window.addGuest = async function() {
-            const val = document.getElementById('newGuestName').value.trim();
-            if(!val) return; globalGuests.push(val);
-            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests });
-            document.getElementById('newGuestName').value = ''; renderGuests();
-        }
-        window.removeGuest = async function(idx) {
-            if(!confirm('ยืนยันลบเกสต์ท่านนี้?')) return;
-            globalGuests.splice(idx, 1);
-            await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests }); renderGuests();
-        }
+        function renderGuests() { const div = document.getElementById('guestListContainer'); div.innerHTML = ''; globalGuests.forEach((g, idx) => { div.innerHTML += `<div class="guest-item">${g} <span onclick="removeGuest(${idx})">×</span></div>`; }); }
+        window.addGuest = async () => { const v = document.getElementById('newGuestName').value.trim(); if(!v) return; globalGuests.push(v); await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests }); document.getElementById('newGuestName').value = ''; renderGuests(); }
+        window.removeGuest = async (idx) => { if(confirm('ลบเกสต์ท่านนี้?')) { globalGuests.splice(idx, 1); await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests }); renderGuests(); } }
 
-        window.toggleAllTables = async function(isVisible) {
-            const actionText = isVisible ? 'เปิดให้ลูกค้าเห็น' : 'ซ่อนไม่ให้ลูกค้าเห็น';
-            if(!confirm(`⚠️ ยืนยันการ ${actionText} "หมายเลข/ชื่อโต๊ะ" ของลูกค้าทั้งหมดใช่หรือไม่?\n(ระบบจะใช้เวลาอัปเดตสักครู่)`)) return;
-            try {
-                const promises = [];
-                allPaidTickets.forEach(t => { promises.push(updateDoc(doc(db, "Tickets", t.id), { isTableVisible: isVisible })); });
-                await Promise.all(promises);
-                alert(`✅ อัปเดตสถานะสำเร็จ! (${actionText} เรียบร้อยแล้ว)`);
-                loadDashboardStats(); 
-            } catch(e) { console.error(e); alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล'); }
+        window.toggleAllTables = async (isVisible) => {
+            if(!confirm(`⚠️ ยืนยันการ ${isVisible?'เปิด':'ซ่อน'} โต๊ะทั้งหมด?`)) return;
+            const promises = allPaidTickets.map(t => updateDoc(doc(db, "Tickets", t.id), { isTableVisible: isVisible }));
+            await Promise.all(promises); alert(`✅ อัปเดตสำเร็จ!`); loadDashboardStats(); 
         };
 
-        window.exportCSV = function() {
-            if(allPaidTickets.length === 0) return alert('ไม่มีข้อมูลตั๋วให้ดาวน์โหลด');
-            let csvContent = "\uFEFFลำดับ,รหัสตั๋ว,อ้างอิงลูกค้า,ประเภทตั๋ว,เลขโต๊ะ,โซนที่รีเควส,รายละเอียดผู้ร่วมงาน (คนที่. ชื่อ | วันเกิด | FB | เกสต์)\n";
+        window.exportCSV = () => {
+            if(allPaidTickets.length === 0) return;
+            let csv = "\uFEFFลำดับ,รหัสตั๋ว,อ้างอิง,ประเภท,โต๊ะ,รีเควส,รายละเอียดผู้ร่วมงาน\n";
             allPaidTickets.forEach((t, index) => {
-                let memberInfo = "";
-                if (t.members) memberInfo = t.members.map((m, i) => `${i+1}. ${m.name||'-'} | ${m.dob||'-'} | ${m.facebook||'-'} | ${m.guest||'-'}`).join("  //  ");
-                let row = [ index + 1, t.id, t.refName || '', t.type, t.tableNumber || '', t.request || '', memberInfo ];
-                let rowString = row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
-                csvContent += rowString + "\n";
+                let mInfo = t.members ? t.members.map((m, i) => `${i+1}.${m.name||'-'}|${m.dob||'-'}|${m.facebook||'-'}|${m.guest||'-'}`).join(" // ") : "";
+                let row = [ index + 1, t.id, t.refName || '', t.type, t.tableNumber || '', t.request || '', mInfo ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+                csv += row + "\n";
             });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
-            link.download = `CosNite_Tickets_${new Date().toISOString().slice(0,10)}.csv`;
-            link.style.display = "none"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); a.download = `CosNite_Tickets.csv`; a.click();
         }
 
-        window.addManualTicket = async function() {
-            const type = document.getElementById('manualType').value;
-            const refName = document.getElementById('manualRef').value || 'ลูกค้าเก่า (Manual)';
-            const inputUid = document.getElementById('manualUid').value.trim();
-            const finalUid = inputUid !== '' ? inputUid : 'manual_admin_added';
-
-            if(!confirm(`ยืนยันการเพิ่มตั๋ว ${type} ให้กับ: ${refName} ใช่หรือไม่?`)) return;
-            try {
-                await addDoc(collection(db, "Tickets"), {
-                    userId: finalUid, refName: refName, type: type, status: "paid", isMembersLocked: false, isTableVisible: false, createdAt: serverTimestamp()
-                });
-                alert('เพิ่มตั๋วเข้าระบบสำเร็จ!');
-                document.getElementById('manualRef').value = ''; document.getElementById('manualUid').value = '';
-                loadDashboardStats();
-            } catch (e) { console.error(e); }
+        window.addManualTicket = async () => {
+            const type = document.getElementById('manualType').value, ref = document.getElementById('manualRef').value || 'ลูกค้าเก่า', uid = document.getElementById('manualUid').value.trim();
+            if(!confirm(`ยืนยันการเพิ่ม?`)) return;
+            await addDoc(collection(db, "Tickets"), { userId: uid !== '' ? uid : 'manual_admin', refName: ref, type: type, status: "paid", isMembersLocked: false, isTableVisible: false, createdAt: serverTimestamp() });
+            document.getElementById('manualRef').value = ''; document.getElementById('manualUid').value = ''; loadDashboardStats();
         }
 
-        window.approve = async (id) => { if(confirm('ยืนยันสลิปยอดเงิน?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); loadDashboardStats(); } }
+        window.approve = async (id) => { if(confirm('ยืนยันยอดเงิน?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); loadDashboardStats(); } }
         window.delTicket = async (id) => { if(confirm('ลบตั๋วใบนี้ทิ้งอย่างถาวร?')) { await deleteDoc(doc(db,"Tickets",id)); loadPending(); loadDashboardStats(); } }
-        window.transferTicket = async function(id) {
-            const newUid = prompt("กรอก UID ใหม่:");
-            if(!newUid) return;
-            if(confirm(`โอนตั๋วไปที่ UID: ${newUid.trim()} ?`)) { await updateDoc(doc(db, "Tickets", id), { userId: newUid.trim() }); alert("✅ โอนสิทธิ์สำเร็จ!"); loadDashboardStats(); }
-        };
+        window.transferTicket = async (id) => { const n = prompt("กรอก UID ใหม่:"); if(n && confirm(`โอนไปที่ ${n}?`)) { await updateDoc(doc(db, "Tickets", id), { userId: n.trim() }); loadDashboardStats(); } };
 
-        window.openEdit = async function(id) {
-            const dSnap = await getDoc(doc(db, "Tickets", id));
-            const data = dSnap.data();
-            document.getElementById('editTid').value = id;
-            document.getElementById('editType').value = data.type;
-            
-            document.getElementById('editTableNum').value = data.tableNumber || '';
-            document.getElementById('editShowTable').checked = data.isTableVisible === true;
-            document.getElementById('editNote').value = data.adminNote || '';
-            document.getElementById('editReq').value = data.request || '';
-            
+        window.openEdit = async (id) => {
+            const data = (await getDoc(doc(db, "Tickets", id))).data();
+            document.getElementById('editTid').value = id; document.getElementById('editType').value = data.type;
+            document.getElementById('editTableNum').value = data.tableNumber || ''; document.getElementById('editShowTable').checked = data.isTableVisible === true;
+            document.getElementById('editNote').value = data.adminNote || ''; document.getElementById('editReq').value = data.request || '';
             let s=1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
-            let isVip = data.type.includes('vip');
-            let h = '';
-            
+            let isVip = data.type.includes('vip'), h = '';
             for(let i=0; i<s; i++) {
                 let m = data.members && data.members[i] ? data.members[i] : {name:'',dob:'',facebook:'',guest:''};
-                h += `<div class="member-edit-card">
-                    <b style="color:var(--primary); font-size:14px; margin-bottom:5px; display:block;">คนที่ ${i+1}</b>
-                    <div class="member-edit-grid">
+                h += `<div class="member-edit-card"><b style="color:var(--primary); font-size:13px;">คนที่ ${i+1}</b><div class="member-edit-grid">
                         <input class="full-width" type="text" id="ed_n_${i}" value="${m.name}" placeholder="ชื่อ-สกุล">
-                        <input type="text" id="ed_d_${i}" value="${m.dob}" placeholder="วันเกิด">
-                        <input type="text" id="ed_f_${i}" value="${m.facebook}" placeholder="Facebook">`;
-                if(isVip) {
-                    let opts = `<option value="">- เลือกเกสต์ -</option>`;
-                    globalGuests.forEach(g => opts += `<option value="${g}" ${m.guest===g?'selected':''}>${g}</option>`);
-                    h += `<select class="full-width" id="ed_g_${i}">${opts}</select>`;
-                }
+                        <input type="text" id="ed_d_${i}" value="${m.dob}" placeholder="วันเกิด"><input type="text" id="ed_f_${i}" value="${m.facebook}" placeholder="Facebook">`;
+                if(isVip) { let opts = `<option value="">- เลือกเกสต์ -</option>`; globalGuests.forEach(g => opts += `<option value="${g}" ${m.guest===g?'selected':''}>${g}</option>`); h += `<select class="full-width" id="ed_g_${i}">${opts}</select>`; }
                 h += `</div></div>`;
             }
-            document.getElementById('editMembersArea').innerHTML = h;
-            document.getElementById('editModalOverlay').style.display = 'block';
-            document.getElementById('editModal').style.display = 'block';
+            document.getElementById('editMembersArea').innerHTML = h; document.getElementById('editModalOverlay').style.display = 'block'; document.getElementById('editModal').style.display = 'block';
         }
 
         window.closeModal = () => { document.getElementById('editModalOverlay').style.display='none'; document.getElementById('editModal').style.display='none'; }
         
-        window.saveAdminEdit = async function() {
-            const id = document.getElementById('editTid').value;
-            const type = document.getElementById('editType').value;
-            let s=1; if(type.includes('4')) s=4; if(type.includes('6')) s=6;
-            let isVip = type.includes('vip');
-            let arr = [];
-            for(let i=0; i<s; i++) {
-                arr.push({ name: document.getElementById(`ed_n_${i}`).value, dob: document.getElementById(`ed_d_${i}`).value,
-                           facebook: document.getElementById(`ed_f_${i}`).value, guest: isVip ? document.getElementById(`ed_g_${i}`).value : '' });
-            }
-            await updateDoc(doc(db,"Tickets",id), { 
-                tableNumber: document.getElementById('editTableNum').value, adminNote: document.getElementById('editNote').value,
-                isTableVisible: document.getElementById('editShowTable').checked, request: document.getElementById('editReq').value, members: arr, isMembersLocked: true 
-            });
+        window.saveAdminEdit = async () => {
+            const id = document.getElementById('editTid').value, type = document.getElementById('editType').value;
+            let s=1; if(type.includes('4')) s=4; if(type.includes('6')) s=6; let isVip = type.includes('vip'), arr = [];
+            for(let i=0; i<s; i++) arr.push({ name: document.getElementById(`ed_n_${i}`).value, dob: document.getElementById(`ed_d_${i}`).value, facebook: document.getElementById(`ed_f_${i}`).value, guest: isVip ? document.getElementById(`ed_g_${i}`).value : '' });
+            await updateDoc(doc(db,"Tickets",id), { tableNumber: document.getElementById('editTableNum').value, adminNote: document.getElementById('editNote').value, isTableVisible: document.getElementById('editShowTable').checked, request: document.getElementById('editReq').value, members: arr, isMembersLocked: true });
             closeModal(); loadDashboardStats();
         }
     </script>
