@@ -18,7 +18,10 @@
         .pay-btn { flex: 1; min-width: 140px; padding: 12px 10px; background: #f9f9f9; border: 2px solid #eee; border-radius: 12px; cursor: pointer; font-family: 'Kanit'; font-weight: 500; font-size: 0.95rem; color: #555; transition: 0.3s; }
         .pay-btn.active { border-color: var(--primary); background: #fff0f9; color: var(--primary); box-shadow: 0 4px 10px rgba(255,62,201,0.2); }
         
-        #qrCodeDisplay { max-width: 100%; height: auto; width: 220px; display: none; margin: 15px auto; border-radius: 15px; border: 3px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #qrCodeDisplay { max-width: 100%; height: auto; width: 220px; display: none; margin: 15px auto 5px auto; border-radius: 15px; border: 3px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        /* กล่องอธิบายช่องทางชำระเงิน */
+        #paymentDetails { background: #f3f4f6; border-radius: 10px; padding: 12px; margin-bottom: 20px; font-size: 0.9rem; color: #555; line-height: 1.5; border: 1px solid #e5e7eb;}
         
         .instruction { text-align: left; background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #555; margin-bottom: 15px; border-left: 4px solid #10b981; }
 
@@ -48,7 +51,7 @@
 
         <h3 style="text-align: left; font-size: 1.05rem; color: #444; margin-bottom: 8px;">เลือกช่องทางการชำระเงิน:</h3>
         <div class="pay-methods">
-            <button class="pay-btn active" data-method="normal">โอนเงิน / PromptPay</button>
+            <button class="pay-btn active" data-method="normal">สแกนจ่าย / E-Wallet</button>
             <button class="pay-btn" data-method="credit">บัตรเครดิต (+3%)</button>
         </div>
 
@@ -56,6 +59,8 @@
             <h3 style="color: var(--primary); font-size: 1.6rem; margin: 10px 0;">ยอดชำระ: <span id="finalPriceDisplay">0</span> ฿</h3>
             <p style="color: #666; font-size: 0.9rem; margin:0;">สแกน QR Code เพื่อชำระเงิน หรือบันทึกรูปภาพเพื่อสแกนในแอปธนาคาร</p>
             <img id="qrCodeDisplay" src="" alt="QR Code">
+            
+            <div id="paymentDetails"></div>
             
             <hr style="border:none; border-top: 1px dashed #ddd; margin: 25px 0;">
             
@@ -89,15 +94,9 @@
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-        const app = initializeApp({
-            apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
-            authDomain: "cosniteclub.firebaseapp.com",
-            projectId: "cosniteclub"
-        });
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        let currentUser = null;
-        let selectedMethod = 'normal';
+        const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
+        const db = getFirestore(app); const auth = getAuth(app);
+        let currentUser = null; let selectedMethod = 'normal';
 
         onAuthStateChanged(auth, (user) => {
             if (user) currentUser = user;
@@ -128,6 +127,14 @@
             let sojuText = hasSoju ? "-soju" : "";
             document.getElementById('qrCodeDisplay').src = `assets/images/qrcodes/qr-${ticketType}${sojuText}-${selectedMethod}.jpg`;
             document.getElementById('qrCodeDisplay').style.display = 'block';
+            
+            // อัปเดตข้อความอธิบายช่องทาง
+            const pd = document.getElementById('paymentDetails');
+            if (selectedMethod === 'normal') {
+                pd.innerHTML = `✅ รองรับ <b>PromptPay</b> และ <b>Mobile Banking</b> ทุกธนาคาร<br>✅ รองรับ <b>E-Wallet</b>: ShopeePay, TrueMoney Wallet<br><span style="color:var(--primary); font-weight:bold;">🔥 สามารถสแกนเพื่อผ่อนชำระผ่าน SPayLater ได้!</span>`;
+            } else {
+                pd.innerHTML = `💳 รองรับบัตรเครดิต / เดบิต<br><b>Mastercard, Visa, JCB, UnionPay</b>`;
+            }
         };
         updateDisplay();
 
@@ -165,8 +172,7 @@
                 document.getElementById('successModal').style.display = 'flex';
                 
             } catch (e) {
-                console.error(e); 
-                document.getElementById('loadingModal').style.display = 'none';
+                console.error(e); document.getElementById('loadingModal').style.display = 'none';
                 alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป กรุณาลองใหม่ หรือปรับขนาดรูปให้เล็กลง');
             }
         });
