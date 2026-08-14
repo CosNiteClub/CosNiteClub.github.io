@@ -7,37 +7,49 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #fffafc; --text: #333; }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
-        .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; position: relative; }
-        h2 { color: var(--primary); text-align: center; margin-top: 0; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 30px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; position: relative; }
+        h2 { color: var(--primary); text-align: center; margin-top: 0; font-size: 1.8rem; }
         
-        .grid-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; margin-bottom: 25px; }
-        .card-opt { background: #f9f9f9; border: 2px solid #eee; padding: 15px; border-radius: 12px; cursor: pointer; text-align: center; transition: 0.3s; display: flex; flex-direction: column; justify-content: center; min-height: 80px; position: relative; overflow: hidden; }
+        /* UX Writing Helper text */
+        .helper-text { text-align: center; color: #666; font-size: 0.95rem; margin-bottom: 20px; background: #fff5fb; padding: 10px; border-radius: 10px; }
+        
+        .grid-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; margin-bottom: 20px; }
+        .card-opt { background: #f9f9f9; border: 2px solid #eee; padding: 15px; border-radius: 12px; cursor: pointer; text-align: center; transition: 0.3s; display: flex; flex-direction: column; justify-content: center; min-height: 85px; position: relative; overflow: hidden; }
         .card-opt:not(.sold-out):hover { border-color: #ffb3e6; background: #fff5fb; }
-        .card-opt.active { border-color: var(--primary); background: #fff0f9; box-shadow: 0 5px 15px rgba(255,62,201,0.2); }
+        .card-opt.active { border-color: var(--primary); background: #fff0f9; box-shadow: 0 5px 15px rgba(255,62,201,0.2); transform: scale(1.02); }
         .card-opt strong { font-size: 1.1rem; color: var(--primary); }
         .card-opt span { font-size: 0.9rem; color: #666; }
         .full-width { grid-column: span 2; }
         
         .card-opt.sold-out { background: #eee; border-color: #ccc; cursor: not-allowed; opacity: 0.7; }
         .card-opt.sold-out strong { color: #888; text-decoration: line-through; }
-        .sold-out-badge { position: absolute; top: 10px; right: -25px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 3px 25px; transform: rotate(45deg); letter-spacing: 1px; }
+        .sold-out-badge { position: absolute; top: 12px; right: -25px; background: #ef4444; color: white; font-size: 11px; font-weight: bold; padding: 3px 25px; transform: rotate(45deg); letter-spacing: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
 
-        label { font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
-        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; margin-top: 10px; }
+        label { font-weight: bold; color: #444; display: block; margin-bottom: 5px; font-size: 1.05rem; }
+        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; margin-top: 15px; font-family: 'Kanit';}
         button.submit-btn:hover:not(:disabled) { background-color: #e62eb3; transform: translateY(-3px); }
         button.submit-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
         
-        #inlineLoader { text-align: center; color: #888; font-size: 14px; margin-bottom: 15px; transition: 0.3s; }
+        #inlineLoader { text-align: center; color: #888; font-size: 14px; margin-bottom: 15px; background: #f3f4f6; padding: 8px; border-radius: 8px; }
+
+        /* Responsive มือถือ */
+        @media (max-width: 480px) {
+            .grid-options { grid-template-columns: 1fr; } /* ทำให้เรียงเป็นแถวเดียวบนมือถือ */
+            .full-width { grid-column: span 1; }
+            .container { padding: 20px 15px; }
+            h2 { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>เลือกแพ็กเกจบัตร 🎟️</h2>
+        <div class="helper-text">กรุณากดเลือกกล่องแพ็กเกจที่คุณต้องการจองด้านล่าง<br>(ระบบอัปเดตที่นั่งว่างแบบ Real-time)</div>
         
         <div id="inlineLoader">⏳ กำลังเชื่อมต่อระบบเช็กที่นั่ง...</div>
         
-        <label>ประเภทบัตร (อัปเดตแบบ Real-time):</label>
+        <label>1. เลือกประเภทบัตร:</label>
         <div class="grid-options" id="ticketGrid">
             <div class="card-opt full-width" id="opt_solo" data-val="solo"><strong>Solo (เดี่ยว)</strong><span>690 บาท</span></div>
             <div class="card-opt" id="opt_party4" data-val="party4"><strong>Party โต๊ะ 4 คน</strong><span>3,400 บาท</span></div>
@@ -46,16 +58,16 @@
             <div class="card-opt" id="opt_vip6" data-val="vip6"><strong>VIP โต๊ะ 6 คน</strong><span>9,000 บาท</span></div>
         </div>
 
-        <div id="drinkSection" style="display: none;">
-            <label>เลือกเซ็ตเครื่องดื่ม (สำหรับ Party):</label>
+        <div id="drinkSection" style="display: none; border-top: 1px dashed #ddd; padding-top: 20px;">
+            <label>2. เลือกเซ็ตเครื่องดื่ม <span style="color:var(--primary); font-size:0.9rem;">(ฟรีสำหรับโต๊ะ Party)</span></label>
             <div class="grid-options" id="drinkGrid">
                 <div class="card-opt active" data-val="A"><strong>Set A</strong><span>Sangsom + Mixer</span></div>
                 <div class="card-opt" data-val="B"><strong>Set B</strong><span>Leo Beer</span></div>
-                <div class="card-opt" data-val="C"><strong>Set C (Soju)</strong><span>+39 บาท/คน</span></div>
+                <div class="card-opt" data-val="C"><strong>Set C (Soju)</strong><span>เพิ่ม 39 บาท/คน</span></div>
             </div>
         </div>
 
-        <button id="btnNext" class="submit-btn" disabled>ไปหน้าชำระเงิน</button>
+        <button id="btnNext" class="submit-btn" disabled>ยืนยันแพ็กเกจ > ไปหน้าชำระเงิน</button>
     </div>
 
     <script type="module">
@@ -75,7 +87,6 @@
             if (!user) { alert("กรุณาเข้าสู่ระบบก่อนทำการจองบัตรครับ!"); window.location.href = "index.html"; }
         });
 
-        // โควตาแยกเป๊ะๆ ตามที่คำนวณ 500 ที่นั่ง
         const maxVip4Tables = 3;   
         const maxVip6Tables = 9;   
         const maxParty = 384;      
@@ -122,14 +133,12 @@
 
                 ['opt_solo', 'opt_party4', 'opt_party6', 'opt_vip4', 'opt_vip6'].forEach(setAvailable);
 
-                // เช็กลิมิต
                 if (countSolo >= maxSolo) setSoldOut('opt_solo');
                 if (maxParty - countParty < 4) setSoldOut('opt_party4');
                 if (maxParty - countParty < 6) setSoldOut('opt_party6');
                 if (countVip4 >= maxVip4Tables) setSoldOut('opt_vip4');
                 if (countVip6 >= maxVip6Tables) setSoldOut('opt_vip6');
 
-                // ดักจับกรณีจองชนกัน (คนนึงจองโต๊ะสุดท้ายไปก่อน แล้วเรากดปุ่มช้ากว่า)
                 if (selectedTicket) {
                     const activeCard = document.getElementById(`opt_${selectedTicket}`);
                     if (activeCard.classList.contains('sold-out')) {
