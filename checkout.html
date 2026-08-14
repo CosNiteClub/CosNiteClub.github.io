@@ -7,56 +7,62 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #fffafc; --text: #333; }
-        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; text-align: center; margin: 0;}
-        .container { max-width: 500px; margin: auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
-        h2 { color: var(--primary); margin-top: 0; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; text-align: center; margin: 0;}
+        .container { max-width: 500px; margin: auto; background: #fff; padding: 25px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
+        h2 { color: var(--primary); margin-top: 0; font-size: 1.6rem;}
         
-        .summary-box { background: #fffafc; padding: 20px; border-radius: 15px; margin-bottom: 25px; text-align: left; border: 1px dashed var(--primary); }
-        .summary-box p { margin: 5px 0; font-size: 1.1rem; }
+        .summary-box { background: #fff5fb; padding: 15px; border-radius: 12px; margin-bottom: 25px; text-align: left; border: 1px dashed var(--primary); }
+        .summary-box p { margin: 5px 0; font-size: 1.05rem; color: #444;}
         
-        /* ปุ่มเลือกช่องทางชำระเงิน */
-        .pay-methods { display: flex; gap: 10px; margin-bottom: 20px; }
-        .pay-btn { flex: 1; padding: 15px 10px; background: #f9f9f9; border: 2px solid #eee; border-radius: 12px; cursor: pointer; font-family: 'Kanit'; font-weight: 500; font-size: 1rem; color: #555; transition: 0.3s; }
+        .pay-methods { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .pay-btn { flex: 1; min-width: 140px; padding: 12px 10px; background: #f9f9f9; border: 2px solid #eee; border-radius: 12px; cursor: pointer; font-family: 'Kanit'; font-weight: 500; font-size: 0.95rem; color: #555; transition: 0.3s; }
         .pay-btn.active { border-color: var(--primary); background: #fff0f9; color: var(--primary); box-shadow: 0 4px 10px rgba(255,62,201,0.2); }
         
-        #qrCodeDisplay { max-width: 220px; display: none; margin: 15px auto; border-radius: 15px; border: 3px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #qrCodeDisplay { max-width: 100%; height: auto; width: 220px; display: none; margin: 15px auto; border-radius: 15px; border: 3px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
-        input[type="file"] { width: 100%; padding: 12px; border: 2px dashed #ddd; border-radius: 10px; background: #fdfdfd; margin-bottom: 20px; cursor: pointer; }
-        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; }
+        .instruction { text-align: left; background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #555; margin-bottom: 15px; border-left: 4px solid #10b981; }
+
+        input[type="file"] { width: 100%; padding: 10px; border: 2px dashed #ccc; border-radius: 10px; background: #fafafa; margin-bottom: 10px; cursor: pointer; box-sizing: border-box; font-family: 'Kanit'; }
+        
+        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; font-family: 'Kanit';}
         button.submit-btn:hover { background-color: #e62eb3; transform: translateY(-2px); }
 
-        /* Loading & Success Modal */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; }
-        .custom-modal { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 15px 35px rgba(255,62,201,0.2); border: 2px solid #ffe6f7; animation: popIn 0.3s ease-out; }
-        
-        /* Spinner */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .custom-modal { background: white; padding: 30px 20px; border-radius: 20px; width: 100%; max-width: 350px; text-align: center; box-shadow: 0 15px 35px rgba(255,62,201,0.2); border: 2px solid #ffe6f7; animation: popIn 0.3s ease-out; }
         .spinner { width: 50px; height: 50px; border: 5px solid #ffe6f7; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px auto; }
+        
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
         .success-icon { font-size: 4rem; color: #10b981; margin-bottom: 10px; animation: popIn 0.5s ease-out; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>สรุปรายการ & ชำระเงิน 💸</h2>
+        
+        <div class="instruction">
+            <b>คำแนะนำ:</b> กรุณาตรวจสอบแพ็กเกจให้ถูกต้องก่อนโอนเงิน หากเลือกบัตรเครดิตจะมียอดชาร์จ 3% แจ้งเตือนอัตโนมัติ
+        </div>
+
         <div class="summary-box" id="orderSummary"></div>
 
-        <h3 style="text-align: left; font-size: 1.1rem; color: #555;">เลือกช่องทางการชำระเงิน</h3>
+        <h3 style="text-align: left; font-size: 1.05rem; color: #444; margin-bottom: 8px;">เลือกช่องทางการชำระเงิน:</h3>
         <div class="pay-methods">
-            <button class="pay-btn active" data-method="normal">โอนเงิน / QR Code</button>
+            <button class="pay-btn active" data-method="normal">โอนเงิน / PromptPay</button>
             <button class="pay-btn" data-method="credit">บัตรเครดิต (+3%)</button>
         </div>
 
         <div id="paymentArea">
-            <h3 style="color: var(--primary); font-size: 1.5rem; margin: 10px 0;">ยอดชำระ: <span id="finalPriceDisplay">0</span> ฿</h3>
-            <p style="color: #666; font-size: 0.9rem; margin:0;">สแกน QR Code ด้านล่างเพื่อชำระเงิน</p>
+            <h3 style="color: var(--primary); font-size: 1.6rem; margin: 10px 0;">ยอดชำระ: <span id="finalPriceDisplay">0</span> ฿</h3>
+            <p style="color: #666; font-size: 0.9rem; margin:0;">สแกน QR Code เพื่อชำระเงิน หรือบันทึกรูปภาพเพื่อสแกนในแอปธนาคาร</p>
             <img id="qrCodeDisplay" src="" alt="QR Code">
             
             <hr style="border:none; border-top: 1px dashed #ddd; margin: 25px 0;">
             
-            <h3 style="text-align:left; color:#555; font-size: 1.1rem; margin-top:0;">แนบหลักฐาน (สลิป)</h3>
+            <h3 style="text-align:left; color:#444; font-size: 1.05rem; margin-top:0; margin-bottom: 5px;">แนบหลักฐาน (สลิปการโอนเงิน)</h3>
             <input type="file" id="slipUpload" accept="image/*" required>
+            <p style="font-size: 0.8rem; color: #888; text-align: left; margin-top: 0;">* รองรับไฟล์รูปภาพเท่านั้น ขนาดไม่เกิน 5MB จะทำให้อัปโหลดไวขึ้น</p>
+            
             <button id="submitOrderBtn" class="submit-btn">ยืนยันการชำระเงิน</button>
         </div>
     </div>
@@ -64,8 +70,8 @@
     <div class="modal-overlay" id="loadingModal">
         <div class="custom-modal">
             <div class="spinner"></div>
-            <h3 style="color: var(--primary); margin:0;">กำลังประมวลผล...</h3>
-            <p style="color:#666; font-size:0.9rem;">กรุณารอสักครู่ ห้ามปิดหน้านี้</p>
+            <h3 style="color: var(--primary); margin:0;">กำลังอัปโหลดสลิป...</h3>
+            <p style="color:#666; font-size:0.9rem; margin-top: 5px;">กรุณารอสักครู่ ห้ามปิดหน้าจอหรือรีเฟรช</p>
         </div>
     </div>
 
@@ -73,8 +79,8 @@
         <div class="custom-modal">
             <div class="success-icon">✅</div>
             <h3 style="color: #10b981; margin:0;">ส่งข้อมูลสำเร็จ!</h3>
-            <p style="color:#666; font-size:0.9rem;">รอแอดมินตรวจสอบสลิปสักครู่นะครับ</p>
-            <button onclick="window.location.href='profile.html'" class="submit-btn" style="margin-top:15px; padding:10px;">ไปดูตั๋วของฉัน</button>
+            <p style="color:#666; font-size:0.9rem; margin-top: 5px;">รอทีมงานตรวจสอบสลิป เมื่อสถานะอัปเดต คุณจะสามารถกรอกรายชื่อเพื่อรับ QR Code เข้างานได้</p>
+            <button onclick="window.location.href='profile.html'" class="submit-btn" style="margin-top:15px; padding:12px; font-size: 1.1rem;">ดูสถานะตั๋วของฉัน</button>
         </div>
     </div>
 
@@ -86,10 +92,7 @@
         const app = initializeApp({
             apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE",
             authDomain: "cosniteclub.firebaseapp.com",
-            projectId: "cosniteclub",
-            storageBucket: "cosniteclub.firebasestorage.app",
-            messagingSenderId: "429033863377",
-            appId: "1:429033863377:web:e1077d4f5ebf29e3e8adf0"
+            projectId: "cosniteclub"
         });
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -97,12 +100,8 @@
         let selectedMethod = 'normal';
 
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-            } else { 
-                alert('กรุณาเข้าสู่ระบบก่อนชำระเงิน'); 
-                window.location.href = 'index.html'; // เด้งกลับหน้าแรก
-            }
+            if (user) currentUser = user;
+            else { alert('กรุณาเข้าสู่ระบบก่อน'); window.location.href = 'index.html'; }
         });
 
         const bookingData = JSON.parse(localStorage.getItem('bookingData'));
@@ -119,7 +118,7 @@
         else if(ticketType === 'vip6') basePrice = 9000;
 
         document.getElementById('orderSummary').innerHTML = `
-            <p><b>บัตร:</b> <span style="color:var(--primary);">${ticketType.toUpperCase()}</span></p>
+            <p><b>แพ็กเกจ:</b> <span style="color:var(--primary); font-weight:bold;">${ticketType.toUpperCase()}</span></p>
             ${ticketType.includes('party') ? `<p><b>เครื่องดื่ม:</b> Set ${drinkSet}</p>` : ''}
         `;
 
@@ -132,7 +131,6 @@
         };
         updateDisplay();
 
-        // กดปุ่มเลือกชำระเงิน
         document.querySelectorAll('.pay-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
@@ -147,7 +145,6 @@
             const slipFile = document.getElementById('slipUpload').files[0];
             if(!slipFile) return alert('กรุณาแนบรูปสลิปด้วยครับ!');
 
-            // โชว์ Loading Modal
             document.getElementById('loadingModal').style.display = 'flex';
 
             try {
@@ -164,14 +161,13 @@
                 });
 
                 localStorage.removeItem('bookingData');
-                // ปิด Loading โชว์ Success
                 document.getElementById('loadingModal').style.display = 'none';
                 document.getElementById('successModal').style.display = 'flex';
                 
             } catch (e) {
                 console.error(e); 
                 document.getElementById('loadingModal').style.display = 'none';
-                alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป กรุณาลองใหม่');
+                alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป กรุณาลองใหม่ หรือปรับขนาดรูปให้เล็กลง');
             }
         });
     </script>
