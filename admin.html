@@ -14,7 +14,6 @@
         button { cursor: pointer; transition: 0.2s; border: none; color: white; font-weight: 500;}
         button:hover { filter: brightness(1.1); }
         
-        /* สร้าง Wrapper ให้ตารางเลื่อนซ้ายขวาบนมือถือได้ */
         .table-responsive { overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid #eee; margin-top: 15px;}
         table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 0.9rem; }
         th, td { border: 1px solid #eee; padding: 10px; text-align: left; vertical-align: top; }
@@ -40,8 +39,10 @@
         .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #f1f5f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         .toolbar-group { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; align-items: center;}
         .toolbar-group button { width: auto; font-size: 0.9rem;}
+
+        .google-admin-btn { background-color: white; color: #444; display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #ddd; padding: 15px 25px; border-radius: 50px; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); font-family: 'Kanit'; width: 100%; max-width: 320px; }
+        .google-admin-btn:hover { background-color: #f9f9f9; transform: translateY(-2px); }
         
-        /* Modal Responsive */
         #editModalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; backdrop-filter: blur(2px);}
         #editModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; width: 95%; max-width: 600px; max-height: 90vh; overflow-y: auto; border-radius: 20px; z-index: 101; box-sizing: border-box; }
         .admin-note-box { background: #fff0f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed var(--primary); }
@@ -52,8 +53,8 @@
         .full-width { grid-column: span 2; }
 
         @media (max-width: 768px) {
-            .dash-grid { grid-template-columns: 1fr 1fr; } /* โชว์ 2 แถวบนมือถือ/แท็บเล็ต */
-            .member-edit-grid { grid-template-columns: 1fr; } /* ช่องกรอกใน Modal เรียง 1 แถว */
+            .dash-grid { grid-template-columns: 1fr 1fr; }
+            .member-edit-grid { grid-template-columns: 1fr; }
             .full-width { grid-column: span 1; }
         }
     </style>
@@ -61,12 +62,21 @@
 <body>
     <div class="container">
         <h2>ระบบจัดการหลังบ้าน (Admin)</h2>
+        
         <div id="loginSection" style="text-align:center; padding: 50px 0;">
-            <input type="email" id="adminEmail" placeholder="ใส่อีเมลแอดมิน (cosniteclubparty@gmail.com)" style="max-width: 300px; margin: 0 auto 10px auto;">
-            <button id="loginBtn" style="padding: 12px 20px; background:var(--primary); max-width: 300px;">เข้าสู่ระบบ</button>
+            <p style="color: #666; margin-bottom: 20px;">กรุณายืนยันตัวตนด้วยบัญชีแอดมินเพื่อเข้าใช้งาน</p>
+            <button id="loginBtn" class="google-admin-btn">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="22">
+                เข้าสู่ระบบด้วย Google (Admin)
+            </button>
         </div>
 
         <div id="adminPanel" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #fff0f9; padding: 10px 15px; border-radius: 10px;">
+                <span style="font-size:0.9rem; color:#555;">เข้าสู่ระบบด้วยสิทธิ์แอดมิน: <b id="adminEmailDisplay" style="color:var(--primary);"></b></span>
+                <button onclick="adminLogout()" style="background:#ef4444; padding:5px 12px; font-size:0.85rem; width:auto; border-radius:6px;">ออกจากระบบ</button>
+            </div>
+
             <div class="tab-menu">
                 <button class="tab-btn active" onclick="switchTab('tab-pending')">ตรวจสอบสลิป</button>
                 <button class="tab-btn" onclick="switchTab('tab-manage')">สรุปยอด & จัดการตั๋ว</button>
@@ -172,11 +182,39 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc, addDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // อีเมลแอดมินที่ได้รับอนุญาตเท่านั้น
+        const ADMIN_EMAIL = 'cosniteclubparty@gmail.com';
 
         let globalGuests = []; let allPaidTickets = []; 
+
+        // ตรวจสอบการเข้าสู่ระบบแบบปลอดภัยผ่าน Firebase
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email === ADMIN_EMAIL) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('adminEmailDisplay').innerText = user.email;
+                loadPending(); loadDashboardStats(); loadGuests();
+            } else if (user) {
+                alert('บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานระบบหลังบ้าน (Admin)');
+                signOut(auth);
+            } else {
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('adminPanel').style.display = 'none';
+            }
+        });
+
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch(e => console.error(e));
+        });
+
+        window.adminLogout = () => signOut(auth);
 
         window.switchTab = function(id) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -185,14 +223,6 @@
             document.getElementById(id).style.display = 'block';
             if(id === 'tab-pending') loadPending(); if(id === 'tab-manage') loadDashboardStats(); if(id === 'tab-settings') loadGuests();
         }
-
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            if(document.getElementById('adminEmail').value === 'cosniteclubparty@gmail.com') {
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'block';
-                loadPending(); loadDashboardStats(); loadGuests();
-            } else alert('อีเมลไม่มีสิทธิ์เข้าถึง');
-        });
 
         async function loadDashboardStats() {
             const qsPaid = await getDocs(query(collection(db, "Tickets"), where("status", "==", "paid")));
