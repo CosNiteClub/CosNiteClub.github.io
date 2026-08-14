@@ -36,6 +36,11 @@
         
         .manual-add-box, .guest-manage-box { background: #fffafc; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--primary); }
         
+        /* สไตล์ชิปเกสต์แบบใหม่ (มีปุ่มลบชัดเจน) */
+        .guest-item { display: inline-flex; align-items: center; background: #fff0f9; padding: 8px 15px; border-radius: 30px; border: 1px solid var(--primary); margin: 5px; color: var(--primary); font-weight: 500;}
+        .guest-item-del { cursor: pointer; color: white; background: #ef4444; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; font-weight: bold; font-size: 12px; transition: 0.2s; }
+        .guest-item-del:hover { background: #dc2626; transform: scale(1.1); }
+        
         .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #f1f5f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         .toolbar-group { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; align-items: center;}
         .toolbar-group button { width: auto; font-size: 0.9rem;}
@@ -189,12 +194,9 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // อีเมลแอดมินที่ได้รับอนุญาตเท่านั้น
         const ADMIN_EMAIL = 'cosniteclubparty@gmail.com';
-
         let globalGuests = []; let allPaidTickets = []; 
 
-        // ตรวจสอบการเข้าสู่ระบบแบบปลอดภัยผ่าน Firebase
         onAuthStateChanged(auth, (user) => {
             if (user && user.email === ADMIN_EMAIL) {
                 document.getElementById('loginSection').style.display = 'none';
@@ -274,12 +276,18 @@
             });
         }
 
+        // --- ระบบเกสต์แบบปรับปรุง UI ลบใหม่ ---
         async function loadGuests() {
             try { const ds = await getDoc(doc(db, "Settings", "GuestList")); if (ds.exists() && ds.data().guests) globalGuests = ds.data().guests; else { await setDoc(doc(db, "Settings", "GuestList"), { guests: ["เกสต์ A"] }); globalGuests = ["เกสต์ A"]; } renderGuests(); } catch(e) {}
         }
-        function renderGuests() { const div = document.getElementById('guestListContainer'); div.innerHTML = ''; globalGuests.forEach((g, idx) => { div.innerHTML += `<div class="guest-item">${g} <span onclick="removeGuest(${idx})">×</span></div>`; }); }
+        function renderGuests() { 
+            const div = document.getElementById('guestListContainer'); div.innerHTML = ''; 
+            globalGuests.forEach((g, idx) => { 
+                div.innerHTML += `<div class="guest-item">${g} <span class="guest-item-del" onclick="removeGuest(${idx})" title="ลบเกสต์">✕</span></div>`; 
+            }); 
+        }
         window.addGuest = async () => { const v = document.getElementById('newGuestName').value.trim(); if(!v) return; globalGuests.push(v); await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests }); document.getElementById('newGuestName').value = ''; renderGuests(); }
-        window.removeGuest = async (idx) => { if(confirm('ลบเกสต์ท่านนี้?')) { globalGuests.splice(idx, 1); await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests }); renderGuests(); } }
+        window.removeGuest = async (idx) => { if(confirm('ยืนยันลบเกสต์ท่านนี้?')) { globalGuests.splice(idx, 1); await updateDoc(doc(db, "Settings", "GuestList"), { guests: globalGuests }); renderGuests(); } }
 
         window.toggleAllTables = async (isVisible) => {
             if(!confirm(`⚠️ ยืนยันการ ${isVisible?'เปิด':'ซ่อน'} โต๊ะทั้งหมด?`)) return;
@@ -291,7 +299,7 @@
             if(allPaidTickets.length === 0) return;
             let csv = "\uFEFFลำดับ,รหัสตั๋ว,อ้างอิง,ประเภท,โต๊ะ,รีเควส,รายละเอียดผู้ร่วมงาน\n";
             allPaidTickets.forEach((t, index) => {
-                let mInfo = t.members ? t.members.map((m, i) => `${i+1}.${m.name||'-'}|${m.dob||'-'}|${m.facebook||'-'}|${m.guest||'-'}`).join(" // ") : "";
+                let mInfo = t.members ? t.members.map((m, i) => `${i+1}.${m.name||'-'} | ${m.dob||'-'} | ${m.facebook||'-'} | ${m.guest||'-'}`).join(" // ") : "";
                 let row = [ index + 1, t.id, t.refName || '', t.type, t.tableNumber || '', t.request || '', mInfo ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
                 csv += row + "\n";
             });
