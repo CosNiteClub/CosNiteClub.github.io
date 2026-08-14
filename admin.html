@@ -90,7 +90,15 @@
             <div id="tab-pending">
                 <div class="table-responsive">
                     <table id="pendingTable">
-                        <thead><tr><th>ประเภทตั๋ว</th><th>ราคา/ช่องทาง</th><th>สลิป</th><th style="width:120px;">จัดการ</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>ประเภทตั๋ว</th>
+                                <th>รายชื่อลูกค้า (เทียบสลิป)</th>
+                                <th>ยอดโอน</th>
+                                <th>สลิป</th>
+                                <th style="width:120px;">จัดการ</th>
+                            </tr>
+                        </thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -243,16 +251,45 @@
             renderPaidTable();
         }
 
+        // --- โหลดตั๋วรอตรวจสอบ และดึงชื่อมาแสดง ---
         async function loadPending() {
-            const tbody = document.querySelector('#pendingTable tbody'); tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">โหลด...</td></tr>';
+            const tbody = document.querySelector('#pendingTable tbody'); 
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">⏳ กำลังโหลดข้อมูล...</td></tr>';
+            
             const qs = await getDocs(query(collection(db, "Tickets"), where("status", "==", "pending_verification")));
             tbody.innerHTML = '';
+
+            if (qs.empty) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #888;">🎉 เย้! ไม่มีสลิปรอตรวจสอบในขณะนี้</td></tr>';
+                return;
+            }
+
             qs.forEach(d => {
                 const data = d.data();
-                // 🔴 เปลี่ยนจากโชว์ภาพพังๆ เป็นปุ่มกดดูสลิปที่ทำงานได้ชัวร์ 100%
-                tbody.innerHTML += `<tr><td>${data.type}</td><td>${data.pricePaid}฿<br><span style="font-size:11px; color:#aaa;">(${data.paymentMethod})</span></td>
+                
+                // ดึงรายชื่อลูกค้าที่กรอกมาแสดง
+                let membersList = '';
+                if (data.members && data.members.length > 0) {
+                    data.members.forEach((m, i) => {
+                        if (m.name) {
+                            membersList += `<div style="font-size:12px; color:#333; margin-bottom:4px; padding-bottom:4px; border-bottom:1px dashed #eee;">
+                                👤 <b>${m.name}</b>
+                            </div>`;
+                        }
+                    });
+                }
+                
+                if (membersList === '') {
+                    membersList = `<span style="font-size:11px; color:#ef4444; background:#fee2e2; padding:3px 8px; border-radius:5px;">ยังไม่ได้กรอกชื่อ</span>`;
+                }
+
+                tbody.innerHTML += `<tr>
+                    <td><b>${data.type.toUpperCase()}</b><br><span style="font-size:10px; color:#aaa;">ID: ${d.id}</span></td>
+                    <td style="min-width: 160px; background: #fffdf5;">${membersList}</td>
+                    <td><b style="color:var(--primary); font-size: 14px;">${data.pricePaid} ฿</b><br><span style="font-size:11px; color:#888;">(${data.paymentMethod === 'normal' ? 'สแกนจ่าย/โอน' : 'บัตรเครดิต'})</span></td>
                     <td><a href="${data.slipUrl}" target="_blank" style="display:inline-block; background:var(--primary); color:white; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:bold; box-shadow:0 2px 5px rgba(255,62,201,0.3);">🔍 ดูสลิป</a></td>
-                    <td><div class="action-btns"><button class="btn-approve" onclick="approve('${d.id}')">ยืนยัน</button><button class="btn-del" onclick="delTicket('${d.id}')">ลบ</button></div></td></tr>`;
+                    <td><div class="action-btns"><button class="btn-approve" onclick="approve('${d.id}')">ยืนยัน</button><button class="btn-del" onclick="delTicket('${d.id}')">ลบ</button></div></td>
+                </tr>`;
             });
         }
 
@@ -312,7 +349,7 @@
             document.getElementById('manualRef').value = ''; document.getElementById('manualUid').value = ''; loadDashboardStats();
         }
 
-        window.approve = async (id) => { if(confirm('ยืนยันยอดเงิน?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); loadDashboardStats(); } }
+        window.approve = async (id) => { if(confirm('ยืนยันว่าได้รับยอดเงินนี้เรียบร้อยแล้วใช่ไหม?')) { await updateDoc(doc(db,"Tickets",id),{status:"paid"}); loadPending(); loadDashboardStats(); } }
         window.delTicket = async (id) => { if(confirm('ลบตั๋วใบนี้ทิ้งอย่างถาวร?')) { await deleteDoc(doc(db,"Tickets",id)); loadPending(); loadDashboardStats(); } }
         window.transferTicket = async (id) => { const n = prompt("กรอก UID ใหม่:"); if(n && confirm(`โอนไปที่ ${n}?`)) { await updateDoc(doc(db, "Tickets", id), { userId: n.trim() }); loadDashboardStats(); } };
 
