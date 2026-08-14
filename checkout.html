@@ -20,9 +20,7 @@
         
         #qrCodeDisplay { max-width: 100%; height: auto; width: 220px; display: none; margin: 15px auto 5px auto; border-radius: 15px; border: 3px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
-        /* กล่องอธิบายช่องทางชำระเงิน */
-        #paymentDetails { background: #f3f4f6; border-radius: 10px; padding: 12px; margin-bottom: 20px; font-size: 0.9rem; color: #555; line-height: 1.5; border: 1px solid #e5e7eb;}
-        
+        #paymentDetails { background: #f3f4f6; border-radius: 10px; padding: 12px; margin-bottom: 20px; font-size: 0.9rem; color: #555; line-height: 1.5; border: 1px solid #e5e7eb; text-align: left;}
         .instruction { text-align: left; background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #555; margin-bottom: 15px; border-left: 4px solid #10b981; }
 
         input[type="file"] { width: 100%; padding: 10px; border: 2px dashed #ccc; border-radius: 10px; background: #fafafa; margin-bottom: 10px; cursor: pointer; box-sizing: border-box; font-family: 'Kanit'; }
@@ -66,7 +64,7 @@
             
             <h3 style="text-align:left; color:#444; font-size: 1.05rem; margin-top:0; margin-bottom: 5px;">แนบหลักฐาน (สลิปการโอนเงิน)</h3>
             <input type="file" id="slipUpload" accept="image/*" required>
-            <p style="font-size: 0.8rem; color: #888; text-align: left; margin-top: 0;">* รองรับไฟล์รูปภาพเท่านั้น ขนาดไม่เกิน 5MB จะทำให้อัปโหลดไวขึ้น</p>
+            <p style="font-size: 0.8rem; color: #888; text-align: left; margin-top: 0;">* รองรับไฟล์รูปภาพเท่านั้น ขนาดไม่เกิน 5MB</p>
             
             <button id="submitOrderBtn" class="submit-btn">ยืนยันการชำระเงิน</button>
         </div>
@@ -75,8 +73,8 @@
     <div class="modal-overlay" id="loadingModal">
         <div class="custom-modal">
             <div class="spinner"></div>
-            <h3 style="color: var(--primary); margin:0;">กำลังอัปโหลดสลิป...</h3>
-            <p style="color:#666; font-size:0.9rem; margin-top: 5px;">กรุณารอสักครู่ ห้ามปิดหน้าจอหรือรีเฟรช</p>
+            <h3 style="color: var(--primary); margin:0;">กำลังส่งข้อมูลสลิป...</h3>
+            <p style="color:#666; font-size:0.9rem; margin-top: 5px;">กรุณารอสักครู่ อาจใช้เวลา 5-10 วินาที ห้ามปิดหน้าจอ</p>
         </div>
     </div>
 
@@ -93,6 +91,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // URL ที่คุณให้มา (Apps Script) ถูกนำมาใส่ตรงนี้แล้วครับ
+        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxNrQgHP5oCMoIhRvWx81HioOKR2rq_t27OAb6paP8yVcf-FwW6PhGf9qbCnxbm93Xbw/exec";
 
         const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
         const db = getFirestore(app); const auth = getAuth(app);
@@ -128,7 +129,6 @@
             document.getElementById('qrCodeDisplay').src = `assets/images/qrcodes/qr-${ticketType}${sojuText}-${selectedMethod}.jpg`;
             document.getElementById('qrCodeDisplay').style.display = 'block';
             
-            // อัปเดตข้อความอธิบายช่องทาง
             const pd = document.getElementById('paymentDetails');
             if (selectedMethod === 'normal') {
                 pd.innerHTML = `✅ รองรับ <b>PromptPay</b> และ <b>Mobile Banking</b> ทุกธนาคาร<br>✅ รองรับ <b>E-Wallet</b>: ShopeePay, TrueMoney Wallet<br><span style="color:var(--primary); font-weight:bold;">🔥 สามารถสแกนเพื่อผ่อนชำระผ่าน SPayLater ได้!</span>`;
@@ -147,6 +147,13 @@
             });
         });
 
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
         document.getElementById('submitOrderBtn').addEventListener('click', async () => {
             if(!currentUser) return;
             const slipFile = document.getElementById('slipUpload').files[0];
@@ -155,16 +162,32 @@
             document.getElementById('loadingModal').style.display = 'flex';
 
             try {
-                const formData = new FormData(); formData.append('image', slipFile);
-                const res = await fetch(`https://api.imgbb.com/1/upload?key=766268cd70aad6dfecb61cfb6d44917e`, { method: 'POST', body: formData });
-                const imgbb = await res.json();
-                if (!imgbb.success) throw new Error('Upload failed');
+                // แปลงไฟล์รูปภาพเป็น Base64
+                const base64Image = await fileToBase64(slipFile);
+                
+                // ส่งรูปไปที่ Google Apps Script ของคุณ
+                const response = await fetch(GOOGLE_APP_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        filename: currentUser.uid + '_' + slipFile.name,
+                        mimeType: slipFile.type,
+                        base64: base64Image
+                    })
+                });
 
+                const result = await response.json();
+                if (!result.success) throw new Error('Upload to Drive failed');
+
+                // เซฟ URL ของรูปที่ได้ลง Firestore
                 await addDoc(collection(db, "Tickets"), {
-                    userId: currentUser.uid, type: ticketType, drinkSet: drinkSet || null,
+                    userId: currentUser.uid, 
+                    type: ticketType, 
+                    drinkSet: drinkSet || null,
                     paymentMethod: selectedMethod,
                     pricePaid: parseFloat(document.getElementById('finalPriceDisplay').innerText.replace(/,/g, '')),
-                    slipUrl: imgbb.data.url, status: "pending_verification", createdAt: serverTimestamp()
+                    slipUrl: result.url,
+                    status: "pending_verification", 
+                    createdAt: serverTimestamp()
                 });
 
                 localStorage.removeItem('bookingData');
@@ -172,8 +195,9 @@
                 document.getElementById('successModal').style.display = 'flex';
                 
             } catch (e) {
-                console.error(e); document.getElementById('loadingModal').style.display = 'none';
-                alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป กรุณาลองใหม่ หรือปรับขนาดรูปให้เล็กลง');
+                console.error(e); 
+                document.getElementById('loadingModal').style.display = 'none';
+                alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป กรุณาลองตรวจสอบขนาดไฟล์รูป (ไม่เกิน 5MB) และลองอีกครั้งครับ');
             }
         });
     </script>
