@@ -87,11 +87,12 @@
         </div>
     </div>
 
-   <script type="module">
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
+        // URL Web App
         const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwYYCpWkWH4T3_98QqXZRMVB0eVoBrhx0vRHHYdSl9_7tIyHDYDXxCYMq5ep1oYKeAFdA/exec";
 
         const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
@@ -146,6 +147,7 @@
             });
         });
 
+        // 🖼️ ฟังก์ชันบีบอัดรูปภาพ (ลดความกว้างไม่เกิน 800px, คุณภาพ JPEG 70%)
         const compressImage = (file, maxWidth = 800, quality = 0.7) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -154,12 +156,23 @@
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    let width = img.width, height = img.height;
-                    if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
-                    canvas.width = width; canvas.height = height;
+                    let width = img.width;
+                    let height = img.height;
+
+                    // คำนวณอัตราส่วนใหม่ถ้ากว้างกว่าที่กำหนด
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
+
+                    // แปลงเป็น Base64 (ชนิด JPEG เพื่อลดขนาด)
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressedBase64);
                 };
                 img.onerror = (err) => reject(err);
             };
@@ -174,39 +187,32 @@
             document.getElementById('loadingModal').style.display = 'flex';
 
             try {
+                // เรียกใช้ฟังก์ชันย่อขนาดรูปล่าสุด
                 const compressedBase64Image = await compressImage(slipFile);
                 
+                // ส่งรูปไปที่ Google Apps Script ของคุณ
                 const response = await fetch(GOOGLE_APP_SCRIPT_URL, {
-                    redirect: "follow",
                     method: 'POST',
-                    headers: {
-                        "Content-Type": "text/plain;charset=utf-8" // สำคัญ! ทะลวงบล็อก CORS
-                    },
                     body: JSON.stringify({
-                        filename: currentUser.uid + '_slip.jpg',
+                        filename: currentUser.uid + '_slip.jpg', // เซฟเป็นนามสกุล .jpg เสมอ
                         mimeType: 'image/jpeg',
                         base64: compressedBase64Image
                     })
                 });
 
-                // อ่านข้อมูลดิบก่อน เผื่อ Google ส่งหน้า Error HTML มา
-                const responseText = await response.text();
-                
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                } catch (jsonErr) {
-                    // ถ้าแปลง JSON ไม่ได้ แสดงว่าตั้งค่าสิทธิ์ Drive ผิดชัวร์ๆ
-                    throw new Error("ระบบ Drive ปฏิเสธการเข้าถึง กรุณาเช็กสิทธิ์ 'Everyone' (Raw: " + responseText.substring(0, 50) + "...)");
-                }
+                const result = await response.json();
+                if (!result.success) throw new Error('Upload to Drive failed');
 
-                if (!result.success) throw new Error('Drive Error: ' + result.error);
-
+                // เซฟ URL ของรูปที่ได้ลง Firestore
                 await addDoc(collection(db, "Tickets"), {
-                    userId: currentUser.uid, type: ticketType, drinkSet: drinkSet || null,
+                    userId: currentUser.uid, 
+                    type: ticketType, 
+                    drinkSet: drinkSet || null,
                     paymentMethod: selectedMethod,
                     pricePaid: parseFloat(document.getElementById('finalPriceDisplay').innerText.replace(/,/g, '')),
-                    slipUrl: result.url, status: "pending_verification", createdAt: serverTimestamp()
+                    slipUrl: result.url,
+                    status: "pending_verification", 
+                    createdAt: serverTimestamp()
                 });
 
                 localStorage.removeItem('bookingData');
@@ -216,8 +222,7 @@
             } catch (e) {
                 console.error(e); 
                 document.getElementById('loadingModal').style.display = 'none';
-                // โชว์ Error ตัวจริงให้รู้ดำรู้แดงกันไปเลย!
-                alert('🚨 เกิดข้อผิดพลาด:\n' + e.message + '\n\nแคปหน้าจอนี้ส่งให้โปรแกรมเมอร์ได้เลยครับ!');
+                alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป กรุณาลองอีกครั้งครับ');
             }
         });
     </script>
