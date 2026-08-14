@@ -36,7 +36,6 @@
         
         .manual-add-box, .guest-manage-box { background: #fffafc; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--primary); }
         
-        /* สไตล์ชิปเกสต์แบบใหม่ (มีปุ่มลบชัดเจน) */
         .guest-item { display: inline-flex; align-items: center; background: #fff0f9; padding: 8px 15px; border-radius: 30px; border: 1px solid var(--primary); margin: 5px; color: var(--primary); font-weight: 500;}
         .guest-item-del { cursor: pointer; color: white; background: #ef4444; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; font-weight: bold; font-size: 12px; transition: 0.2s; }
         .guest-item-del:hover { background: #dc2626; transform: scale(1.1); }
@@ -250,8 +249,9 @@
             tbody.innerHTML = '';
             qs.forEach(d => {
                 const data = d.data();
+                // 🔴 เปลี่ยนจากโชว์ภาพพังๆ เป็นปุ่มกดดูสลิปที่ทำงานได้ชัวร์ 100%
                 tbody.innerHTML += `<tr><td>${data.type}</td><td>${data.pricePaid}฿<br><span style="font-size:11px; color:#aaa;">(${data.paymentMethod})</span></td>
-                    <td><a href="${data.slipUrl}" target="_blank"><img src="${data.slipUrl}" style="width:60px; border-radius:5px;"></a></td>
+                    <td><a href="${data.slipUrl}" target="_blank" style="display:inline-block; background:var(--primary); color:white; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:bold; box-shadow:0 2px 5px rgba(255,62,201,0.3);">🔍 ดูสลิป</a></td>
                     <td><div class="action-btns"><button class="btn-approve" onclick="approve('${d.id}')">ยืนยัน</button><button class="btn-del" onclick="delTicket('${d.id}')">ลบ</button></div></td></tr>`;
             });
         }
@@ -276,7 +276,6 @@
             });
         }
 
-        // --- ระบบเกสต์แบบปรับปรุง UI ลบใหม่ ---
         async function loadGuests() {
             try { const ds = await getDoc(doc(db, "Settings", "GuestList")); if (ds.exists() && ds.data().guests) globalGuests = ds.data().guests; else { await setDoc(doc(db, "Settings", "GuestList"), { guests: ["เกสต์ A"] }); globalGuests = ["เกสต์ A"]; } renderGuests(); } catch(e) {}
         }
