@@ -23,9 +23,9 @@
         #paymentDetails { background: #f3f4f6; border-radius: 10px; padding: 12px; margin-bottom: 20px; font-size: 0.9rem; color: #555; line-height: 1.5; border: 1px solid #e5e7eb; text-align: left;}
         .instruction { text-align: left; background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #555; margin-bottom: 15px; border-left: 4px solid #10b981; }
 
-        input[type="file"] { width: 100%; padding: 10px; border: 2px dashed #ccc; border-radius: 10px; background: #fafafa; margin-bottom: 10px; cursor: pointer; box-sizing: border-box; font-family: 'Kanit'; }
+        input[type="file"] { width: 100%; padding: 10px; border: 2px dashed #ccc; border-radius: 10px; background: #fafafa; margin-bottom: 5px; cursor: pointer; box-sizing: border-box; font-family: 'Kanit'; }
         
-        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; font-family: 'Kanit';}
+        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255,62,201,0.3); transition: 0.3s; font-family: 'Kanit'; margin-top: 15px;}
         button.submit-btn:hover { background-color: #e62eb3; transform: translateY(-2px); }
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
@@ -64,7 +64,7 @@
             
             <h3 style="text-align:left; color:#444; font-size: 1.05rem; margin-top:0; margin-bottom: 5px;">แนบหลักฐาน (สลิปการโอนเงิน)</h3>
             <input type="file" id="slipUpload" accept="image/*" required>
-            <p style="font-size: 0.8rem; color: #888; text-align: left; margin-top: 0;">* รองรับไฟล์รูปภาพเท่านั้น ขนาดไม่เกิน 5MB</p>
+            <p style="font-size: 0.8rem; color: #10b981; text-align: left; margin-top: 0;">* ระบบจะทำการบีบอัดรูปภาพให้เล็กลงอัตโนมัติเพื่อความรวดเร็ว</p>
             
             <button id="submitOrderBtn" class="submit-btn">ยืนยันการชำระเงิน</button>
         </div>
@@ -74,7 +74,7 @@
         <div class="custom-modal">
             <div class="spinner"></div>
             <h3 style="color: var(--primary); margin:0;">กำลังส่งข้อมูลสลิป...</h3>
-            <p style="color:#666; font-size:0.9rem; margin-top: 5px;">กรุณารอสักครู่ อาจใช้เวลา 5-10 วินาที ห้ามปิดหน้าจอ</p>
+            <p style="color:#666; font-size:0.9rem; margin-top: 5px;">กรุณารอสักครู่ อาจใช้เวลา 3-5 วินาที ห้ามปิดหน้าจอ</p>
         </div>
     </div>
 
@@ -92,8 +92,8 @@
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-        // URL ที่คุณให้มา (Apps Script) ถูกนำมาใส่ตรงนี้แล้วครับ
-        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxNrQgHP5oCMoIhRvWx81HioOKR2rq_t27OAb6paP8yVcf-FwW6PhGf9qbCnxbm93Xbw/exec";
+        // URL Web App
+        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwYYCpWkWH4T3_98QqXZRMVB0eVoBrhx0vRHHYdSl9_7tIyHDYDXxCYMq5ep1oYKeAFdA/exec";
 
         const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
         const db = getFirestore(app); const auth = getAuth(app);
@@ -147,11 +147,36 @@
             });
         });
 
-        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+        // 🖼️ ฟังก์ชันบีบอัดรูปภาพ (ลดความกว้างไม่เกิน 800px, คุณภาพ JPEG 70%)
+        const compressImage = (file, maxWidth = 800, quality = 0.7) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // คำนวณอัตราส่วนใหม่ถ้ากว้างกว่าที่กำหนด
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // แปลงเป็น Base64 (ชนิด JPEG เพื่อลดขนาด)
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressedBase64);
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
         });
 
         document.getElementById('submitOrderBtn').addEventListener('click', async () => {
@@ -162,16 +187,16 @@
             document.getElementById('loadingModal').style.display = 'flex';
 
             try {
-                // แปลงไฟล์รูปภาพเป็น Base64
-                const base64Image = await fileToBase64(slipFile);
+                // เรียกใช้ฟังก์ชันย่อขนาดรูปล่าสุด
+                const compressedBase64Image = await compressImage(slipFile);
                 
                 // ส่งรูปไปที่ Google Apps Script ของคุณ
                 const response = await fetch(GOOGLE_APP_SCRIPT_URL, {
                     method: 'POST',
                     body: JSON.stringify({
-                        filename: currentUser.uid + '_' + slipFile.name,
-                        mimeType: slipFile.type,
-                        base64: base64Image
+                        filename: currentUser.uid + '_slip.jpg', // เซฟเป็นนามสกุล .jpg เสมอ
+                        mimeType: 'image/jpeg',
+                        base64: compressedBase64Image
                     })
                 });
 
@@ -197,7 +222,7 @@
             } catch (e) {
                 console.error(e); 
                 document.getElementById('loadingModal').style.display = 'none';
-                alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป กรุณาลองตรวจสอบขนาดไฟล์รูป (ไม่เกิน 5MB) และลองอีกครั้งครับ');
+                alert('เกิดข้อผิดพลาดในการอัปโหลดสลิป กรุณาลองอีกครั้งครับ');
             }
         });
     </script>
