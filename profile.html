@@ -76,9 +76,9 @@
             <div class="instruction-box">
                 <b>📌 คำแนะนำการกรอกข้อมูลผู้เข้าร่วม:</b>
                 <ul style="margin: 5px 0 0 0; padding-left: 20px; line-height: 1.6;">
-                    <li>กรุณากรอกชื่อ-สกุล และวันเกิด ให้ตรงกับบัตรประชาชน (ตรวจหน้างาน)</li>
+                    <li>กรุณากรอกข้อมูลให้ตรงกับบัตรประชาชน (ตรวจหน้างาน)</li>
                     <li>ข้อมูลนี้สามารถ <b>บันทึกได้เพียงครั้งเดียวเท่านั้น</b></li>
-                    <li>เมื่อบันทึกแล้ว จะได้รับ QR Code สำหรับสแกนเข้างาน</li>
+                    <li style="color: #10b981; font-weight: bold;">(ใหม่) บังคับกรอกชื่ออย่างน้อย 1 ท่าน ที่เหลือเว้นว่างไว้ก่อนได้ค่ะ</li>
                     <li style="color: #ef4444; font-weight: 500;">หากต้องการเปลี่ยนแปลงรายชื่อหลังจากยืนยันไปแล้ว ให้ติดต่อแอดมินใน inbox เพจ <a href="https://www.facebook.com/profile.php?id=61590410740370" target="_blank" style="color: var(--primary); text-decoration: underline;">CosNiteClub</a></li>
                 </ul>
             </div>
@@ -188,19 +188,21 @@
                         if (isParty || isVip) html += `<label style="font-size:0.95rem;">รีเควสโซนที่นั่ง/อื่นๆ:</label><textarea id="req_${tId}" rows="2" placeholder="ระบุความต้องการเพิ่มเติม (ไม่บังคับ)">${data.request || ''}</textarea>`;
                     }
 
-                    html += `<h4 style="margin-bottom:10px; color:#444;">รายชื่อผู้เข้าร่วม (${seats} คน)</h4>`;
+                    // ปรับข้อความให้รู้ว่าเว้นว่างได้
+                    html += `<h4 style="margin-bottom:10px; color:#444;">รายชื่อผู้เข้าร่วม (${seats} คน) <span style="font-size:0.85rem; color:#888; font-weight:normal;">(เว้นว่างได้)</span></h4>`;
+                    
                     for(let i=0; i<seats; i++) {
                         let m = data.members && data.members[i] ? data.members[i] : {};
                         html += `<div class="member-block"><h5 style="margin:0 0 10px 0; color:var(--primary);">ผู้เข้าร่วมคนที่ ${i+1}</h5>`;
                         if (isLocked) {
                             html += `<div style="font-size:0.9rem; line-height:1.6;">
-                                <b>ชื่อ:</b> ${m.name||'-'} <br>
+                                <b>ชื่อ:</b> ${m.name||'<span style="color:#aaa;">- ยังไม่ระบุ -</span>'} <br>
                                 <b>เกิด:</b> ${m.dob||'-'} <br>
                                 <b>FB:</b> <span style="word-break:break-all;">${m.facebook||'-'}</span>
                                 ${isVip ? `<br><b style="color:var(--primary);">เกสต์: ${m.guest||'ไม่ได้ระบุ'}</b>` : ''}
                             </div>`;
                         } else {
-                            html += `<input type="text" id="name_${tId}_${i}" placeholder="ชื่อ-สกุล (ตรงบัตร ปชช.)" value="${m.name||''}">
+                            html += `<input type="text" id="name_${tId}_${i}" placeholder="ชื่อ-สกุล (ตรงบัตร ปชช.) ${i === 0 ? '*จำเป็น' : ''}" value="${m.name||''}">
                                      <input type="date" id="dob_${tId}_${i}" value="${m.dob||''}">
                                      <input type="text" id="fb_${tId}_${i}" placeholder="ลิงก์ Facebook" value="${m.facebook||''}">`;
                             
@@ -252,8 +254,11 @@
             let arr = [];
             for(let i=0; i<seats; i++) {
                 let gVal = isVip && document.getElementById(`guest_${tId}_${i}`) ? document.getElementById(`guest_${tId}_${i}`).value : '';
-                let n = document.getElementById(`name_${tId}_${i}`).value;
-                if(!n.trim()) return alert(`กรุณากรอกชื่อผู้เข้าร่วมคนที่ ${i+1} ให้ครบถ้วนครับ`);
+                let n = document.getElementById(`name_${tId}_${i}`).value.trim();
+                
+                // บังคับกรอกแค่คนแรก (คนที่ 1) นอกนั้นเว้นว่างได้
+                if(i === 0 && !n) return alert(`กรุณากรอกชื่อผู้เข้าร่วมอย่างน้อย 1 ท่าน (คนที่ 1) ค่ะ`);
+                
                 arr.push({ name: n, dob: document.getElementById(`dob_${tId}_${i}`).value, facebook: document.getElementById(`fb_${tId}_${i}`).value, guest: gVal });
             }
             pendingSaveData = { tId: tId, req: (isParty || isVip) ? document.getElementById(`req_${tId}`).value : '', members: arr };
