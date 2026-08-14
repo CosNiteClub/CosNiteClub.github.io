@@ -12,7 +12,6 @@
         .container { max-width: 700px; margin: auto; background: #fff; padding: 25px 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
         h2 { color: var(--primary); margin-top: 0; text-align: center; }
         
-        /* สไตล์กล่อง UID แบบซ่อน */
         .uid-box { background: #f3f4f6; padding: 12px; border-radius: 10px; color: #4b5563; margin-top: 10px; font-size: 0.95rem; border: 1px solid #d1d5db; text-align: center; }
         .uid-box button { background: #e5e7eb; color: #444; padding: 4px 10px; font-size: 0.85rem; border-radius: 5px; margin-left: 5px; width: auto; display: inline-block; box-shadow: none; border: 1px solid #ccc;}
         .uid-box button:hover { background: #d1d5db; transform: translateY(0); }
@@ -42,6 +41,13 @@
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .popup-btn-wrap { display: flex; gap: 10px; margin-top: 25px; }
 
+        /* Empty State */
+        .empty-state { background: #f9f9f9; border: 2px dashed #ddd; padding: 40px 20px; border-radius: 15px; text-align: center; margin-top: 20px; }
+        .empty-state h3 { color: #888; margin-bottom: 10px; font-size: 1.3rem; }
+        .empty-state p { color: #aaa; font-size: 0.95rem; margin-bottom: 25px; }
+        .empty-state .btn-book { background: var(--primary); color: white; padding: 12px 30px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(255,62,201,0.3); transition: 0.3s; display: inline-block; }
+        .empty-state .btn-book:hover { background-color: #e62eb3; transform: translateY(-2px); }
+
         @media (max-width: 480px) {
             .ticket-box { padding: 15px 10px; }
             .member-block { padding: 12px 10px; }
@@ -51,15 +57,15 @@
 </head>
 <body>
     <div class="container">
-        <h2>ตั๋วของฉัน 🎫</h2>
+        <h2>ตั๋วของคุณหนู 🎫</h2>
         
         <div id="authSection" style="text-align: center;">
-            <p style="color: #666;">กรุณาเข้าสู่ระบบเพื่อจัดการตั๋วของคุณ</p>
+            <p style="color: #666;">กรุณาเข้าสู่ระบบเพื่อจัดการตั๋วของคุณหนูนะคะ</p>
             <button id="loginBtn" style="background: white; color: #444; border: 1px solid #ddd; max-width: 300px; display: inline-flex; align-items: center; justify-content: center; gap: 10px;"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20"> ล็อกอินด้วย Google</button>
         </div>
         
         <div id="profileSection" style="display: none;">
-            <p style="text-align: center; margin-bottom: 5px;">บัญชีผู้ใช้: <b style="color: var(--primary);">${userEmail}</b></p>
+            <p style="text-align: center; margin-bottom: 10px; font-size: 1.2rem;">สวัสดีคุณหนู <b id="displayUserName" style="color: var(--primary);"></b> 💖</p>
             
             <div class="uid-box">
                 <b>UID ของคุณ:</b> <span id="displayUid" style="display:none;"></span><span id="maskedUid" style="font-family: monospace;">**********</span>
@@ -109,8 +115,12 @@
             if (user) {
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('profileSection').style.display = 'block';
-                document.getElementById('displayEmail').innerText = user.email;
-                document.getElementById('displayUid').innerText = user.uid; // ซ่อนไว้
+                
+                // ดึงชื่อมาแสดง ถ้าไม่มีให้ตัดเอาส่วนหน้าของอีเมลมาใช้แทน
+                const userName = user.displayName || user.email.split('@')[0];
+                document.getElementById('displayUserName').innerText = userName;
+                
+                document.getElementById('displayUid').innerText = user.uid; 
                 
                 try {
                     const guestDoc = await getDoc(doc(db, "Settings", "GuestList"));
@@ -127,7 +137,6 @@
         document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider));
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 
-        // ฟังก์ชันก็อปปี้ UID
         window.copyUid = function() {
             const uid = document.getElementById('displayUid').innerText;
             if(uid) {
@@ -141,7 +150,17 @@
             container.innerHTML = '<p style="text-align:center;">กำลังโหลดตั๋ว...</p>';
             try {
                 const qs = await getDocs(query(collection(db, "Tickets"), where("userId", "==", uid)));
-                if (qs.empty) return container.innerHTML = '<p style="text-align:center; color:#666;">คุณยังไม่มีตั๋วในระบบ</p>';
+                
+                // ถ้ายืนยันแล้วว่าไม่มีตั๋ว ให้โชว์ Empty State แบบสวยงาม
+                if (qs.empty) {
+                    return container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>🎟️ คุณหนูยังไม่มีตั๋วในระบบเลยค่ะ</h3>
+                            <p>รีบจับจองโต๊ะก่อนที่นั่งจะเต็มนะคะ!</p>
+                            <a href="booking.html" class="btn-book">กดจองบัตรเข้างานที่นี่</a>
+                        </div>`;
+                }
+
                 container.innerHTML = '';
                 
                 qs.forEach((d) => {
@@ -165,7 +184,7 @@
                         <hr style="border:none; border-top:1px dashed #ddd; margin:15px 0;">`;
 
                     if (isLocked) {
-                        html += `<div class="locked-msg">🔒 ข้อมูลถูกบันทึกเรียบร้อย หากต้องการแก้ไข <a href="https://www.facebook.com/profile.php?id=61590410740370" target="_blank" style="color:#ef4444; text-decoration:underline;">ติดต่อแอดมินเพจที่นี่</a></div>`;
+                        html += `<div class="locked-msg">🔒 ข้อมูลถูกบันทึกเรียบร้อย หากต้องการแก้ไขกรุณาติดต่อเพจ</div>`;
                         if (isParty || isVip) html += `<p style="font-size:0.95rem;"><b>รีเควสโซน:</b> ${data.request || '-'}</p>`;
                     } else if (isPaid) {
                         if (isParty || isVip) html += `<label style="font-size:0.95rem;">รีเควสโซนที่นั่ง/อื่นๆ:</label><textarea id="req_${tId}" rows="2" placeholder="ระบุความต้องการเพิ่มเติม">${data.request || ''}</textarea>`;
