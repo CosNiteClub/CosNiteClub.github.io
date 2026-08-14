@@ -12,7 +12,11 @@
         .container { max-width: 700px; margin: auto; background: #fff; padding: 25px 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(255,62,201,0.1); border: 2px solid #ffe6f7; }
         h2 { color: var(--primary); margin-top: 0; text-align: center; }
         
-        .uid-box { background: #f3f4f6; padding: 12px; border-radius: 10px; font-family: monospace; color: #4b5563; margin-top: 5px; font-size: 13px; border: 1px dashed #d1d5db; word-break: break-all; text-align: center; }
+        /* สไตล์กล่อง UID แบบซ่อน */
+        .uid-box { background: #f3f4f6; padding: 12px; border-radius: 10px; color: #4b5563; margin-top: 10px; font-size: 0.95rem; border: 1px solid #d1d5db; text-align: center; }
+        .uid-box button { background: #e5e7eb; color: #444; padding: 4px 10px; font-size: 0.85rem; border-radius: 5px; margin-left: 5px; width: auto; display: inline-block; box-shadow: none; border: 1px solid #ccc;}
+        .uid-box button:hover { background: #d1d5db; transform: translateY(0); }
+
         .instruction-box { background: #fff5fb; padding: 15px; border-radius: 12px; margin: 20px 0; border-left: 4px solid var(--primary); text-align: left; font-size: 0.95rem; color: #555; }
         
         input, button, textarea { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 12px; border-radius: 10px; border: 1px solid #ddd; font-family: inherit; font-size: 0.95rem; outline: none; box-sizing: border-box; }
@@ -56,17 +60,22 @@
         
         <div id="profileSection" style="display: none;">
             <p style="text-align: center; margin-bottom: 5px;">บัญชีผู้ใช้: <b style="color: var(--primary);">${userEmail}</b></p>
+            
             <div class="uid-box">
-                <b>UID ของคุณ:</b> <span id="displayUid" style="user-select: all;"></span><br>
-                <span style="color: #ef4444; font-size: 0.8rem;">(ใช้รหัสนี้แจ้งแอดมิน เพื่อรับโอนตั๋วจากเพื่อนหรือลูกค้าเก่า)</span>
+                <b>UID ของคุณ:</b> <span id="displayUid" style="display:none;"></span><span id="maskedUid" style="font-family: monospace;">**********</span>
+                <button onclick="copyUid()">📋 คัดลอก</button>
+                <div style="color: #ef4444; font-size: 0.8rem; margin-top: 8px; line-height: 1.4;">
+                    (ข้อมูลส่วนบุคคล โปรดเก็บเป็นความลับ! ก๊อปปี้ส่งให้แอดมินเฉพาะตอนแจ้งตรวจสอบปัญหา หรือต้องการรับโอนสิทธิ์ตั๋วเท่านั้น)
+                </div>
             </div>
             
             <div class="instruction-box">
                 <b>📌 คำแนะนำการกรอกข้อมูลผู้เข้าร่วม:</b>
-                <ul style="margin: 5px 0 0 0; padding-left: 20px;">
+                <ul style="margin: 5px 0 0 0; padding-left: 20px; line-height: 1.6;">
                     <li>กรุณากรอกชื่อ-สกุล และวันเกิด ให้ตรงกับบัตรประชาชน (ตรวจหน้างาน)</li>
                     <li>ข้อมูลนี้สามารถ <b>บันทึกได้เพียงครั้งเดียวเท่านั้น</b></li>
                     <li>เมื่อบันทึกแล้ว จะได้รับ QR Code สำหรับสแกนเข้างาน</li>
+                    <li style="color: #ef4444; font-weight: 500;">หากต้องการเปลี่ยนแปลงรายชื่อหลังจากยืนยันไปแล้ว ให้ติดต่อแอดมินใน inbox เพจ <a href="https://www.facebook.com/profile.php?id=61590410740370" target="_blank" style="color: var(--primary); text-decoration: underline;">CosNiteClub</a></li>
                 </ul>
             </div>
 
@@ -93,10 +102,7 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-
+        const db = getFirestore(app); const auth = getAuth(app); const provider = new GoogleAuthProvider();
         let globalGuestList = [];
 
         onAuthStateChanged(auth, async (user) => {
@@ -104,7 +110,7 @@
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('profileSection').style.display = 'block';
                 document.getElementById('displayEmail').innerText = user.email;
-                document.getElementById('displayUid').innerText = user.uid;
+                document.getElementById('displayUid').innerText = user.uid; // ซ่อนไว้
                 
                 try {
                     const guestDoc = await getDoc(doc(db, "Settings", "GuestList"));
@@ -120,6 +126,15 @@
 
         document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider));
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+        // ฟังก์ชันก็อปปี้ UID
+        window.copyUid = function() {
+            const uid = document.getElementById('displayUid').innerText;
+            if(uid) {
+                navigator.clipboard.writeText(uid);
+                alert("คัดลอก UID สำเร็จ! กรุณาส่งให้แอดมินในแชทเพจเท่านั้นครับ");
+            }
+        };
 
         async function loadMyTickets(uid) {
             const container = document.getElementById('ticketContainer');
@@ -150,7 +165,7 @@
                         <hr style="border:none; border-top:1px dashed #ddd; margin:15px 0;">`;
 
                     if (isLocked) {
-                        html += `<div class="locked-msg">🔒 ข้อมูลถูกบันทึกเรียบร้อย หากต้องการแก้ไขกรุณาติดต่อเพจ</div>`;
+                        html += `<div class="locked-msg">🔒 ข้อมูลถูกบันทึกเรียบร้อย หากต้องการแก้ไข <a href="https://www.facebook.com/profile.php?id=61590410740370" target="_blank" style="color:#ef4444; text-decoration:underline;">ติดต่อแอดมินเพจที่นี่</a></div>`;
                         if (isParty || isVip) html += `<p style="font-size:0.95rem;"><b>รีเควสโซน:</b> ${data.request || '-'}</p>`;
                     } else if (isPaid) {
                         if (isParty || isVip) html += `<label style="font-size:0.95rem;">รีเควสโซนที่นั่ง/อื่นๆ:</label><textarea id="req_${tId}" rows="2" placeholder="ระบุความต้องการเพิ่มเติม">${data.request || ''}</textarea>`;
@@ -224,11 +239,8 @@
             let arr = [];
             for(let i=0; i<seats; i++) {
                 let gVal = isVip && document.getElementById(`guest_${tId}_${i}`) ? document.getElementById(`guest_${tId}_${i}`).value : '';
-                
-                // ตรวจสอบช่องว่างแบบง่าย
                 let n = document.getElementById(`name_${tId}_${i}`).value;
                 if(!n.trim()) return alert(`กรุณากรอกชื่อผู้เข้าร่วมคนที่ ${i+1} ให้ครบถ้วนครับ`);
-
                 arr.push({ name: n, dob: document.getElementById(`dob_${tId}_${i}`).value, facebook: document.getElementById(`fb_${tId}_${i}`).value, guest: gVal });
             }
             pendingSaveData = { tId: tId, req: (isParty || isVip) ? document.getElementById(`req_${tId}`).value : '', members: arr };
