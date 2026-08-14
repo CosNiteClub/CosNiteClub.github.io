@@ -35,13 +35,11 @@
         .guest-chip.selected { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(255,62,201,0.4); }
         .guest-chip.disabled { border-color: #ddd; color: #aaa; background: #f9f9f9; cursor: not-allowed; text-decoration: line-through; }
         
-        /* Popup Confirm */
         #customPopupOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); padding: 20px; box-sizing: border-box; }
         .custom-popup { background: white; padding: 30px 20px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.2); animation: popIn 0.3s ease-out; }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .popup-btn-wrap { display: flex; gap: 10px; margin-top: 25px; }
 
-        /* Empty State */
         .empty-state { background: #f9f9f9; border: 2px dashed #ddd; padding: 40px 20px; border-radius: 15px; text-align: center; margin-top: 20px; }
         .empty-state h3 { color: #888; margin-bottom: 10px; font-size: 1.3rem; }
         .empty-state p { color: #aaa; font-size: 0.95rem; margin-bottom: 25px; }
@@ -96,7 +94,7 @@
             <h3 style="color: var(--primary); margin-top:0;">ยืนยันการบันทึกข้อมูล?</h3>
             <p style="color: #666; font-size: 0.95rem;">ข้อมูลสามารถบันทึกได้ <b style="color:#ef4444;">เพียง 1 ครั้ง</b> กรุณาตรวจสอบความถูกต้องให้ดี หากต้องการแก้ไขภายหลังจะต้องติดต่อแอดมินเพจเท่านั้น</p>
             <div class="popup-btn-wrap">
-                <button id="btnConfirmYes">ยืนยันและรับ QR Code</button>
+                <button id="btnConfirmYes">ยืนยันการบันทึก</button>
                 <button id="btnConfirmNo" style="background:#e5e7eb; color:#444; box-shadow:none;">กลับไปแก้ไข</button>
             </div>
         </div>
@@ -116,7 +114,6 @@
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('profileSection').style.display = 'block';
                 
-                // ดึงชื่อมาแสดง ถ้าไม่มีให้ตัดเอาส่วนหน้าของอีเมลมาใช้แทน
                 const userName = user.displayName || user.email.split('@')[0];
                 document.getElementById('displayUserName').innerText = userName;
                 
@@ -151,7 +148,6 @@
             try {
                 const qs = await getDocs(query(collection(db, "Tickets"), where("userId", "==", uid)));
                 
-                // ถ้ายืนยันแล้วว่าไม่มีตั๋ว ให้โชว์ Empty State แบบสวยงาม
                 if (qs.empty) {
                     return container.innerHTML = `
                         <div class="empty-state">
@@ -178,50 +174,48 @@
                     let html = `<div class="ticket-box">
                         ${tableHtml}
                         <h3 style="margin:0 0 5px 0; color:var(--primary); font-size:1.4rem;">🎟️ ${data.type.toUpperCase()}</h3>
-                        <p style="margin:0 0 15px 0;">สถานะ: <span class="${isPaid ? 'status-paid' : 'status-pending'}">${isPaid ? 'ชำระเงินเรียบร้อย' : 'รอแอดมินตรวจสลิป'}</span></p>
-                        ${(isPaid && isLocked) ? `<div style="text-align:center; background:#fff; padding:10px; border-radius:10px;"><p style="font-size:13px; color:#666; margin:0;">QR Code สำหรับแสดงให้สตาฟฟ์หน้างาน</p><div class="qrcode-container" id="qr_${tId}"></div></div>` : ''}
+                        <p style="margin:0 0 15px 0;">สถานะตั๋ว: <span class="${isPaid ? 'status-paid' : 'status-pending'}">${isPaid ? 'ชำระเงินเรียบร้อย' : 'รอแอดมินตรวจสอบสลิป'}</span></p>
+                        
+                        ${(isPaid && isLocked) ? `<div style="text-align:center; background:#fff; padding:10px; border-radius:10px; border:2px dashed var(--primary);"><p style="font-size:13px; color:#666; margin:0;">QR Code สำหรับแสดงให้สตาฟฟ์หน้างาน</p><div class="qrcode-container" id="qr_${tId}"></div></div>` : ''}
+                        ${(!isPaid && isLocked) ? `<div style="text-align:center; background:#fff3cd; padding:15px; border-radius:10px; color:#856404; margin-bottom:15px; border:1px dashed #ffeeba; font-weight:bold;">⏳ บันทึกข้อมูลเรียบร้อยแล้ว!<br><span style="font-size:0.9rem; font-weight:normal;">QR Code จะปรากฏขึ้นตรงนี้อัตโนมัติเมื่อแอดมินยืนยันยอดเงินสำเร็จค่ะ</span></div>` : ''}
                         
                         <hr style="border:none; border-top:1px dashed #ddd; margin:15px 0;">`;
 
                     if (isLocked) {
                         html += `<div class="locked-msg">🔒 ข้อมูลถูกบันทึกเรียบร้อย หากต้องการแก้ไขกรุณาติดต่อเพจ</div>`;
                         if (isParty || isVip) html += `<p style="font-size:0.95rem;"><b>รีเควสโซน:</b> ${data.request || '-'}</p>`;
-                    } else if (isPaid) {
-                        if (isParty || isVip) html += `<label style="font-size:0.95rem;">รีเควสโซนที่นั่ง/อื่นๆ:</label><textarea id="req_${tId}" rows="2" placeholder="ระบุความต้องการเพิ่มเติม">${data.request || ''}</textarea>`;
+                    } else {
+                        if (isParty || isVip) html += `<label style="font-size:0.95rem;">รีเควสโซนที่นั่ง/อื่นๆ:</label><textarea id="req_${tId}" rows="2" placeholder="ระบุความต้องการเพิ่มเติม (ไม่บังคับ)">${data.request || ''}</textarea>`;
                     }
 
-                    if (isPaid) {
-                        html += `<h4 style="margin-bottom:10px; color:#444;">กรอกข้อมูลผู้เข้าร่วม (${seats} คน)</h4>`;
-                        for(let i=0; i<seats; i++) {
-                            let m = data.members && data.members[i] ? data.members[i] : {};
-                            html += `<div class="member-block"><h5 style="margin:0 0 10px 0; color:var(--primary);">ผู้เข้าร่วมคนที่ ${i+1}</h5>`;
-                            if (isLocked) {
-                                html += `<div style="font-size:0.9rem; line-height:1.6;">
-                                    <b>ชื่อ:</b> ${m.name||'-'} <br>
-                                    <b>เกิด:</b> ${m.dob||'-'} <br>
-                                    <b>FB:</b> <span style="word-break:break-all;">${m.facebook||'-'}</span>
-                                    ${isVip ? `<br><b style="color:var(--primary);">เกสต์: ${m.guest||'ไม่ได้ระบุ'}</b>` : ''}
-                                </div>`;
-                            } else {
-                                html += `<input type="text" id="name_${tId}_${i}" placeholder="ชื่อ-สกุล (ตรงบัตร ปชช.)" value="${m.name||''}">
-                                         <input type="date" id="dob_${tId}_${i}" value="${m.dob||''}">
-                                         <input type="text" id="fb_${tId}_${i}" placeholder="ลิงก์ Facebook" value="${m.facebook||''}">`;
-                                
-                                if (isVip && globalGuestList.length > 0) {
-                                    html += `<div style="font-size:0.85rem; color:#666; margin-top:5px;">เลือก Guest 2-Shot (ห้ามซ้ำในโต๊ะ):</div><div class="chip-container">`;
-                                    globalGuestList.forEach(g => {
-                                        let isSel = (m.guest === g) ? 'selected' : '';
-                                        html += `<div class="guest-chip ${isSel}" data-t="${tId}" data-seat="${i}" data-g="${g}" onclick="toggleChip(this)">${g}</div>`;
-                                    });
-                                    html += `</div><input type="hidden" id="guest_${tId}_${i}" value="${m.guest||''}">`;
-                                }
+                    html += `<h4 style="margin-bottom:10px; color:#444;">รายชื่อผู้เข้าร่วม (${seats} คน)</h4>`;
+                    for(let i=0; i<seats; i++) {
+                        let m = data.members && data.members[i] ? data.members[i] : {};
+                        html += `<div class="member-block"><h5 style="margin:0 0 10px 0; color:var(--primary);">ผู้เข้าร่วมคนที่ ${i+1}</h5>`;
+                        if (isLocked) {
+                            html += `<div style="font-size:0.9rem; line-height:1.6;">
+                                <b>ชื่อ:</b> ${m.name||'-'} <br>
+                                <b>เกิด:</b> ${m.dob||'-'} <br>
+                                <b>FB:</b> <span style="word-break:break-all;">${m.facebook||'-'}</span>
+                                ${isVip ? `<br><b style="color:var(--primary);">เกสต์: ${m.guest||'ไม่ได้ระบุ'}</b>` : ''}
+                            </div>`;
+                        } else {
+                            html += `<input type="text" id="name_${tId}_${i}" placeholder="ชื่อ-สกุล (ตรงบัตร ปชช.)" value="${m.name||''}">
+                                     <input type="date" id="dob_${tId}_${i}" value="${m.dob||''}">
+                                     <input type="text" id="fb_${tId}_${i}" placeholder="ลิงก์ Facebook" value="${m.facebook||''}">`;
+                            
+                            if (isVip && globalGuestList.length > 0) {
+                                html += `<div style="font-size:0.85rem; color:#666; margin-top:5px;">เลือก Guest 2-Shot (ห้ามซ้ำในโต๊ะ):</div><div class="chip-container">`;
+                                globalGuestList.forEach(g => {
+                                    let isSel = (m.guest === g) ? 'selected' : '';
+                                    html += `<div class="guest-chip ${isSel}" data-t="${tId}" data-seat="${i}" data-g="${g}" onclick="toggleChip(this)">${g}</div>`;
+                                });
+                                html += `</div><input type="hidden" id="guest_${tId}_${i}" value="${m.guest||''}">`;
                             }
-                            html += `</div>`;
                         }
-                        if (!isLocked) html += `<button onclick="prepareSave('${tId}', ${seats}, ${isVip}, ${isParty})">บันทึกข้อมูลเพื่อรับ QR Code</button>`;
-                    } else {
-                        html += `<p style="text-align:center; color:#888; font-size:0.9rem;">(กรุณารอแอดมินตรวจสอบสลิป จึงจะสามารถกรอกรายชื่อผู้ร่วมงานได้)</p>`;
+                        html += `</div>`;
                     }
+                    if (!isLocked) html += `<button onclick="prepareSave('${tId}', ${seats}, ${isVip}, ${isParty})">ยืนยันข้อมูล (แก้ไขไม่ได้แล้ว)</button>`;
 
                     html += `</div>`;
                     container.insertAdjacentHTML('beforeend', html);
