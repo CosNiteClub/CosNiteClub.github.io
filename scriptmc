@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CosNite Club - MC Script & Master Schedule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #121212; --card: #1e1e1e; --primary: #ff3ec9; --accent: #fff7ad; --text: #e0e0e0; --mc: #4ade80; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; line-height: 1.6; }
+        .container { max-width: 900px; margin: auto; }
+        h1, h2, h3 { color: var(--primary); }
+        h1 { text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        
+        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { background: #333; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-family: 'Kanit'; font-size: 1.1rem; flex: 1; transition: 0.3s; }
+        .tab-btn.active { background: var(--primary); font-weight: bold; }
+        
+        .content-section { display: none; background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .content-section.active { display: block; }
+        
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+        th, td { border: 1px solid #444; padding: 12px; text-align: left; vertical-align: top; }
+        th { background: #333; color: var(--accent); }
+        .col-time { width: 120px; font-weight: bold; color: var(--accent); }
+        
+        /* Script Styles */
+        .script-block { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #444; }
+        .time-badge { background: #333; color: var(--accent); padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; display: inline-block; margin-bottom: 10px; }
+        .cue { color: #facc15; font-size: 0.9rem; margin-bottom: 8px; font-style: italic; }
+        .mc-line { color: var(--mc); font-size: 1.1rem; margin-bottom: 10px; }
+        .mc-line strong { color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌙 CosNite Club: Master Schedule & MC Script</h1>
+    
+    <div class="tab-menu">
+        <button class="tab-btn active" onclick="switchTab('schedule')">🗓️ ตารางกิจกรรม (Master Schedule)</button>
+        <button class="tab-btn" onclick="switchTab('script')">🎤 สคริปต์ MC (MC Script)</button>
+    </div>
+
+    <!-- SECTION: SCHEDULE -->
+    <div id="schedule" class="content-section active">
+        <h2>ตารางคิวงานแบบละเอียด (เช็คความสอดคล้องแล้ว)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-time">เวลา</th>
+                    <th>กิจกรรม (Activity)</th>
+                    <th>MC Role</th>
+                    <th>Special Guest (SG) / Free Stage (FS) Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="col-time">17:00 - 17:30</td>
+                    <td>Standby & Welcome</td>
+                    <td>Standby เตรียมตัว</td>
+                    <td>FS: ยืนต้อนรับคุณหนูที่หน้างาน (สลับคิวกัน)<br>SG: Standby หลังร้าน</td>
+                </tr>
+                <tr>
+                    <td class="col-time">17:30 - 18:00</td>
+                    <td>Doors Open (VIP Priority)</td>
+                    <td>Voiceover ต้อนรับ (ไม่เห็นตัว)</td>
+                    <td>FS & SG: เตรียมตัวเข้าสู่พื้นที่</td>
+                </tr>
+                <tr>
+                    <td class="col-time">18:00 - 18:30</td>
+                    <td>Grand Opening & กติกา</td>
+                    <td>ขึ้นเวที / เปิดตัว SG / อธิบายเหรียญ & Consent</td>
+                    <td>SG: ขึ้นเวทีแนะนำตัวทีละคน<br>FS: Standby</td>
+                </tr>
+                <tr>
+                    <td class="col-time">18:30 - 19:00</td>
+                    <td>Service Time Block 1</td>
+                    <td><b>(พักคอ)</b> บิ้วบรรยากาศเล็กน้อย</td>
+                    <td>SG: เดิน Service ทักทายคุณหนู<br>FS: ประจำรูทพูดคุย</td>
+                </tr>
+                <tr>
+                    <td class="col-time">19:00 - 19:15</td>
+                    <td>Free Stage Show 1</td>
+                    <td>ประกาศเปิดโชว์ / บิ้วอารมณ์</td>
+                    <td>FS: วงที่ 1 ขึ้นโชว์ (ไม่เกิน 10 นาที)<br>SG: Service ต่อเนื่องตามโต๊ะ</td>
+                </tr>
+                <tr>
+                    <td class="col-time">19:15 - 19:30</td>
+                    <td>Lucky Call รอบ 1</td>
+                    <td>ประกาศโต๊ะผู้โชคดี</td>
+                    <td>FS: เดินไปโต๊ะผู้โชคดี (ชงเหล้า/เต้น 2 เพลง)<br>SG: Service ปกติ</td>
+                </tr>
+                <tr>
+                    <td class="col-time">19:30 - 20:00</td>
+                    <td>VIP 2-Shot Session 1</td>
+                    <td>ประกาศคิว VIP 2-Shot / ขายเหรียญ</td>
+                    <td>SG: ประจำจุดถ่าย 2-Shot กับ VIP<br>FS: <b>(พัก)</b></td>
+                </tr>
+                <tr>
+                    <td class="col-time">20:00 - 20:15</td>
+                    <td>Free Stage Show 2</td>
+                    <td>ประกาศเปิดโชว์ 2</td>
+                    <td>FS: วงที่ 2 ขึ้นโชว์<br>SG: <b>(พัก)</b></td>
+                </tr>
+                <tr>
+                    <td class="col-time">20:15 - 20:30</td>
+                    <td>Lucky Call รอบ 2</td>
+                    <td>ประกาศโต๊ะผู้โชคดี</td>
+                    <td>FS: ประจำโต๊ะ Lucky Call<br>SG: เริ่มเดิน Service Block 2</td>
+                </tr>
+                <tr>
+                    <td class="col-time">20:30 - 21:00</td>
+                    <td>Random Dance!</td>
+                    <td>บิ้วบนเวทีชวนทุกคนเต้น</td>
+                    <td>FS & SG: กระจายตัวเต้นตามรูท / หน้าเวที</td>
+                </tr>
+                <tr>
+                    <td class="col-time">21:00 - 21:15</td>
+                    <td>Free Stage Show 3</td>
+                    <td>ประกาศเปิดโชว์ 3</td>
+                    <td>FS: วงที่ 3 ขึ้นโชว์<br>SG: Service ตามโต๊ะ</td>
+                </tr>
+                <tr>
+                    <td class="col-time">21:15 - 21:30</td>
+                    <td>Lucky Call รอบ 3</td>
+                    <td>ประกาศโต๊ะผู้โชคดี</td>
+                    <td>FS: ประจำโต๊ะ Lucky Call<br>SG: Service ต่อเนื่อง</td>
+                </tr>
+                <tr>
+                    <td class="col-time">21:30 - 22:00</td>
+                    <td>VIP 2-Shot Session 2</td>
+                    <td>ประกาศคิว VIP 2-Shot รอบสอง</td>
+                    <td>SG: ประจำจุดถ่าย 2-Shot กับ VIP<br>FS: <b>(พัก)</b></td>
+                </tr>
+                <tr>
+                    <td class="col-time">22:00 - 22:15</td>
+                    <td>Free Stage Show 4</td>
+                    <td>ประกาศเปิดโชว์ 4</td>
+                    <td>FS: วงที่ 4 ขึ้นโชว์<br>SG: <b>(พัก)</b></td>
+                </tr>
+                <tr>
+                    <td class="col-time">22:15 - 22:30</td>
+                    <td>Lucky Call รอบ 4</td>
+                    <td>ประกาศโต๊ะผู้โชคดี (รอบสุดท้าย)</td>
+                    <td>FS: ประจำโต๊ะ Lucky Call</td>
+                </tr>
+                <tr>
+                    <td class="col-time">22:30 - 23:00</td>
+                    <td>Golden Coin Last Spurt</td>
+                    <td>เชียร์อัพการใช้เหรียญทอง (จ้องตา/Love Shot)</td>
+                    <td>SG & FS: จัดเต็ม Service แจกความฟิน</td>
+                </tr>
+                <tr>
+                    <td class="col-time">23:00 - 23:30</td>
+                    <td>Last Vote / Music</td>
+                    <td>ประกาศปิดโหวต King/Queen of the Night</td>
+                    <td>SG & FS: Service โค้งสุดท้าย</td>
+                </tr>
+                <tr>
+                    <td class="col-time">23:30 - 00:00</td>
+                    <td>Closing & ประกาศรางวัล</td>
+                    <td>ประกาศรางวัล / กล่าวปิดงานเช็คเอาท์</td>
+                    <td>รวมตัวหน้าเวที ขอบคุณคุณหนูทุกท่าน</td>
+                </tr>
+                <tr>
+                    <td class="col-time">00:00 - 01:30</td>
+                    <td>Free Time / After Party</td>
+                    <td><b>(เลิกงาน)</b></td>
+                    <td>อยู่ร่วมสนุกต่อได้ตามความสมัครใจ (Free Time)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SECTION: SCRIPT -->
+    <div id="script" class="content-section">
+        <h2>🎤 สคริปต์ MC ประจำวันงาน</h2>
+        <p style="color: #aaa; font-size: 0.9rem;">*ข้อแนะนำ: ใช้โทนเสียงนุ่มนวล เป็นกันเอง ไม่ทางการจนเกินไป ให้ความรู้สึกเหมือนกำลังดูแลแขก VIP*</p>
+
+        <!-- 17:30 -->
+        <div class="script-block">
+            <span class="time-badge">17:30 - Doors Open (Voiceover)</span>
+            <div class="cue">[CUE] ยืนพูดหลังไมค์ ไม่ต้องขึ้นเวที เพื่อเปิดบรรยากาศตอนลูกค้าระดับ VIP และแขกท่านอื่นๆ ทยอยเข้างาน</div>
+            <div class="mc-line">"สวัสดีครับคุณหนูทุกท่าน ยินดีต้อนรับเข้าสู่ค่ำคืนสุดพิเศษที่คลับของเรา... <strong>CosNite Club</strong> ครับ"</div>
+            <div class="mc-line">"สำหรับคุณหนูที่เดินทางมาถึงแล้ว สามารถติดต่อทีมงานด้านหน้าเพื่อ Check-in รับเครื่องดื่ม และเข้าประจำโต๊ะที่จองไว้ได้เลยนะครับ ค่ำคืนนี้พวกเราเตรียมบริการและเซอร์ไพรส์ไว้รอคุณหนูเพียบเลยครับ ระหว่างนี้ดื่มด่ำกับบรรยากาศและเสียงเพลงไปพลางๆ ก่อนนะครับ"</div>
+        </div>
+
+        <!-- 18:00 -->
+        <div class="script-block">
+            <span class="time-badge">18:00 - Grand Opening & Rules</span>
+            <div class="cue">[CUE] MC ขึ้นเวทีหลัก เพลง BGM สไตล์เลานจ์/คลับหรูหรา</div>
+            <div class="mc-line">"เอาล่ะครับ ขอเสียงปรบมือดังๆ ต้อนรับคุณหนูทุกท่านเข้าสู่ <strong>CosNite Club</strong> อย่างเป็นทางการคร้าบบบ!"</div>
+            <div class="mc-line">"ค่ำคืนนี้ถือเป็นค่ำคืนที่พิเศษมากๆ เพราะเราได้รวบรวมหนุ่มๆ คอสเพลย์เยอร์สุดหล่อ ที่พร้อมจะมาดูแล เทคแคร์ และมอบความสุขให้กับคุณหนูทุกท่านถึงโต๊ะเลยครับ... และเพื่อไม่ให้เป็นการเสียเวลา ผมขอเชิญทุกท่านพบกับ Special Guest ทั้ง 6 ท่านของเราในค่ำคืนนี้ ขอเสียงกรี๊ดต้อนรับด้วยคร้าบบบ!"</div>
+            <div class="cue">[CUE] Guest ทั้ง 6 เดินออกมาทีละคน MC เรียกชื่อ/แนะนำคาแรคเตอร์สั้นๆ ให้ Guest ทักทายคนละ 1 ประโยค</div>
+            
+            <div class="mc-line">"โอ้โห แต่ละคนคือหล่อกระชากใจมากครับคุณหนู... เอาล่ะครับ ก่อนที่เราจะเริ่มปาร์ตี้กัน ผมขออนุญาตแนะนำกติกาเล็กๆ น้อยๆ เพื่อให้ค่ำคืนนี้สมบูรณ์แบบที่สุดนะครับ"</div>
+            <div class="mc-line">"อย่างแรกเลย คลับของเรามีระบบ <strong>Coin</strong> หรือเหรียญครับ แบ่งเป็น 2 แบบ"</div>
+            <div class="mc-line">"<strong>Silver Coin (เหรียญเงิน)</strong>: ใช้สำหรับขอถ่ายรูป 2-Shot กับ Guest หรือ Free Stage ของเราได้เลย และยังใช้โหวตตำแหน่ง King or Queen of the night ในช่วงท้ายงานได้ด้วยนะครับ 1 เหรียญเพียง 25 บาทเท่านั้น!"</div>
+            <div class="mc-line">"และ <strong>Golden Coin (เหรียญทอง)</strong>: อันนี้คือไฮไลท์ครับ! ใช้สำหรับแลก <strong>Service</strong> พิเศษจาก Guest ของเรา... ใครอยากเล่นเกมจ้องตากับเมนตัวเองแบบใกล้ชิด 10 วินาที หรืออยากทำ Love Shot คล้องแขนชนแก้วฟินๆ ใช้ Golden Coin เรียกใช้บริการหนุ่มๆ ของเราได้เลยครับ! (กระซิบ) เหรียญทอง 1 เหรียญ มีค่าเท่ากับเหรียญเงิน 3 เหรียญนะครับ หาซื้อได้ที่สตาฟฟ์เลย"</div>
+            
+            <div class="mc-line" style="color: #fca5a5;">"และกฎเหล็กที่สำคัญที่สุดของคลับเรา... เพื่อความสบายใจของทั้งคุณหนูและ Guest ทุกการสัมผัสหรือการเล่นกิจกรรม จะต้องได้รับ <strong>ความยินยอม หรือ Consent</strong> จาก Guest ของเราก่อนทุกครั้งนะครับ ถ้ารักน้อง เอ็นดูน้อง ต้องเคารพกติกาข้อนี้กันด้วยน้าา"</div>
+            <div class="mc-line">"ถ้าพร้อมแล้ว... Let’s get this party started! ขอให้สนุกกับ Service Time ครับผม!"</div>
+        </div>
+
+        <!-- 19:00 / 20:00 / 21:00 / 22:00 -->
+        <div class="script-block">
+            <span class="time-badge">ช่วง Free Stage Show (พูดเหมือนกันก่อนเริ่มแต่ละวง)</span>
+            <div class="cue">[CUE] MC ขึ้นเวที ประกาศเข้าโชว์เพื่อให้ SG ได้เดิน Service อย่างเต็มที่หรือพัก</span></div>
+            <div class="mc-line">"เป็นยังไงกันบ้างครับคุณหนู โดนหนุ่มๆ ตกกันไปกี่คนแล้วเอ่ย... สำหรับช่วงเวลานี้ เราจะเพิ่มจังหวะความสนุกให้ร้อนแรงขึ้นไปอีก! เตรียมพบกับโชว์สเต็ปแดนซ์สุดปังจากทีม Free Stage ของเรา ขอเสียงปรบมือให้กับวง [ชื่อวง] ด้วยคร้าบบบ!"</div>
+        </div>
+
+        <!-- 19:15 / 20:15 / 21:15 / 22:15 -->
+        <div class="script-block">
+            <span class="time-badge">ช่วง Lucky Call (ทุกๆ 1 ชั่วโมง)</span>
+            <div class="cue">[CUE] MC สุ่มหรือประกาศโต๊ะที่ได้สิทธิ์ Lucky Call (เฉพาะ VIP และ Party)</div>
+            <div class="mc-line">"และแล้วก็ถึงเวลาของกิจกรรม <strong>Lucky Call</strong> ครับคุณหนู! ทุกๆ 1 ชั่วโมง เราจะสุ่มโต๊ะผู้โชคดี เพื่อให้วง Free Stage ของเราไปบุกเอนเตอร์เทนดูแลถึงโต๊ะแบบ Exclusive เป็นเวลา 2 เพลงเต็มๆ! ชงเครื่องดื่ม พูดคุย หรือจะเต้นด้วยกันก็ได้เลย!"</div>
+            <div class="mc-line">"มาลุ้นกันครับว่าโต๊ะไหนจะเป็นผู้โชคดีในรอบนี้... และโต๊ะที่ได้ Lucky Call ไปก็คือ... โต๊ะหมายเลข [ประกาศเลขโต๊ะ] ครับผม! ขอเสียงปรบมือด้วย น้องๆ Free Stage บุกไปที่โต๊ะได้เลยคร้าบบ!"</div>
+        </div>
+
+        <!-- 19:30 & 21:30 -->
+        <div class="script-block">
+            <span class="time-badge">19:30 & 21:30 - VIP 2-Shot Session</span>
+            <div class="cue">[CUE] MC ประกาศรวมคิวลูกค้า VIP เพื่อถ่ายรูป</div>
+            <div class="mc-line">"คุณหนูโต๊ะ VIP ทุกท่านครับ ตอนนี้ถึงเวลาพิเศษของพวกคุณแล้ว! กับช่วง <strong>Special 2-Shot 1:1</strong> ครับผม ขอเชิญคุณหนูโต๊ะ VIP เตรียมตัวที่จุดถ่ายภาพได้เลยนะครับ แอบกระซิบว่าคุณหนูสามารถเลือกหูสัตว์ให้หนุ่มๆ ใส่ถ่ายรูปได้ด้วยนะเออ ใครอยากเห็นเมนตัวเองเป็นแมวเหมียวหรือหมาน้อยน่ารักๆ จัดไปเลยครับ!"</div>
+        </div>
+
+        <!-- 20:30 -->
+        <div class="script-block">
+            <span class="time-badge">20:30 - Random Dance</span>
+            <div class="cue">[CUE] บิ้วให้ทุกคนออกมารวมตัวหน้าเวทีหรือเต้นที่โต๊ะ</div>
+            <div class="mc-line">"เอาล่ะครับคุณหนู นั่งดริ้งค์กันมาพักใหญ่แล้ว ถึงเวลายืดเส้นยืดสาย! กับช่วง <strong>Random Dance</strong> ครับผม! เพลงไหนร้องได้ เพลงไหนเต้นได้ ลุกขึ้นมาเลยครับ! น้องๆ Free Stage และ Guest ของเราพร้อมกระจายตัวไปเต้นกับทุกคนแล้ว... ดีเจ ขอเพลงมันส์ๆ หน่อยยยย!"</div>
+        </div>
+
+        <!-- 23:00 -->
+        <div class="script-block">
+            <span class="time-badge">23:00 - Last Vote & Service</span>
+            <div class="cue">[CUE] เตือนลูกค้าเรื่องการใช้เหรียญและการโหวตช่วงสุดท้าย</div>
+            <div class="mc-line">"เวลาแห่งความสุขมักจะผ่านไปเร็วเสมอเลยนะครับคุณหนู... ตอนนี้เข้าสู่ช่วงโค้งสุดท้ายของปาร์ตี้แล้ว ใครที่ยังมี Golden Coin หรือ Silver Coin อยู่ในมือ รีบเรียกใช้บริการหนุ่มๆ ของเราด่วนๆ เลยนะครับ ก่อนจะหมดเวลา!"</div>
+            <div class="mc-line">"และอย่าลืมนำ Silver Coin ไปโหวตให้กับ Guest หรือ Free Stage ที่คุณหนูชื่นชอบที่สุด เพื่อเฟ้นหา <strong>King of the Night</strong> ประจำค่ำคืนนี้นะครับ เราจะปิดโหวตในอีก 30 นาทีเท่านั้น รีบเลยๆ!"</div>
+        </div>
+
+        <!-- 23:30 -->
+        <div class="script-block">
+            <span class="time-badge">23:30 - Closing & King of the Night</span>
+            <div class="cue">[CUE] ดึงความสนใจกลับมาที่เวทีหลัก SG และ FS รวมตัวหน้าเวที</div>
+            <div class="mc-line">"และแล้วก็ถึงเวลาที่เราจะมาลุ้นกันครับว่า ใครจะได้เป็น <strong>King of the Night</strong> ประจำงาน CosNite Club ของเราในค่ำคืนนี้... จากผลโหวตด้วยเหรียญเงินของคุณหนูทุกท่าน..."</div>
+            <div class="mc-line">"ขอเสียงปรบมือดังๆ ให้กับ... [ประกาศชื่อผู้ชนะ] คร้าบบบ! ยินดีด้วยครับผม รับมงกุฎ(หรือสายสะพาย)ไปเลยยย!"</div>
+            <div class="mc-line">"ค่ำคืนนี้ พวกเราทีมงาน CosNite Club รวมถึง Special Guest และ Free Stage ทุกท่าน ขอขอบพระคุณคุณหนูทุกท่านจากใจจริง ที่มาร่วมสร้างความทรงจำและค่ำคืนที่แสนพิเศษนี้ด้วยกันนะครับ"</div>
+            <div class="mc-line">"หลังจากนี้ จะเป็นช่วง Free Time คุณหนูสามารถอยู่ปาร์ตี้ต่อกับพวกเราได้จนกว่าร้านจะปิดเลยนะครับ สำหรับช่วงนี้ ผมขออนุญาต Check-out ส่งคุณหนูเข้านอน(หรือเต้นต่อ) ขอให้ทุกคนเดินทางกลับโดยสวัสดิภาพ รักษาตัวด้วยนะครับ ขอบคุณและสวัสดีคร้าบบบ!"</div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function switchTab(tabId) {
+        // Remove active classes
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+        
+        // Add active class to selected tab
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+</script>
+
+</body>
+</html>
