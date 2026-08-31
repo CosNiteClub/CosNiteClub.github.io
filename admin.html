@@ -56,6 +56,13 @@
         .member-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .full-width { grid-column: span 2; }
 
+        /* อัปเดต CSS ใหม่สำหรับตารางรายชื่อและป้ายเตือน */
+        .member-detail-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.85rem; background: #fff; }
+        .member-detail-table th, .member-detail-table td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
+        .member-detail-table th { background: #f3f4f6; color: #4b5563; font-weight: 500; }
+        .badge-untransferred { background: #fee2e2; color: #ef4444; font-size: 0.8rem; padding: 4px 10px; border-radius: 12px; display: inline-block; margin-top: 8px; font-weight: bold; border: 1px solid #fca5a5; }
+        .row-untransferred { background-color: #fff5f5 !important; }
+
         @media (max-width: 768px) {
             .dash-grid { grid-template-columns: 1fr 1fr; }
             .member-edit-grid { grid-template-columns: 1fr; }
@@ -87,6 +94,7 @@
                 <button class="tab-btn" onclick="switchTab('tab-settings')">ตั้งค่าเกสต์ (VIP)</button>
             </div>
 
+            <!-- TAB 1: ตรวจสอบสลิป -->
             <div id="tab-pending">
                 <div class="table-responsive">
                     <table id="pendingTable">
@@ -104,6 +112,7 @@
                 </div>
             </div>
 
+            <!-- TAB 2 -->
             <div id="tab-manage" style="display: none;">
                 <div class="dash-grid">
                     <div class="dash-card"><h3>ที่นั่งทั้งหมด (500)</h3><p id="dashTotal">0/500</p><div class="dash-sub" id="dashTotalSub"></div></div>
@@ -136,7 +145,10 @@
                             <option value="party">เฉพาะ Party</option>
                             <option value="solo">เฉพาะ Solo</option>
                         </select>
-                        <button onclick="exportCSV()" style="background:#10b981; padding:8px 15px;">📥 โหลดชีท (CSV)</button>
+                        <div>
+                            <button onclick="exportCSV()" style="background:#8b5cf6; padding:8px 15px;">📥 โหลด CSV</button>
+                            <button id="btnSyncSheet" onclick="syncToGoogleSheet()" style="background:#10b981; padding:8px 15px; margin-left: 5px;">🔄 ซิงค์ลง Google Sheets</button>
+                        </div>
                     </div>
                     
                     <div class="toolbar-group" style="background:#fff; padding:10px; border-radius:8px; border:1px solid #ddd;">
@@ -154,6 +166,7 @@
                 </div>
             </div>
 
+            <!-- TAB 3: ตั้งค่าเกสต์ -->
             <div id="tab-settings" style="display: none;">
                 <div class="guest-manage-box">
                     <h3 style="margin-top:0; color:var(--primary);">รายชื่อ Guest สำหรับบัตร VIP</h3>
@@ -167,14 +180,24 @@
         </div>
     </div>
 
+    <!-- Modal จัดการแอดมิน -->
     <div id="editModalOverlay" onclick="closeModal()"></div>
     <div id="editModal">
-        <h3 style="color:var(--primary); margin-top:0;">แก้ไขข้อมูลตั๋ว</h3>
-        <input type="hidden" id="editTid"><input type="hidden" id="editType">
+        <h3 style="color:var(--primary); margin-top:0;">จัดการข้อมูลตั๋ว</h3>
+        <input type="hidden" id="editTid">
         
         <div class="admin-note-box">
-            <label style="font-weight:bold; color:var(--primary); font-size:0.95rem;">สำหรับแอดมินจัดผังโต๊ะ:</label>
-            <input type="text" id="editTableNum" class="full-width" placeholder="ระบุหมายเลข / ชื่อโต๊ะ (เช่น V01, P12)" style="margin-top:5px;">
+            <label style="font-weight:bold; color:var(--primary); font-size:0.95rem; display:block;">ประเภทบัตร (อัปเกรด/แก้ไข):</label>
+            <select id="editType" class="full-width" onchange="window.renderEditMembersArea()" style="margin-bottom:10px;">
+                <option value="solo">Solo (เดี่ยว)</option>
+                <option value="party4">Party 4 คน</option>
+                <option value="party6">Party 6 คน</option>
+                <option value="vip4">VIP 4 คน</option>
+                <option value="vip6">VIP 6 คน</option>
+            </select>
+
+            <label style="font-weight:bold; color:var(--primary); font-size:0.95rem; margin-top:10px;">สำหรับจัดผังโต๊ะ:</label>
+            <input type="text" id="editTableNum" class="full-width" placeholder="ระบุเลขโต๊ะ หรือจัดกลุ่ม Solo (เช่น V01, กลุ่ม1)" style="margin-top:5px;">
             <div class="switch-wrap">
                 <input type="checkbox" id="editShowTable" style="width:auto;">
                 <label for="editShowTable" style="color: #ef4444; font-weight: bold; cursor:pointer; font-size:0.9rem;">เปิดให้ลูกค้าเห็นเลขโต๊ะ</label>
@@ -185,6 +208,8 @@
         <textarea id="editReq" class="full-width" rows="2" style="margin-bottom:15px;" placeholder="รีเควสโซน/อื่นๆ"></textarea>
         <div id="editMembersArea"></div>
         
+        <button type="button" onclick="unlockTicketEdit()" style="width:100%; background:#f59e0b; margin-top:15px; font-size:1rem; padding:10px; border-radius:8px;">🔓 ปลดล็อกให้ลูกค้าแก้ไขชื่อได้อีก 1 ครั้ง (เฉพาะกรณีจำเป็น)</button>
+
         <div style="display:flex; gap:10px; margin-top:20px;">
             <button onclick="saveAdminEdit()" style="flex:1; background:#10b981; font-size:1.1rem;">บันทึก</button>
             <button onclick="closeModal()" style="flex:1; background:#ef4444; font-size:1.1rem;">ยกเลิก</button>
@@ -195,6 +220,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc, addDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // 🔴 นำ URL ของ Web App Google Sheets มาใส่ในเครื่องหมายคำพูดนี้
+        const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycby3VbxhyMro2Jhsd5gg7payagtNdeTMXV1aI3ZYtofk8Mnlfce4a4crx_n7GtKPPQtL3g/exec";
 
         const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
         const db = getFirestore(app);
@@ -233,6 +261,19 @@
             if(id === 'tab-pending') loadPending(); if(id === 'tab-manage') loadDashboardStats(); if(id === 'tab-settings') loadGuests();
         }
 
+        // --- ฟังก์ชันจัดฟอร์แมตวันเกิดให้เป็นมาตรฐาน ---
+        function standardizeDOB(dob) {
+            if(!dob || dob.trim() === '') return '';
+            let d = dob.replace(/-/g, '/');
+            let parts = d.split('/');
+            if(parts.length !== 3) return dob;
+            let p1 = parseInt(parts[0]), p2 = parseInt(parts[1]), p3 = parseInt(parts[2]);
+            let y, m = p2, day;
+            if(p1 > 31) { y = p1; day = p3; } else { day = p1; y = p3; }
+            if(y > 2400) y -= 543; // แปลง พ.ศ. เป็น ค.ศ.
+            return `${String(day).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
+        }
+
         async function loadDashboardStats() {
             const qsPaid = await getDocs(query(collection(db, "Tickets"), where("status", "==", "paid")));
             const qsPending = await getDocs(query(collection(db, "Tickets"), where("status", "==", "pending_verification")));
@@ -251,7 +292,6 @@
             renderPaidTable();
         }
 
-        // --- โหลดตั๋วรอตรวจสอบ และดึงชื่อมาแสดง ---
         async function loadPending() {
             const tbody = document.querySelector('#pendingTable tbody'); 
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">⏳ กำลังโหลดข้อมูล...</td></tr>';
@@ -266,8 +306,6 @@
 
             qs.forEach(d => {
                 const data = d.data();
-                
-                // ดึงรายชื่อลูกค้าที่กรอกมาแสดง
                 let membersList = '';
                 if (data.members && data.members.length > 0) {
                     data.members.forEach((m, i) => {
@@ -278,10 +316,7 @@
                         }
                     });
                 }
-                
-                if (membersList === '') {
-                    membersList = `<span style="font-size:11px; color:#ef4444; background:#fee2e2; padding:3px 8px; border-radius:5px;">ยังไม่ได้กรอกชื่อ</span>`;
-                }
+                if (membersList === '') membersList = `<span style="font-size:11px; color:#ef4444; background:#fee2e2; padding:3px 8px; border-radius:5px;">ยังไม่ได้กรอกชื่อ</span>`;
 
                 tbody.innerHTML += `<tr>
                     <td><b>${data.type.toUpperCase()}</b><br><span style="font-size:10px; color:#aaa;">ID: ${d.id}</span></td>
@@ -301,13 +336,31 @@
             if(displayTickets.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ไม่มีข้อมูล</td></tr>';
 
             displayTickets.forEach(data => {
-                let tableTag = data.tableNumber ? `<div style="color:var(--primary); font-weight:bold; font-size:13px;">📍 ${data.tableNumber} ${data.isTableVisible ? '👁️' : '🙈'}</div>` : '';
-                let mHtml = data.request ? `<div style="color:#f59e0b; font-size:12px;">Req: ${data.request}</div>` : '';
-                if(data.members) data.members.forEach((m,i) => mHtml += `<div style="font-size:11px; margin-top:3px; padding-bottom:3px; border-bottom:1px dashed #eee;">${i+1}.${m.name||'-'} ${data.type.includes('vip')?`<br><b style="color:var(--primary);">[${m.guest||'ไม่ระบุ'}]</b>`:''}</div>`);
+                let isUntransferred = data.userId === 'manual_admin';
+                let trClass = isUntransferred ? 'class="row-untransferred"' : '';
+                let badgeUntransferred = isUntransferred ? `<div class="badge-untransferred">⚠️ ยังไม่โอนสิทธิ์</div>` : '';
                 
-                tbody.innerHTML += `<tr>
-                    <td>${tableTag}<span style="font-size:10px; color:#aaa;">ID: ${data.id}</span>${data.refName ? `<br><b style="font-size:11px; color:#10b981;">Ref: ${data.refName}</b>` : ''}</td>
-                    <td>${data.type.toUpperCase()}</td><td>${mHtml}</td>
+                let tableTag = data.tableNumber ? `<div style="color:var(--primary); font-weight:bold; font-size:13px;">📍 ${data.tableNumber} ${data.isTableVisible ? '👁️' : '🙈'}</div>` : '';
+                
+                // สร้างตารางข้อมูลลูกค้า
+                let mHtml = `<table class="member-detail-table"><tr><th>ชื่อ-สกุล</th><th>เกิด</th><th>Facebook</th>${data.type.includes('vip')?'<th>เกสต์</th>':''}</tr>`;
+                if(data.members) {
+                    data.members.forEach((m,i) => {
+                        let dobFormat = standardizeDOB(m.dob);
+                        mHtml += `<tr>
+                            <td style="white-space:nowrap;">${i+1}. ${m.name||'<span style="color:#aaa;">-</span>'}</td>
+                            <td style="white-space:nowrap;">${dobFormat||'-'}</td>
+                            <td>${m.facebook ? `<a href="${m.facebook}" target="_blank" style="color:var(--primary); text-decoration:underline;">FB Link</a>` : '-'}</td>
+                            ${data.type.includes('vip')?`<td style="white-space:nowrap;"><b style="color:var(--primary);">${m.guest||'-'}</b></td>`:''}
+                        </tr>`;
+                    });
+                }
+                mHtml += `</table>`;
+                if(data.request) mHtml = `<div style="color:#f59e0b; font-size:12px; margin-bottom:5px;"><b>Req:</b> ${data.request}</div>` + mHtml;
+                
+                tbody.innerHTML += `<tr ${trClass}>
+                    <td>${tableTag}${badgeUntransferred}<br><span style="font-size:10px; color:#aaa;">ID: ${data.id}</span>${data.refName ? `<br><b style="font-size:11px; color:#10b981;">Ref: ${data.refName}</b>` : ''}</td>
+                    <td><b>${data.type.toUpperCase()}</b></td><td>${mHtml}</td>
                     <td><div class="action-btns"><button class="btn-edit" onclick="openEdit('${data.id}')">แก้</button><button class="btn-transfer" onclick="transferTicket('${data.id}')">โอน</button><button class="btn-del" onclick="delTicket('${data.id}')">ลบ</button></div></td>
                 </tr>`;
             });
@@ -335,11 +388,40 @@
             if(allPaidTickets.length === 0) return;
             let csv = "\uFEFFลำดับ,รหัสตั๋ว,อ้างอิง,ประเภท,โต๊ะ,รีเควส,รายละเอียดผู้ร่วมงาน\n";
             allPaidTickets.forEach((t, index) => {
-                let mInfo = t.members ? t.members.map((m, i) => `${i+1}.${m.name||'-'} | ${m.dob||'-'} | ${m.facebook||'-'} | ${m.guest||'-'}`).join(" // ") : "";
+                let mInfo = t.members ? t.members.map((m, i) => `${i+1}.${m.name||'-'} | ${standardizeDOB(m.dob)||'-'} | ${m.facebook||'-'} | ${m.guest||'-'}`).join(" // ") : "";
                 let row = [ index + 1, t.id, t.refName || '', t.type, t.tableNumber || '', t.request || '', mInfo ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
                 csv += row + "\n";
             });
             const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); a.download = `CosNite_Tickets.csv`; a.click();
+        }
+
+        // 🟢 ฟังก์ชันซิงค์ข้อมูลลง Google Sheets แบบ Realtime
+        window.syncToGoogleSheet = async () => {
+            if(GOOGLE_SHEET_API_URL === "ใส่_URL_WEB_APP_ของการซิงค์ชีทที่นี่") return alert("แอดมินต้องสร้าง Google Apps Script และนำ URL มาใส่ในโค้ดก่อนครับ");
+            if(allPaidTickets.length === 0) return alert("ไม่มีข้อมูลให้ซิงค์");
+            
+            const btn = document.getElementById('btnSyncSheet');
+            btn.innerText = "⏳ กำลังซิงค์...";
+            
+            try {
+                // จัดรูปแบบก่อนส่งไป Apps Script
+                const payload = allPaidTickets.map(t => {
+                    return {
+                        id: t.id, refName: t.refName||'', type: t.type, tableNumber: t.tableNumber||'', request: t.request||'',
+                        members: t.members || []
+                    };
+                });
+                
+                await fetch(GOOGLE_SHEET_API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload)
+                });
+                alert("✅ ซิงค์ข้อมูลลง Google Sheet สำเร็จ!");
+            } catch(e) { 
+                alert("🚨 เกิดข้อผิดพลาดในการซิงค์: " + e.message); 
+            }
+            btn.innerText = "🔄 ซิงค์ลง Google Sheets";
         }
 
         window.addManualTicket = async () => {
@@ -355,29 +437,54 @@
 
         window.openEdit = async (id) => {
             const data = (await getDoc(doc(db, "Tickets", id))).data();
-            document.getElementById('editTid').value = id; document.getElementById('editType').value = data.type;
-            document.getElementById('editTableNum').value = data.tableNumber || ''; document.getElementById('editShowTable').checked = data.isTableVisible === true;
-            document.getElementById('editNote').value = data.adminNote || ''; document.getElementById('editReq').value = data.request || '';
-            let s=1; if(data.type.includes('4')) s=4; if(data.type.includes('6')) s=6;
-            let isVip = data.type.includes('vip'), h = '';
+            window.currentEditingMembers = data.members || []; 
+            
+            document.getElementById('editTid').value = id; 
+            document.getElementById('editType').value = data.type;
+            document.getElementById('editTableNum').value = data.tableNumber || ''; 
+            document.getElementById('editShowTable').checked = data.isTableVisible === true;
+            document.getElementById('editNote').value = data.adminNote || ''; 
+            document.getElementById('editReq').value = data.request || '';
+            
+            window.renderEditMembersArea();
+            document.getElementById('editModalOverlay').style.display = 'block'; document.getElementById('editModal').style.display = 'block';
+        }
+
+        // 🟢 เรนเดอร์ช่องกรอกข้อมูลตามประเภทบัตรที่เปลี่ยนใหม่
+        window.renderEditMembersArea = () => {
+            const type = document.getElementById('editType').value;
+            let s=1; if(type.includes('4')) s=4; if(type.includes('6')) s=6;
+            let isVip = type.includes('vip'), h = '';
+            let currentMembers = window.currentEditingMembers || [];
+            
             for(let i=0; i<s; i++) {
-                let m = data.members && data.members[i] ? data.members[i] : {name:'',dob:'',facebook:'',guest:''};
+                let m = currentMembers[i] || {name:'',dob:'',facebook:'',guest:''};
                 h += `<div class="member-edit-card"><b style="color:var(--primary); font-size:13px;">คนที่ ${i+1}</b><div class="member-edit-grid">
                         <input class="full-width" type="text" id="ed_n_${i}" value="${m.name}" placeholder="ชื่อ-สกุล">
                         <input type="text" id="ed_d_${i}" value="${m.dob}" placeholder="วันเกิด"><input type="text" id="ed_f_${i}" value="${m.facebook}" placeholder="Facebook">`;
                 if(isVip) { let opts = `<option value="">- เลือกเกสต์ -</option>`; globalGuests.forEach(g => opts += `<option value="${g}" ${m.guest===g?'selected':''}>${g}</option>`); h += `<select class="full-width" id="ed_g_${i}">${opts}</select>`; }
                 h += `</div></div>`;
             }
-            document.getElementById('editMembersArea').innerHTML = h; document.getElementById('editModalOverlay').style.display = 'block'; document.getElementById('editModal').style.display = 'block';
+            document.getElementById('editMembersArea').innerHTML = h;
         }
 
         window.closeModal = () => { document.getElementById('editModalOverlay').style.display='none'; document.getElementById('editModal').style.display='none'; }
         
+        // 🟢 ฟังก์ชันปลดล็อกให้ลูกค้าแก้ไขชื่อได้ชั่วคราว
+        window.unlockTicketEdit = async () => {
+            const id = document.getElementById('editTid').value;
+            if(confirm('⚠️ ยืนยันปลดล็อกให้ลูกค้าแก้ไขรายชื่อได้อีก 1 ครั้งใช่ไหม?\n(เมื่อปลดล็อกแล้ว ลูกค้าจะสามารถเข้าไปแก้ไขชื่อที่หน้าเว็บตัวเองได้ เมื่อลูกค้ากดยืนยันแล้ว ระบบจะล็อกให้เหมือนเดิมอัตโนมัติ)')) {
+                await updateDoc(doc(db,"Tickets",id), { isMembersLocked: false });
+                alert('✅ ปลดล็อกเรียบร้อย! แจ้งลูกค้าให้เข้าไปแก้ข้อมูลได้เลยครับ');
+                closeModal(); loadDashboardStats();
+            }
+        }
+
         window.saveAdminEdit = async () => {
             const id = document.getElementById('editTid').value, type = document.getElementById('editType').value;
             let s=1; if(type.includes('4')) s=4; if(type.includes('6')) s=6; let isVip = type.includes('vip'), arr = [];
-            for(let i=0; i<s; i++) arr.push({ name: document.getElementById(`ed_n_${i}`).value, dob: document.getElementById(`ed_d_${i}`).value, facebook: document.getElementById(`ed_f_${i}`).value, guest: isVip ? document.getElementById(`ed_g_${i}`).value : '' });
-            await updateDoc(doc(db,"Tickets",id), { tableNumber: document.getElementById('editTableNum').value, adminNote: document.getElementById('editNote').value, isTableVisible: document.getElementById('editShowTable').checked, request: document.getElementById('editReq').value, members: arr, isMembersLocked: true });
+            for(let i=0; i<s; i++) arr.push({ name: document.getElementById(`ed_n_${i}`).value, dob: document.getElementById(`ed_d_${i}`).value, facebook: document.getElementById(`ed_f_${i}`).value, guest: isVip && document.getElementById(`ed_g_${i}`) ? document.getElementById(`ed_g_${i}`).value : '' });
+            await updateDoc(doc(db,"Tickets",id), { type: type, tableNumber: document.getElementById('editTableNum').value, adminNote: document.getElementById('editNote').value, isTableVisible: document.getElementById('editShowTable').checked, request: document.getElementById('editReq').value, members: arr, isMembersLocked: true });
             closeModal(); loadDashboardStats();
         }
     </script>
