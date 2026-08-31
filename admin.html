@@ -56,7 +56,6 @@
         .member-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .full-width { grid-column: span 2; }
 
-        /* อัปเดต CSS ใหม่สำหรับตารางรายชื่อและป้ายเตือน */
         .member-detail-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.85rem; background: #fff; }
         .member-detail-table th, .member-detail-table td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
         .member-detail-table th { background: #f3f4f6; color: #4b5563; font-weight: 500; }
@@ -221,7 +220,6 @@
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, deleteDoc, addDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-        // 🔴 นำ URL ของ Web App Google Sheets มาใส่ในเครื่องหมายคำพูดนี้
         const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycby3VbxhyMro2Jhsd5gg7payagtNdeTMXV1aI3ZYtofk8Mnlfce4a4crx_n7GtKPPQtL3g/exec";
 
         const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
@@ -261,7 +259,6 @@
             if(id === 'tab-pending') loadPending(); if(id === 'tab-manage') loadDashboardStats(); if(id === 'tab-settings') loadGuests();
         }
 
-        // --- ฟังก์ชันจัดฟอร์แมตวันเกิดให้เป็นมาตรฐาน ---
         function standardizeDOB(dob) {
             if(!dob || dob.trim() === '') return '';
             let d = dob.replace(/-/g, '/');
@@ -270,8 +267,44 @@
             let p1 = parseInt(parts[0]), p2 = parseInt(parts[1]), p3 = parseInt(parts[2]);
             let y, m = p2, day;
             if(p1 > 31) { y = p1; day = p3; } else { day = p1; y = p3; }
-            if(y > 2400) y -= 543; // แปลง พ.ศ. เป็น ค.ศ.
+            if(y > 2400) y -= 543; 
             return `${String(day).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
+        }
+
+        // ฟังก์ชันคำนวณอายุ ณ วันที่ 13 ก.ย. 2026
+        function calculateAgeAtEvent(dob) {
+            if(!dob || dob.trim() === '') return '';
+            let d = dob.replace(/-/g, '/');
+            let parts = d.split('/');
+            if(parts.length !== 3) return '';
+            let p1 = parseInt(parts[0]), p2 = parseInt(parts[1]), p3 = parseInt(parts[2]);
+            let y, m = p2, day;
+            if(p1 > 31) { y = p1; day = p3; } else { day = p1; y = p3; }
+            if(y > 2400) y -= 543;
+            
+            let birthDate = new Date(y, m - 1, day);
+            let eventDate = new Date(2026, 8, 13); // เดือนเริ่มจาก 0 (8 = กันยายน)
+            let age = eventDate.getFullYear() - birthDate.getFullYear();
+            let mDiff = eventDate.getMonth() - birthDate.getMonth();
+            if (mDiff < 0 || (mDiff === 0 && eventDate.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return isNaN(age) ? '' : age;
+        }
+
+        // ฟังก์ชันจัดฟอร์แมตช่องเฟซบุ๊ก/ไอจี ให้สวยงาม
+        function formatSocialLink(val) {
+            if(!val || val.trim() === '') return '-';
+            let str = val.trim();
+            let lower = str.toLowerCase();
+            if(lower.startsWith('http') || lower.startsWith('www')) {
+                let url = lower.startsWith('www') ? 'https://' + str : str;
+                let label = lower.includes('instagram') || lower.includes('ig') ? 'IG Link' : 'FB Link';
+                let color = lower.includes('instagram') || lower.includes('ig') ? '#e1306c' : '#1877f2';
+                return `<a href="${url}" target="_blank" style="color:${color}; text-decoration:underline; font-weight:bold;">${label}</a>`;
+            } else {
+                return `<span style="color:#555; background:#f3f4f6; padding:2px 6px; border-radius:4px;">${str}</span>`;
+            }
         }
 
         async function loadDashboardStats() {
@@ -331,7 +364,14 @@
         window.renderPaidTable = function() {
             const filterVal = document.getElementById('ticketFilter').value;
             const tbody = document.querySelector('#paidTable tbody'); tbody.innerHTML = '';
-            let displayTickets = filterVal === 'all' ? allPaidTickets : allPaidTickets.filter(t => t.type.includes(filterVal));
+            let displayTickets = filterVal === 'all' ? [...allPaidTickets] : allPaidTickets.filter(t => t.type.includes(filterVal));
+
+            // จัดเรียงข้อมูลตามกลุ่มโต๊ะ (tableNumber)
+            displayTickets.sort((a,b) => {
+                let tA = (a.tableNumber || 'zzz').toString().toLowerCase();
+                let tB = (b.tableNumber || 'zzz').toString().toLowerCase();
+                return tA.localeCompare(tB);
+            });
 
             if(displayTickets.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ไม่มีข้อมูล</td></tr>';
 
@@ -342,15 +382,18 @@
                 
                 let tableTag = data.tableNumber ? `<div style="color:var(--primary); font-weight:bold; font-size:13px;">📍 ${data.tableNumber} ${data.isTableVisible ? '👁️' : '🙈'}</div>` : '';
                 
-                // สร้างตารางข้อมูลลูกค้า
-                let mHtml = `<table class="member-detail-table"><tr><th>ชื่อ-สกุล</th><th>เกิด</th><th>Facebook</th>${data.type.includes('vip')?'<th>เกสต์</th>':''}</tr>`;
+                let mHtml = `<table class="member-detail-table"><tr><th>ชื่อ-สกุล</th><th>เกิด (อายุ)</th><th>โซเชียล</th>${data.type.includes('vip')?'<th>เกสต์</th>':''}</tr>`;
                 if(data.members) {
                     data.members.forEach((m,i) => {
                         let dobFormat = standardizeDOB(m.dob);
+                        let age = calculateAgeAtEvent(m.dob);
+                        let dobDisplay = dobFormat ? `${dobFormat} ${age ? `<br><span style="color:var(--primary); font-size:11px;">(อายุ ${age} ปี)</span>` : ''}` : '-';
+                        let socialDisplay = formatSocialLink(m.facebook);
+
                         mHtml += `<tr>
                             <td style="white-space:nowrap;">${i+1}. ${m.name||'<span style="color:#aaa;">-</span>'}</td>
-                            <td style="white-space:nowrap;">${dobFormat||'-'}</td>
-                            <td>${m.facebook ? `<a href="${m.facebook}" target="_blank" style="color:var(--primary); text-decoration:underline;">FB Link</a>` : '-'}</td>
+                            <td style="white-space:nowrap;">${dobDisplay}</td>
+                            <td>${socialDisplay}</td>
                             ${data.type.includes('vip')?`<td style="white-space:nowrap;"><b style="color:var(--primary);">${m.guest||'-'}</b></td>`:''}
                         </tr>`;
                     });
@@ -387,15 +430,25 @@
         window.exportCSV = () => {
             if(allPaidTickets.length === 0) return;
             let csv = "\uFEFFลำดับ,รหัสตั๋ว,อ้างอิง,ประเภท,โต๊ะ,รีเควส,รายละเอียดผู้ร่วมงาน\n";
-            allPaidTickets.forEach((t, index) => {
-                let mInfo = t.members ? t.members.map((m, i) => `${i+1}.${m.name||'-'} | ${standardizeDOB(m.dob)||'-'} | ${m.facebook||'-'} | ${m.guest||'-'}`).join(" // ") : "";
+            
+            // เรียงข้อมูลตามโต๊ะก่อนดาวน์โหลด
+            let sortedTickets = [...allPaidTickets].sort((a,b) => {
+                let tA = (a.tableNumber || 'zzz').toString().toLowerCase();
+                let tB = (b.tableNumber || 'zzz').toString().toLowerCase();
+                return tA.localeCompare(tB);
+            });
+
+            sortedTickets.forEach((t, index) => {
+                let mInfo = t.members ? t.members.map((m, i) => {
+                    let age = calculateAgeAtEvent(m.dob);
+                    return `${i+1}.${m.name||'-'} | ${standardizeDOB(m.dob)||'-'} ${age?`(${age}ปี)`:''} | ${m.facebook||'-'} | ${m.guest||'-'}`
+                }).join(" // ") : "";
                 let row = [ index + 1, t.id, t.refName || '', t.type, t.tableNumber || '', t.request || '', mInfo ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
                 csv += row + "\n";
             });
             const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); a.download = `CosNite_Tickets.csv`; a.click();
         }
 
-        // 🟢 ฟังก์ชันซิงค์ข้อมูลลง Google Sheets แบบ Realtime
         window.syncToGoogleSheet = async () => {
             if(GOOGLE_SHEET_API_URL === "ใส่_URL_WEB_APP_ของการซิงค์ชีทที่นี่") return alert("แอดมินต้องสร้าง Google Apps Script และนำ URL มาใส่ในโค้ดก่อนครับ");
             if(allPaidTickets.length === 0) return alert("ไม่มีข้อมูลให้ซิงค์");
@@ -404,12 +457,16 @@
             btn.innerText = "⏳ กำลังซิงค์...";
             
             try {
-                // จัดรูปแบบก่อนส่งไป Apps Script
+                // จัดเรียงโต๊ะให้อยู่ด้วยกันก่อนส่งเข้า Google Sheets
                 const payload = allPaidTickets.map(t => {
                     return {
                         id: t.id, refName: t.refName||'', type: t.type, tableNumber: t.tableNumber||'', request: t.request||'',
                         members: t.members || []
                     };
+                }).sort((a,b) => {
+                    let tA = (a.tableNumber || 'zzz').toString().toLowerCase();
+                    let tB = (b.tableNumber || 'zzz').toString().toLowerCase();
+                    return tA.localeCompare(tB);
                 });
                 
                 await fetch(GOOGLE_SHEET_API_URL, {
@@ -450,7 +507,6 @@
             document.getElementById('editModalOverlay').style.display = 'block'; document.getElementById('editModal').style.display = 'block';
         }
 
-        // 🟢 เรนเดอร์ช่องกรอกข้อมูลตามประเภทบัตรที่เปลี่ยนใหม่
         window.renderEditMembersArea = () => {
             const type = document.getElementById('editType').value;
             let s=1; if(type.includes('4')) s=4; if(type.includes('6')) s=6;
@@ -470,7 +526,6 @@
 
         window.closeModal = () => { document.getElementById('editModalOverlay').style.display='none'; document.getElementById('editModal').style.display='none'; }
         
-        // 🟢 ฟังก์ชันปลดล็อกให้ลูกค้าแก้ไขชื่อได้ชั่วคราว
         window.unlockTicketEdit = async () => {
             const id = document.getElementById('editTid').value;
             if(confirm('⚠️ ยืนยันปลดล็อกให้ลูกค้าแก้ไขรายชื่อได้อีก 1 ครั้งใช่ไหม?\n(เมื่อปลดล็อกแล้ว ลูกค้าจะสามารถเข้าไปแก้ไขชื่อที่หน้าเว็บตัวเองได้ เมื่อลูกค้ากดยืนยันแล้ว ระบบจะล็อกให้เหมือนเดิมอัตโนมัติ)')) {
