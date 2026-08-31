@@ -271,7 +271,6 @@
             return `${String(day).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
         }
 
-        // ฟังก์ชันคำนวณอายุ ณ วันที่ 13 ก.ย. 2026
         function calculateAgeAtEvent(dob) {
             if(!dob || dob.trim() === '') return '';
             let d = dob.replace(/-/g, '/');
@@ -283,7 +282,7 @@
             if(y > 2400) y -= 543;
             
             let birthDate = new Date(y, m - 1, day);
-            let eventDate = new Date(2026, 8, 13); // เดือนเริ่มจาก 0 (8 = กันยายน)
+            let eventDate = new Date(2026, 8, 13); 
             let age = eventDate.getFullYear() - birthDate.getFullYear();
             let mDiff = eventDate.getMonth() - birthDate.getMonth();
             if (mDiff < 0 || (mDiff === 0 && eventDate.getDate() < birthDate.getDate())) {
@@ -292,7 +291,6 @@
             return isNaN(age) ? '' : age;
         }
 
-        // ฟังก์ชันจัดฟอร์แมตช่องเฟซบุ๊ก/ไอจี ให้สวยงาม
         function formatSocialLink(val) {
             if(!val || val.trim() === '') return '-';
             let str = val.trim();
@@ -350,9 +348,15 @@
                     });
                 }
                 if (membersList === '') membersList = `<span style="font-size:11px; color:#ef4444; background:#fee2e2; padding:3px 8px; border-radius:5px;">ยังไม่ได้กรอกชื่อ</span>`;
+                
+                // 🔴 แสดง Drink Set ในตารางรอตรวจสอบ
+                let typeDisplay = `<b>${data.type.toUpperCase()}</b>`;
+                if(data.drinkSet) {
+                    typeDisplay += `<br><span style="font-size:11px; color:var(--primary); font-weight:bold;">🍹 Set ${data.drinkSet}</span>`;
+                }
 
                 tbody.innerHTML += `<tr>
-                    <td><b>${data.type.toUpperCase()}</b><br><span style="font-size:10px; color:#aaa;">ID: ${d.id}</span></td>
+                    <td>${typeDisplay}<br><span style="font-size:10px; color:#aaa;">ID: ${d.id}</span></td>
                     <td style="min-width: 160px; background: #fffdf5;">${membersList}</td>
                     <td><b style="color:var(--primary); font-size: 14px;">${data.pricePaid} ฿</b><br><span style="font-size:11px; color:#888;">(${data.paymentMethod === 'normal' ? 'สแกนจ่าย/โอน' : 'บัตรเครดิต'})</span></td>
                     <td><a href="${data.slipUrl}" target="_blank" style="display:inline-block; background:var(--primary); color:white; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:bold; box-shadow:0 2px 5px rgba(255,62,201,0.3);">🔍 ดูสลิป</a></td>
@@ -366,7 +370,6 @@
             const tbody = document.querySelector('#paidTable tbody'); tbody.innerHTML = '';
             let displayTickets = filterVal === 'all' ? [...allPaidTickets] : allPaidTickets.filter(t => t.type.includes(filterVal));
 
-            // จัดเรียงข้อมูลตามกลุ่มโต๊ะ (tableNumber)
             displayTickets.sort((a,b) => {
                 let tA = (a.tableNumber || 'zzz').toString().toLowerCase();
                 let tB = (b.tableNumber || 'zzz').toString().toLowerCase();
@@ -382,6 +385,12 @@
                 
                 let tableTag = data.tableNumber ? `<div style="color:var(--primary); font-weight:bold; font-size:13px;">📍 ${data.tableNumber} ${data.isTableVisible ? '👁️' : '🙈'}</div>` : '';
                 
+                // 🔴 แสดง Drink Set ในตารางจัดการตั๋ว
+                let typeDisplay = `<b>${data.type.toUpperCase()}</b>`;
+                if(data.drinkSet) {
+                    typeDisplay += `<br><span style="font-size:11px; color:var(--primary); font-weight:bold;">🍹 Set ${data.drinkSet}</span>`;
+                }
+
                 let mHtml = `<table class="member-detail-table"><tr><th>ชื่อ-สกุล</th><th>เกิด (อายุ)</th><th>โซเชียล</th>${data.type.includes('vip')?'<th>เกสต์</th>':''}</tr>`;
                 if(data.members) {
                     data.members.forEach((m,i) => {
@@ -403,7 +412,7 @@
                 
                 tbody.innerHTML += `<tr ${trClass}>
                     <td>${tableTag}${badgeUntransferred}<br><span style="font-size:10px; color:#aaa;">ID: ${data.id}</span>${data.refName ? `<br><b style="font-size:11px; color:#10b981;">Ref: ${data.refName}</b>` : ''}</td>
-                    <td><b>${data.type.toUpperCase()}</b></td><td>${mHtml}</td>
+                    <td>${typeDisplay}</td><td>${mHtml}</td>
                     <td><div class="action-btns"><button class="btn-edit" onclick="openEdit('${data.id}')">แก้</button><button class="btn-transfer" onclick="transferTicket('${data.id}')">โอน</button><button class="btn-del" onclick="delTicket('${data.id}')">ลบ</button></div></td>
                 </tr>`;
             });
@@ -431,7 +440,6 @@
             if(allPaidTickets.length === 0) return;
             let csv = "\uFEFFลำดับ,รหัสตั๋ว,อ้างอิง,ประเภท,โต๊ะ,รีเควส,รายละเอียดผู้ร่วมงาน\n";
             
-            // เรียงข้อมูลตามโต๊ะก่อนดาวน์โหลด
             let sortedTickets = [...allPaidTickets].sort((a,b) => {
                 let tA = (a.tableNumber || 'zzz').toString().toLowerCase();
                 let tB = (b.tableNumber || 'zzz').toString().toLowerCase();
@@ -443,7 +451,11 @@
                     let age = calculateAgeAtEvent(m.dob);
                     return `${i+1}.${m.name||'-'} | ${standardizeDOB(m.dob)||'-'} ${age?`(${age}ปี)`:''} | ${m.facebook||'-'} | ${m.guest||'-'}`
                 }).join(" // ") : "";
-                let row = [ index + 1, t.id, t.refName || '', t.type, t.tableNumber || '', t.request || '', mInfo ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+                
+                // 🔴 นำ Drink Set ไปต่อท้ายประเภทบัตรเพื่อลง CSV
+                let typeWithDrink = t.drinkSet ? `${t.type} (Set ${t.drinkSet})` : t.type;
+                
+                let row = [ index + 1, t.id, t.refName || '', typeWithDrink, t.tableNumber || '', t.request || '', mInfo ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
                 csv += row + "\n";
             });
             const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); a.download = `CosNite_Tickets.csv`; a.click();
@@ -457,10 +469,11 @@
             btn.innerText = "⏳ กำลังซิงค์...";
             
             try {
-                // จัดเรียงโต๊ะให้อยู่ด้วยกันก่อนส่งเข้า Google Sheets
                 const payload = allPaidTickets.map(t => {
+                    // 🔴 นำ Drink Set ไปต่อท้ายประเภทบัตรเพื่อลง Sheet ได้เลย โดยไม่ต้องแก้ Apps Script
+                    let typeWithDrink = t.drinkSet ? `${t.type} (Set ${t.drinkSet})` : t.type;
                     return {
-                        id: t.id, refName: t.refName||'', type: t.type, tableNumber: t.tableNumber||'', request: t.request||'',
+                        id: t.id, refName: t.refName||'', type: typeWithDrink, tableNumber: t.tableNumber||'', request: t.request||'',
                         members: t.members || []
                     };
                 }).sort((a,b) => {
