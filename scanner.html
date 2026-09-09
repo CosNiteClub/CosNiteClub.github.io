@@ -48,7 +48,6 @@
     </style>
 </head>
 <body>
-    <!-- ล็อกอินสำหรับสตาฟฟ์/แอดมิน -->
     <div id="auth-overlay">
         <h2 style="color:var(--primary);">CosNite Staff Scanner 🔎</h2>
         <p style="color:#aaa; margin-bottom:20px;">กรุณาล็อกอินด้วยบัญชีแอดมิน</p>
@@ -66,6 +65,9 @@
         <p style="color:#aaa; text-align:center; margin-bottom:10px;">จ่อคิวอาร์โค้ดให้อยู่ในกรอบเพื่อสแกนเข้างาน</p>
         <div id="reader"></div>
         <div id="error-msg">❌ ไม่พบข้อมูลตั๋วใบนี้ หรือ QR Code ผิดพลาด</div>
+        
+        <!-- 🟢 ปุ่มสำหรับทดสอบโดยไม่ต้องใช้กล้อง -->
+        <button onclick="simulateMockScan()" style="margin-top: 25px; background: #3b82f6; color: white; border: none; padding: 12px 25px; border-radius: 30px; font-family: 'Kanit'; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);">🧪 ลองสแกนตั๋วทดสอบ (Mock Data)</button>
     </div>
 
     <!-- จอแสดงผลเมื่อสแกนเจอ -->
@@ -98,7 +100,6 @@
         let html5QrcodeScanner;
         let currentTicketId = null;
 
-        // เช็กสิทธิ์แอดมิน
         onAuthStateChanged(auth, (user) => {
             if (user && user.email === ADMIN_EMAIL) {
                 document.getElementById('auth-overlay').style.display = 'none';
@@ -112,20 +113,42 @@
         window.logout = () => signOut(auth);
 
         function initScanner() {
-            // ตั้งค่ากล้องสแกน
             html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 });
             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
         }
 
+        // 🟢 เปิดฟังก์ชันให้ปุ่มกดเรียกใช้การจำลองสแกนได้
+        window.simulateMockScan = () => {
+            onScanSuccess("TEST-MOCK-123", null);
+        };
+
         async function onScanSuccess(decodedText, decodedResult) {
-            // หยุดสแกนชั่วคราวเพื่อป้องกันการสแกนรัวๆ
-            html5QrcodeScanner.pause(true);
+            if(html5QrcodeScanner) html5QrcodeScanner.pause(true);
             
             document.getElementById('error-msg').style.display = 'none';
             document.getElementById('reader').style.opacity = '0.5';
 
+            // 🟢 ดักจับรหัสทดสอบ จะไม่มีการยุ่งกับ Firebase เด็ดขาด
+            if (decodedText === "TEST-MOCK-123") {
+                const mockData = {
+                    status: 'paid',
+                    type: 'vip4',
+                    tableNumber: 'V99 (โต๊ะทดสอบ)',
+                    drinkSet: 'A',
+                    request: 'ขอที่นั่งใกล้เวที (ข้อมูลสมมติ)',
+                    members: [
+                        { name: 'คุณหนู ทดสอบคนที่ 1', dob: '15/05/1995', facebook: 'test.fb', guest: 'เกสต์ A', isCheckedIn: false },
+                        { name: 'เพื่อนคนที่ 2 (มาถึงแล้ว)', dob: '13/09/2000', facebook: '-', guest: 'เกสต์ B', isCheckedIn: true },
+                        { name: 'เพื่อนคนที่ 3', dob: '20/12/2002', facebook: 'ig:test', guest: 'เกสต์ A', isCheckedIn: false },
+                        { name: '', dob: '', facebook: '', guest: '' }
+                    ]
+                };
+                currentTicketId = "TEST-MOCK-123";
+                renderTicketUI(mockData);
+                return;
+            }
+
             try {
-                // ค้นหาข้อมูลตั๋วจาก QR Code (ซึ่งก็คือ Ticket ID)
                 const ticketRef = doc(db, "Tickets", decodedText);
                 const ticketSnap = await getDoc(ticketRef);
 
@@ -142,17 +165,15 @@
             } catch (error) {
                 document.getElementById('error-msg').innerText = error.message || "เกิดข้อผิดพลาด";
                 document.getElementById('error-msg').style.display = 'block';
-                // ให้เวลาสตาฟฟ์อ่าน Error 2 วินาที แล้วเปิดสแกนใหม่
                 setTimeout(() => { 
-                    html5QrcodeScanner.resume(); 
+                    if(html5QrcodeScanner) html5QrcodeScanner.resume(); 
                     document.getElementById('reader').style.opacity = '1';
                 }, 2500);
             }
         }
 
-        function onScanFailure(error) { /* ไม่ต้องทำอะไร ปล่อยให้มันพยายามสแกนต่อไป */ }
+        function onScanFailure(error) { }
 
-        // --- ฟังก์ชันจัดฟอร์แมตวันเกิด & อายุ (ยืมมาจากหน้าแอดมิน) ---
         function calculateAge(dob) {
             if(!dob || dob.trim() === '') return '';
             let d = dob.replace(/-/g, '/').split('/');
@@ -167,12 +188,10 @@
         }
 
         function renderTicketUI(data) {
-            // ซ่อนกล้อง โชว์ผลลัพธ์
             document.getElementById('reader-container').style.display = 'none';
             document.getElementById('result-container').style.display = 'block';
             document.body.style.backgroundColor = '#fff';
 
-            // ใส่ข้อมูลโต๊ะ
             document.getElementById('resTable').innerText = data.tableNumber || 'ยังไม่จัดโต๊ะ';
             document.getElementById('resType').innerText = `${data.type.toUpperCase()} ${data.drinkSet ? `(Set ${data.drinkSet})` : ''}`;
             
@@ -190,7 +209,7 @@
             let checkedCount = 0;
 
             members.forEach((m, index) => {
-                if(!m.name) return; // ข้ามคนที่เว้นว่างไว้
+                if(!m.name) return;
                 
                 const isChecked = m.isCheckedIn === true;
                 if(isChecked) checkedCount++;
@@ -220,31 +239,40 @@
         }
 
         window.checkInMember = async (ticketId, memberIndex, btnElement) => {
-            if(btnElement.classList.contains('checked')) return; // กันกดซ้ำ
+            if(btnElement.classList.contains('checked')) return; 
             
-            // เปลี่ยนสถานะปุ่มเป็นกำลังโหลด
             btnElement.innerText = "กำลังบันทึก...";
             btnElement.classList.add('loading');
 
+            // 🟢 หากเป็นโหมดทดสอบ ให้ข้ามการเซฟลง Firebase ไปเลย (จำลองการโหลด 0.5 วินาที)
+            if (ticketId === "TEST-MOCK-123") {
+                setTimeout(() => {
+                    btnElement.classList.remove('loading');
+                    btnElement.classList.add('checked');
+                    btnElement.innerText = 'เข้างานแล้ว ✅';
+                    btnElement.parentElement.classList.add('checked');
+
+                    let txt = document.getElementById('checkCount').innerText.split('/');
+                    document.getElementById('checkCount').innerText = `${parseInt(txt[0])+1}/${txt[1]}`;
+                }, 500);
+                return;
+            }
+
             try {
-                // ดึงข้อมูลล่าสุดมาอัปเดต (ป้องกันสตาฟฟ์ 2 คนกดพร้อมกัน)
                 const ticketRef = doc(db, "Tickets", ticketId);
                 const snap = await getDoc(ticketRef);
                 let currentMembers = snap.data().members;
                 
-                // อัปเดตสถานะเช็กอิน
                 currentMembers[memberIndex].isCheckedIn = true;
-                currentMembers[memberIndex].checkInTime = new Date().toISOString(); // เก็บเวลาไว้เผื่อตรวจย้อนหลัง
+                currentMembers[memberIndex].checkInTime = new Date().toISOString(); 
 
                 await updateDoc(ticketRef, { members: currentMembers });
 
-                // อัปเดต UI ปุ่ม
                 btnElement.classList.remove('loading');
                 btnElement.classList.add('checked');
                 btnElement.innerText = 'เข้างานแล้ว ✅';
                 btnElement.parentElement.classList.add('checked');
 
-                // อัปเดตตัวเลขเคานต์
                 let txt = document.getElementById('checkCount').innerText.split('/');
                 document.getElementById('checkCount').innerText = `${parseInt(txt[0])+1}/${txt[1]}`;
 
@@ -262,7 +290,6 @@
             document.getElementById('reader-container').style.display = 'flex';
             document.getElementById('reader').style.opacity = '1';
             
-            // เปิดกล้องสแกนต่อ
             if(html5QrcodeScanner) html5QrcodeScanner.resume();
         }
     </script>
