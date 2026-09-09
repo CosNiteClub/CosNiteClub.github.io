@@ -19,6 +19,11 @@
         #reader-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         #reader { width: 100%; max-width: 500px; border-radius: 15px; overflow: hidden; border: 3px solid var(--primary); box-shadow: 0 0 20px rgba(255,62,201,0.3); background: #000; }
         
+        /* สวิตช์โหมดทดสอบ */
+        .test-mode-box { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #ffeeba; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 470px; }
+        .test-mode-box input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; }
+        .test-mode-box label { font-weight: bold; cursor: pointer; font-size: 0.95rem; line-height: 1.3; }
+
         /* ส่วนของผลลัพธ์ (จะโชว์เมื่อสแกนติด) */
         #result-container { display: none; padding: 20px; flex: 1; background: #fff; color: #333; border-top-left-radius: 20px; border-top-right-radius: 20px; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -62,12 +67,17 @@
 
     <!-- จอกล้องสแกน -->
     <div id="reader-container">
+        <!-- 🟢 สวิตช์โหมดทดสอบ -->
+        <div class="test-mode-box">
+            <input type="checkbox" id="testModeToggle">
+            <label for="testModeToggle">🧪 เปิดโหมดทดลองสแกน<br><span style="font-size: 0.8rem; font-weight: normal;">(สแกนตั๋วจริงได้ แต่กดเช็กอินแล้วจะไม่บันทึกลงระบบ)</span></label>
+        </div>
+
         <p style="color:#aaa; text-align:center; margin-bottom:10px;">จ่อคิวอาร์โค้ดให้อยู่ในกรอบเพื่อสแกนเข้างาน</p>
         <div id="reader"></div>
         <div id="error-msg">❌ ไม่พบข้อมูลตั๋วใบนี้ หรือ QR Code ผิดพลาด</div>
         
-        <!-- 🟢 ปุ่มสำหรับทดสอบโดยไม่ต้องใช้กล้อง -->
-        <button onclick="simulateMockScan()" style="margin-top: 25px; background: #3b82f6; color: white; border: none; padding: 12px 25px; border-radius: 30px; font-family: 'Kanit'; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);">🧪 ลองสแกนตั๋วทดสอบ (Mock Data)</button>
+        <button onclick="simulateMockScan()" style="margin-top: 25px; background: #3b82f6; color: white; border: none; padding: 12px 25px; border-radius: 30px; font-family: 'Kanit'; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);">🧪 จำลองตั๋วทดสอบ (Mock Data)</button>
     </div>
 
     <!-- จอแสดงผลเมื่อสแกนเจอ -->
@@ -117,7 +127,6 @@
             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
         }
 
-        // 🟢 เปิดฟังก์ชันให้ปุ่มกดเรียกใช้การจำลองสแกนได้
         window.simulateMockScan = () => {
             onScanSuccess("TEST-MOCK-123", null);
         };
@@ -128,18 +137,17 @@
             document.getElementById('error-msg').style.display = 'none';
             document.getElementById('reader').style.opacity = '0.5';
 
-            // 🟢 ดักจับรหัสทดสอบ จะไม่มีการยุ่งกับ Firebase เด็ดขาด
             if (decodedText === "TEST-MOCK-123") {
                 const mockData = {
                     status: 'paid',
                     type: 'vip4',
                     tableNumber: 'V99 (โต๊ะทดสอบ)',
                     drinkSet: 'A',
-                    request: 'ขอที่นั่งใกล้เวที (ข้อมูลสมมติ)',
+                    request: 'ขอที่นั่งใกล้เวที',
                     members: [
-                        { name: 'คุณหนู ทดสอบคนที่ 1', dob: '15/05/1995', facebook: 'test.fb', guest: 'เกสต์ A', isCheckedIn: false },
-                        { name: 'เพื่อนคนที่ 2 (มาถึงแล้ว)', dob: '13/09/2000', facebook: '-', guest: 'เกสต์ B', isCheckedIn: true },
-                        { name: 'เพื่อนคนที่ 3', dob: '20/12/2002', facebook: 'ig:test', guest: 'เกสต์ A', isCheckedIn: false },
+                        { name: 'คุณสมชาย ใจดี', dob: '15/05/1995', facebook: 'สมชาย', guest: 'เกสต์ A', isCheckedIn: false },
+                        { name: 'คุณสมศรี มีสุข', dob: '13/09/2000', facebook: '-', guest: 'เกสต์ B', isCheckedIn: true },
+                        { name: 'คุณสมหมาย สายบุญ', dob: '20/12/2002', facebook: 'ig:sommai', guest: 'เกสต์ A', isCheckedIn: false },
                         { name: '', dob: '', facebook: '', guest: '' }
                     ]
                 };
@@ -174,17 +182,17 @@
 
         function onScanFailure(error) { }
 
-        function calculateAge(dob) {
+        // 🟢 ฟังก์ชันแปลงวันเกิดให้อ่านง่าย
+        function standardizeDOB(dob) {
             if(!dob || dob.trim() === '') return '';
-            let d = dob.replace(/-/g, '/').split('/');
-            if(d.length !== 3) return '';
-            let y = parseInt(d[2]); if(y > 2400) y -= 543;
-            let birthDate = new Date(y, parseInt(d[1])-1, parseInt(d[0]));
-            let eventDate = new Date(2026, 8, 13);
-            let age = eventDate.getFullYear() - birthDate.getFullYear();
-            let mDiff = eventDate.getMonth() - birthDate.getMonth();
-            if (mDiff < 0 || (mDiff === 0 && eventDate.getDate() < birthDate.getDate())) age--;
-            return isNaN(age) ? '' : age;
+            let d = dob.replace(/-/g, '/');
+            let parts = d.split('/');
+            if(parts.length !== 3) return dob;
+            let p1 = parseInt(parts[0]), p2 = parseInt(parts[1]), p3 = parseInt(parts[2]);
+            let y, m = p2, day;
+            if(p1 > 31) { y = p1; day = p3; } else { day = p1; y = p3; }
+            if(y > 2400) y -= 543; 
+            return `${String(day).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
         }
 
         function renderTicketUI(data) {
@@ -214,8 +222,9 @@
                 const isChecked = m.isCheckedIn === true;
                 if(isChecked) checkedCount++;
 
-                const age = calculateAge(m.dob);
-                const ageText = age ? `<b style="color:var(--primary);">${age} ปี</b>` : 'ไม่ระบุ';
+                // 🟢 เปลี่ยนจากคำนวณอายุเป็นแสดงวันเกิด
+                const dobFormat = standardizeDOB(m.dob);
+                const dobText = dobFormat ? `<b style="color:var(--primary);">${dobFormat}</b>` : 'ไม่ระบุ';
                 const guestText = data.type.includes('vip') && m.guest ? ` | เกสต์: <b style="color:#8b5cf6;">${m.guest}</b>` : '';
                 
                 const btnClass = isChecked ? 'btn-checkin checked' : 'btn-checkin';
@@ -225,7 +234,7 @@
                     <div class="member-row ${isChecked ? 'checked' : ''}">
                         <div class="member-info">
                             <h4 class="member-name">${index+1}. ${m.name}</h4>
-                            <p class="member-detail">อายุ: ${ageText}${guestText}</p>
+                            <p class="member-detail">วันเกิด: ${dobText}${guestText}</p>
                         </div>
                         <button class="${btnClass}" id="btn_chk_${index}" onclick="checkInMember('${currentTicketId}', ${index}, this)">
                             ${btnText}
@@ -244,8 +253,10 @@
             btnElement.innerText = "กำลังบันทึก...";
             btnElement.classList.add('loading');
 
-            // 🟢 หากเป็นโหมดทดสอบ ให้ข้ามการเซฟลง Firebase ไปเลย (จำลองการโหลด 0.5 วินาที)
-            if (ticketId === "TEST-MOCK-123") {
+            // 🟢 เช็กว่าเปิดสวิตช์โหมดทดสอบไว้หรือไม่
+            const isTestMode = document.getElementById('testModeToggle').checked;
+
+            if (ticketId === "TEST-MOCK-123" || isTestMode) {
                 setTimeout(() => {
                     btnElement.classList.remove('loading');
                     btnElement.classList.add('checked');
@@ -254,6 +265,10 @@
 
                     let txt = document.getElementById('checkCount').innerText.split('/');
                     document.getElementById('checkCount').innerText = `${parseInt(txt[0])+1}/${txt[1]}`;
+                    
+                    if (isTestMode && ticketId !== "TEST-MOCK-123") {
+                        alert('🧪 (โหมดทดสอบ): จำลองการเช็กอินสำเร็จ!\nข้อมูลจริงในระบบไม่ถูกเปลี่ยนแปลงครับ');
+                    }
                 }, 500);
                 return;
             }
