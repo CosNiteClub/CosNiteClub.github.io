@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner - CosNite Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- นำเข้า Library สำหรับอ่าน QR Code ด้วยกล้องมือถือ -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        :root { --primary: #ff3ec9; --accent: #fff7ad; --bg: #111; --text: #fff; }
+        body { font-family: 'Kanit', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        .header { background: #222; padding: 15px; text-align: center; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center;}
+        .header h2 { margin: 0; font-size: 1.2rem; color: var(--primary); }
+        .logout-btn { background: #ef4444; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-family: 'Kanit'; cursor: pointer; }
+
+        /* ส่วนของกล้องสแกน */
+        #reader-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #reader { width: 100%; max-width: 500px; border-radius: 15px; overflow: hidden; border: 3px solid var(--primary); box-shadow: 0 0 20px rgba(255,62,201,0.3); background: #000; }
+        
+        /* ส่วนของผลลัพธ์ (จะโชว์เมื่อสแกนติด) */
+        #result-container { display: none; padding: 20px; flex: 1; background: #fff; color: #333; border-top-left-radius: 20px; border-top-right-radius: 20px; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .ticket-header { text-align: center; margin-bottom: 20px; }
+        .table-number { font-size: 3.5rem; font-weight: bold; color: var(--primary); margin: 0; line-height: 1.1; }
+        .ticket-type { font-size: 1.2rem; color: #666; background: #fff0f9; display: inline-block; padding: 5px 15px; border-radius: 20px; margin-top: 5px; font-weight: 500; border: 1px solid var(--primary);}
+        .req-box { background: #fef3c7; color: #b45309; padding: 10px; border-radius: 8px; font-size: 0.95rem; margin-top: 10px; font-weight: 500; }
+
+        .member-list { margin-top: 20px; }
+        .member-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #eee; border-radius: 12px; margin-bottom: 10px; background: #fafafa; transition: 0.2s; }
+        .member-row.checked { background: #f0fdf4; border-color: #bbf7d0; opacity: 0.7; }
+        
+        .member-info { flex: 1; padding-right: 10px; }
+        .member-name { font-size: 1.1rem; font-weight: bold; color: #333; margin: 0; }
+        .member-detail { font-size: 0.85rem; color: #777; margin: 3px 0 0 0; }
+        
+        .btn-checkin { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 30px; font-size: 1rem; font-weight: bold; cursor: pointer; font-family: 'Kanit'; box-shadow: 0 4px 10px rgba(255,62,201,0.3); width: 120px; text-align: center; }
+        .btn-checkin.checked { background: #10b981; box-shadow: none; pointer-events: none; }
+        .btn-checkin.loading { background: #aaa; pointer-events: none; }
+
+        .btn-scan-next { width: 100%; background: #333; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; font-family: 'Kanit'; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        #error-msg { display: none; background: #fee2e2; color: #ef4444; padding: 15px; border-radius: 10px; text-align: center; margin: 20px; font-weight: bold; font-size: 1.1rem;}
+
+        #auth-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000; }
+    </style>
+</head>
+<body>
+    <!-- ล็อกอินสำหรับสตาฟฟ์/แอดมิน -->
+    <div id="auth-overlay">
+        <h2 style="color:var(--primary);">CosNite Staff Scanner 🔎</h2>
+        <p style="color:#aaa; margin-bottom:20px;">กรุณาล็อกอินด้วยบัญชีแอดมิน</p>
+        <button id="loginBtn" style="background:white; color:#333; border:none; padding:10px 20px; border-radius:30px; font-family:'Kanit'; font-size:1.1rem; font-weight:bold; cursor:pointer;"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="18" style="vertical-align:middle; margin-right:8px;"> ล็อกอินด้วย Google</button>
+    </div>
+
+    <div class="header">
+        <h2>Scanner 🔎</h2>
+        <span id="staffName" style="font-size: 0.85rem; color:#aaa;"></span>
+        <button class="logout-btn" onclick="logout()">ออกระบบ</button>
+    </div>
+
+    <!-- จอกล้องสแกน -->
+    <div id="reader-container">
+        <p style="color:#aaa; text-align:center; margin-bottom:10px;">จ่อคิวอาร์โค้ดให้อยู่ในกรอบเพื่อสแกนเข้างาน</p>
+        <div id="reader"></div>
+        <div id="error-msg">❌ ไม่พบข้อมูลตั๋วใบนี้ หรือ QR Code ผิดพลาด</div>
+    </div>
+
+    <!-- จอแสดงผลเมื่อสแกนเจอ -->
+    <div id="result-container">
+        <div class="ticket-header">
+            <p style="margin:0; font-size:1rem; color:#888;">หมายเลขโต๊ะ / โซน</p>
+            <h1 class="table-number" id="resTable">-</h1>
+            <div class="ticket-type" id="resType">กำลังโหลด...</div>
+            <div id="resReq" class="req-box" style="display:none;"></div>
+        </div>
+
+        <h3 style="margin: 0 0 10px 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 5px;">รายชื่อผู้เข้าร่วม <span id="checkCount" style="color:var(--primary); font-size:1rem; float:right;">0/0</span></h3>
+        
+        <div id="memberList" class="member-list">
+            <!-- รายชื่อจะถูก Render ที่นี่ -->
+        </div>
+
+        <button class="btn-scan-next" onclick="resetScanner()">📷 สแกนคิวอาร์ต่อไป</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const app = initializeApp({ apiKey: "AIzaSyBVvOAwIpu6PPcQumrmqN0Sdc9yT-69kRE", authDomain: "cosniteclub.firebaseapp.com", projectId: "cosniteclub" });
+        const db = getFirestore(app); const auth = getAuth(app); const provider = new GoogleAuthProvider();
+        const ADMIN_EMAIL = 'cosniteclubparty@gmail.com'; 
+        
+        let html5QrcodeScanner;
+        let currentTicketId = null;
+
+        // เช็กสิทธิ์แอดมิน
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email === ADMIN_EMAIL) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('staffName').innerText = user.displayName || user.email;
+                initScanner();
+            } else if (user) {
+                alert('บัญชีนี้ไม่ใช่สตาฟฟ์/แอดมิน'); signOut(auth);
+            }
+        });
+        document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider));
+        window.logout = () => signOut(auth);
+
+        function initScanner() {
+            // ตั้งค่ากล้องสแกน
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 });
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            // หยุดสแกนชั่วคราวเพื่อป้องกันการสแกนรัวๆ
+            html5QrcodeScanner.pause(true);
+            
+            document.getElementById('error-msg').style.display = 'none';
+            document.getElementById('reader').style.opacity = '0.5';
+
+            try {
+                // ค้นหาข้อมูลตั๋วจาก QR Code (ซึ่งก็คือ Ticket ID)
+                const ticketRef = doc(db, "Tickets", decodedText);
+                const ticketSnap = await getDoc(ticketRef);
+
+                if (ticketSnap.exists()) {
+                    const data = ticketSnap.data();
+                    if(data.status !== 'paid') {
+                        throw new Error("ตั๋วใบนี้ยังชำระเงินไม่สมบูรณ์ (สถานะ: " + data.status + ")");
+                    }
+                    currentTicketId = decodedText;
+                    renderTicketUI(data);
+                } else {
+                    throw new Error("❌ ไม่พบข้อมูลตั๋วใบนี้ในระบบ");
+                }
+            } catch (error) {
+                document.getElementById('error-msg').innerText = error.message || "เกิดข้อผิดพลาด";
+                document.getElementById('error-msg').style.display = 'block';
+                // ให้เวลาสตาฟฟ์อ่าน Error 2 วินาที แล้วเปิดสแกนใหม่
+                setTimeout(() => { 
+                    html5QrcodeScanner.resume(); 
+                    document.getElementById('reader').style.opacity = '1';
+                }, 2500);
+            }
+        }
+
+        function onScanFailure(error) { /* ไม่ต้องทำอะไร ปล่อยให้มันพยายามสแกนต่อไป */ }
+
+        // --- ฟังก์ชันจัดฟอร์แมตวันเกิด & อายุ (ยืมมาจากหน้าแอดมิน) ---
+        function calculateAge(dob) {
+            if(!dob || dob.trim() === '') return '';
+            let d = dob.replace(/-/g, '/').split('/');
+            if(d.length !== 3) return '';
+            let y = parseInt(d[2]); if(y > 2400) y -= 543;
+            let birthDate = new Date(y, parseInt(d[1])-1, parseInt(d[0]));
+            let eventDate = new Date(2026, 8, 13);
+            let age = eventDate.getFullYear() - birthDate.getFullYear();
+            let mDiff = eventDate.getMonth() - birthDate.getMonth();
+            if (mDiff < 0 || (mDiff === 0 && eventDate.getDate() < birthDate.getDate())) age--;
+            return isNaN(age) ? '' : age;
+        }
+
+        function renderTicketUI(data) {
+            // ซ่อนกล้อง โชว์ผลลัพธ์
+            document.getElementById('reader-container').style.display = 'none';
+            document.getElementById('result-container').style.display = 'block';
+            document.body.style.backgroundColor = '#fff';
+
+            // ใส่ข้อมูลโต๊ะ
+            document.getElementById('resTable').innerText = data.tableNumber || 'ยังไม่จัดโต๊ะ';
+            document.getElementById('resType').innerText = `${data.type.toUpperCase()} ${data.drinkSet ? `(Set ${data.drinkSet})` : ''}`;
+            
+            if(data.request) {
+                document.getElementById('resReq').innerText = `💬 Req: ${data.request}`;
+                document.getElementById('resReq').style.display = 'block';
+            } else {
+                document.getElementById('resReq').style.display = 'none';
+            }
+
+            const members = data.members || [];
+            const listDiv = document.getElementById('memberList');
+            listDiv.innerHTML = '';
+
+            let checkedCount = 0;
+
+            members.forEach((m, index) => {
+                if(!m.name) return; // ข้ามคนที่เว้นว่างไว้
+                
+                const isChecked = m.isCheckedIn === true;
+                if(isChecked) checkedCount++;
+
+                const age = calculateAge(m.dob);
+                const ageText = age ? `<b style="color:var(--primary);">${age} ปี</b>` : 'ไม่ระบุ';
+                const guestText = data.type.includes('vip') && m.guest ? ` | เกสต์: <b style="color:#8b5cf6;">${m.guest}</b>` : '';
+                
+                const btnClass = isChecked ? 'btn-checkin checked' : 'btn-checkin';
+                const btnText = isChecked ? 'เข้างานแล้ว ✅' : '👉 เช็กอิน';
+
+                const html = `
+                    <div class="member-row ${isChecked ? 'checked' : ''}">
+                        <div class="member-info">
+                            <h4 class="member-name">${index+1}. ${m.name}</h4>
+                            <p class="member-detail">อายุ: ${ageText}${guestText}</p>
+                        </div>
+                        <button class="${btnClass}" id="btn_chk_${index}" onclick="checkInMember('${currentTicketId}', ${index}, this)">
+                            ${btnText}
+                        </button>
+                    </div>
+                `;
+                listDiv.insertAdjacentHTML('beforeend', html);
+            });
+
+            document.getElementById('checkCount').innerText = `${checkedCount}/${members.filter(m=>m.name).length}`;
+        }
+
+        window.checkInMember = async (ticketId, memberIndex, btnElement) => {
+            if(btnElement.classList.contains('checked')) return; // กันกดซ้ำ
+            
+            // เปลี่ยนสถานะปุ่มเป็นกำลังโหลด
+            btnElement.innerText = "กำลังบันทึก...";
+            btnElement.classList.add('loading');
+
+            try {
+                // ดึงข้อมูลล่าสุดมาอัปเดต (ป้องกันสตาฟฟ์ 2 คนกดพร้อมกัน)
+                const ticketRef = doc(db, "Tickets", ticketId);
+                const snap = await getDoc(ticketRef);
+                let currentMembers = snap.data().members;
+                
+                // อัปเดตสถานะเช็กอิน
+                currentMembers[memberIndex].isCheckedIn = true;
+                currentMembers[memberIndex].checkInTime = new Date().toISOString(); // เก็บเวลาไว้เผื่อตรวจย้อนหลัง
+
+                await updateDoc(ticketRef, { members: currentMembers });
+
+                // อัปเดต UI ปุ่ม
+                btnElement.classList.remove('loading');
+                btnElement.classList.add('checked');
+                btnElement.innerText = 'เข้างานแล้ว ✅';
+                btnElement.parentElement.classList.add('checked');
+
+                // อัปเดตตัวเลขเคานต์
+                let txt = document.getElementById('checkCount').innerText.split('/');
+                document.getElementById('checkCount').innerText = `${parseInt(txt[0])+1}/${txt[1]}`;
+
+            } catch (error) {
+                alert("เกิดข้อผิดพลาดในการบันทึก: " + error.message);
+                btnElement.classList.remove('loading');
+                btnElement.innerText = "👉 เช็กอิน";
+            }
+        }
+
+        window.resetScanner = () => {
+            currentTicketId = null;
+            document.body.style.backgroundColor = 'var(--bg)';
+            document.getElementById('result-container').style.display = 'none';
+            document.getElementById('reader-container').style.display = 'flex';
+            document.getElementById('reader').style.opacity = '1';
+            
+            // เปิดกล้องสแกนต่อ
+            if(html5QrcodeScanner) html5QrcodeScanner.resume();
+        }
+    </script>
+</body>
+</html>
