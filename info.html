@@ -52,22 +52,36 @@
         }
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
-        .modal-header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; flex-shrink: 0; }
+        .modal-header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; flex-shrink: 0; z-index: 10; }
         .modal-header h3 { margin: 0; font-size: 1.1rem; }
-        .btn-close { background: white; color: var(--primary); border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; font-family: 'Kanit'; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .btn-close { background: white; color: var(--primary); border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; font-family: 'Kanit'; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-close:hover { transform: scale(1.1); }
         
         .modal-iframe-wrapper { flex: 1; width: 100%; background: #f9f9f9; -webkit-overflow-scrolling: touch; overflow-y: auto; display: none; }
         .modal-iframe-wrapper iframe { width: 100%; height: 100%; border: none; }
         
-        /* ระบบ Gallery */
-        .modal-gallery-wrapper { flex: 1; width: 100%; background: #111; display: none; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        .modal-gallery-wrapper img { max-width: 100%; max-height: 70vh; object-fit: contain; }
-        .gallery-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,62,201,0.8); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        /* 🟢 อัปเกรดระบบ Gallery */
+        .modal-gallery-wrapper { flex: 1; width: 100%; background: #111; display: none; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        
+        .image-container { position: relative; width: 100%; height: 70vh; display: flex; align-items: center; justify-content: center; }
+        .modal-gallery-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; position: absolute; z-index: 2; pointer-events: none; }
+        
+        .gallery-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; transition: 0.2s; }
+        .gallery-btn:hover { background: rgba(255,62,201,0.8); transform: translateY(-50%) scale(1.1); }
         .gallery-btn.prev { left: 10px; }
         .gallery-btn.next { right: 10px; }
-        .gallery-counter { color: white; margin-top: 15px; font-size: 1rem; font-weight: bold; }
         
-        .loading-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #888; z-index: 1; }
+        .gallery-footer { width: 100%; padding: 15px 0; display: flex; flex-direction: column; align-items: center; background: #000; z-index: 5; }
+        .gallery-counter { color: #aaa; font-size: 0.9rem; margin-bottom: 8px; font-weight: bold; }
+        
+        /* จุดไข่ปลา (Dots) */
+        .gallery-dots { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; padding: 0 20px; }
+        .dot { width: 8px; height: 8px; background: #444; border-radius: 50%; cursor: pointer; transition: 0.3s; }
+        .dot.active { background: var(--primary); transform: scale(1.4); }
+        
+        .loading-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #888; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -123,10 +137,10 @@
                 <div class="menu-card" onclick="openModal('gallery', ['img/coins/coin1.png', 'img/coins/coin2.png', 'img/coins/coin3.png', 'img/coins/coin4.png'], 'อธิบายระบบคอยน์')">
                     <span class="menu-icon">🪙</span><span class="menu-text">อธิบายระบบคอยน์ (Coin)</span><span class="menu-arrow">→</span>
                 </div>
+                <!-- 🟢 รวมเมนูเกม และตารางเกสต์เกมเข้าด้วยกันที่นี่ -->
                 <div class="menu-card" onclick="openModal('gallery', ['img/games/game1.png', 'img/games/game2.png', 'img/games/game3.png', 'img/games/game4.png', 'img/games/game5.png', 'img/games/game6.png'], 'กิจกรรมเกม & เกสต์ที่เข้าร่วม')">
                     <span class="menu-icon">🎲</span><span class="menu-text">กิจกรรมเกม & เกสต์ที่เข้าร่วม</span><span class="menu-arrow">→</span>
                 </div>
-                <!-- 🟢 เมนูใหม่: ลิสต์เกมเซอร์วิสและเกสต์ที่เข้าร่วม -->
                 <div class="menu-card" onclick="openModal('gallery', ['img/service/service1.png', 'img/service/service2.png', 'img/service/service3.png', 'img/service/service4.png', 'img/service/service5.png'], 'ลิสต์เกมเซอร์วิสและเกสต์ที่เข้าร่วม')">
                     <span class="menu-icon">🎯</span><span class="menu-text">ลิสต์เกมเซอร์วิสและเกสต์ที่เข้าร่วม</span><span class="menu-arrow">→</span>
                 </div>
@@ -146,16 +160,23 @@
             
             <!-- ส่วนแสดงผลแบบ Iframe (สำหรับ Anyflip) -->
             <div class="modal-iframe-wrapper" id="iframeWrapper">
-                <div class="loading-text">⏳ กำลังโหลดข้อมูล...</div>
+                <div class="loading-text"><div class="spinner"></div>กำลังโหลด...</div>
                 <iframe id="contentIframe" src="" scrolling="yes" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
             </div>
 
-            <!-- ส่วนแสดงผลแบบ Gallery -->
+            <!-- 🟢 ส่วนแสดงผลแบบ Gallery อัปเกรดใหม่ -->
             <div class="modal-gallery-wrapper" id="galleryWrapper">
-                <button class="gallery-btn prev" onclick="changeImage(-1)">❮</button>
-                <img id="galleryImage" src="" alt="Gallery Image">
-                <button class="gallery-btn next" onclick="changeImage(1)">❯</button>
-                <div class="gallery-counter" id="galleryCounter">1 / 1</div>
+                <div class="loading-text"><div class="spinner"></div></div>
+                <div class="image-container" id="imageContainer">
+                    <button class="gallery-btn prev" id="btnPrev" onclick="changeImage(-1)">❮</button>
+                    <img id="galleryImage" src="" alt="Gallery Image">
+                    <button class="gallery-btn next" id="btnNext" onclick="changeImage(1)">❯</button>
+                </div>
+                
+                <div class="gallery-footer">
+                    <div class="gallery-counter" id="galleryCounter">1 / 1</div>
+                    <div class="gallery-dots" id="galleryDots"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -163,6 +184,7 @@
     <script>
         let currentGalleryImages = [];
         let currentImageIndex = 0;
+        let isAnimating = false;
 
         function openModal(type, data, title) {
             document.getElementById('modalTitle').innerText = title;
@@ -171,10 +193,11 @@
             const galleryWrap = document.getElementById('galleryWrapper');
             const iframe = document.getElementById('contentIframe');
 
-            // Reset
+            // Reset UI
             iframeWrap.style.display = 'none';
             galleryWrap.style.display = 'none';
             iframe.src = '';
+            isAnimating = false;
 
             if (type === 'anyflip') {
                 iframe.src = data; 
@@ -183,7 +206,17 @@
             else if (type === 'gallery') {
                 currentGalleryImages = data;
                 currentImageIndex = 0;
-                updateGalleryUI();
+                
+                // ซ่อนปุ่มลูกศรถ้ามีแค่รูปเดียว
+                document.getElementById('btnPrev').style.display = data.length > 1 ? 'flex' : 'none';
+                document.getElementById('btnNext').style.display = data.length > 1 ? 'flex' : 'none';
+
+                const img = document.getElementById('galleryImage');
+                img.style.transition = 'none';
+                img.style.transform = 'translateX(0)';
+                img.style.opacity = '1';
+                
+                updateGalleryUI(false); 
                 galleryWrap.style.display = 'flex';
             }
 
@@ -192,23 +225,71 @@
         }
 
         function changeImage(direction) {
-            currentImageIndex += direction;
-            if (currentImageIndex >= currentGalleryImages.length) currentImageIndex = 0;
-            if (currentImageIndex < 0) currentImageIndex = currentGalleryImages.length - 1;
-            updateGalleryUI();
+            if (isAnimating || currentGalleryImages.length <= 1) return;
+            isAnimating = true;
+
+            const img = document.getElementById('galleryImage');
+            
+            // แอนิเมชันสไลด์ออกแบบเนียนๆ
+            img.style.transition = 'transform 0.25s ease-in, opacity 0.25s ease-in';
+            img.style.transform = direction > 0 ? 'translateX(-50px)' : 'translateX(50px)';
+            img.style.opacity = '0';
+
+            setTimeout(() => {
+                currentImageIndex += direction;
+                if (currentImageIndex >= currentGalleryImages.length) currentImageIndex = 0;
+                if (currentImageIndex < 0) currentImageIndex = currentGalleryImages.length - 1;
+
+                // ย้ายรูปไปรอสไลด์เข้าอีกฝั่งนึง
+                img.style.transition = 'none';
+                img.style.transform = direction > 0 ? 'translateX(50px)' : 'translateX(-50px)';
+                
+                updateGalleryUI(true);
+            }, 250);
         }
 
-        function updateGalleryUI() {
+        // ฟังก์ชันเวลากดจิ้มที่จุดไข่ปลา
+        function goToImage(index) {
+            if (isAnimating || index === currentImageIndex) return;
+            let direction = index > currentImageIndex ? 1 : -1;
+            changeImage(direction); // ยืมแอนิเมชันสไลด์มาใช้
+            
+            // แอบแก้ index ให้ตรงกับจุดที่กด (delay รอสไลด์ออกแปบนึง)
+            setTimeout(() => { currentImageIndex = index; }, 50); 
+        }
+
+        function updateGalleryUI(animateIn = false) {
             if (currentGalleryImages.length === 0) return;
             const img = document.getElementById('galleryImage');
             const counter = document.getElementById('galleryCounter');
+            const dots = document.getElementById('galleryDots');
             
-            // แสดง Loading เบาๆ ระหว่างเปลี่ยนรูป
-            img.style.opacity = 0.5;
-            img.onload = () => img.style.opacity = 1;
-            
-            img.src = currentGalleryImages[currentImageIndex];
+            // วาดจุดไข่ปลา
+            dots.innerHTML = '';
+            if (currentGalleryImages.length > 1) {
+                currentGalleryImages.forEach((_, i) => {
+                    dots.innerHTML += `<div class="dot ${i === currentImageIndex ? 'active' : ''}" onclick="goToImage(${i})"></div>`;
+                });
+            }
+
             counter.innerText = `${currentImageIndex + 1} / ${currentGalleryImages.length}`;
+
+            // จัดการตอนรูปโหลดเสร็จ
+            img.onload = () => {
+                if (animateIn) {
+                    // แอนิเมชันสไลด์เข้า
+                    setTimeout(() => {
+                        img.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+                        img.style.transform = 'translateX(0)';
+                        img.style.opacity = '1';
+                        setTimeout(() => { isAnimating = false; }, 250);
+                    }, 50);
+                } else {
+                    isAnimating = false;
+                }
+            };
+
+            img.src = currentGalleryImages[currentImageIndex];
         }
 
         function closeModal() {
@@ -221,6 +302,23 @@
         document.getElementById('contentModal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });
+
+        // 🟢 เพิ่มระบบปัดซ้าย-ขวาสำหรับหน้าจอมือถือ (Swipe Gestures)
+        let touchstartX = 0;
+        let touchendX = 0;
+        const imageContainer = document.getElementById('imageContainer');
+
+        imageContainer.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
+        imageContainer.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            // ถ้าปัดนิ้วยาวเกิน 40px ให้เปลี่ยนรูป
+            if (touchstartX - touchendX > 40) changeImage(1);  // ปัดซ้าย -> รูปถัดไป
+            if (touchendX - touchstartX > 40) changeImage(-1); // ปัดขวา -> รูปก่อนหน้า
+        }, {passive: true});
+
     </script>
 </body>
 </html>
